@@ -1,4 +1,4 @@
-import handlers.websockets
+import handlers
 
 import tornado.ioloop
 import tornado.web
