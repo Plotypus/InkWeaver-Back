@@ -1,6 +1,6 @@
-from .WS_GenericHandler import WS_GenericHandler
+from .GenericHandler import GenericHandler
 
-class WS_EchoHandler(WS_GenericHandler):
+class EchoHandler(GenericHandler):
     """
     A simple echo WS handler.
     """

@@ -1,4 +1,4 @@
-import handlers
+import handlers.websockets
 
 import tornado.ioloop
 import tornado.web
@@ -9,7 +9,7 @@ define_option('port', default=8080, help='run on the given port', type=int)
 
 
 ROUTES = [
-    (r"/ws", handlers.WS_EchoHandler),
+    (r"/ws", handlers.websockets.EchoHandler),
 ]
 
 

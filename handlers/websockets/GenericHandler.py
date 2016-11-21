@@ -2,7 +2,7 @@ import tornado.websocket
 
 from uuid import uuid4 as generate_uuid
 
-class WS_GenericHandler(tornado.websocket.WebSocketHandler):
+class GenericHandler(tornado.websocket.WebSocketHandler):
     """
     The default Plotypus WebSocket Handler.
     """
