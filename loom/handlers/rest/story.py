@@ -19,13 +19,15 @@ class StoryHandler(GenericHandler):
         self.success_write_json(dict(story=await loom.database.get_story(story_id)))
 
     async def post(self):
-        # TODO: Create new chapter
-        pass
+        chapter_id = await loom.database.create_chapter(**self.decode_json(self.request.body))
+        self.success_write_json(dict(chapter=chapter_id))
 
 
 class ChapterHandler(GenericHandler):
-    def get(self, story_id, chapter_id):
-        self.success_write_json(dict(story=story_id, chapter=chapter_id))
+    async def get(self, story_id, chapter_id):
+        # TODO: Stitch paragraphs together
+        chapter = await loom.database.get_chapter(chapter_id)
+        self.success_write_json(dict(story=story_id, chapter=chapter))
 
 
 class ParagraphHandler(GenericHandler):

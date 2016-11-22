@@ -76,7 +76,6 @@ async def get_story(story_id):
 
 
 async def create_story(user_id, wiki_id, title, author_name=None, synopsis=None):
-    # TODO: Attach story to user
     story = {
         'user_id':     user_id,
         'wiki_id':     wiki_id,
@@ -91,3 +90,25 @@ async def create_story(user_id, wiki_id, title, author_name=None, synopsis=None)
     story_id = str(result.inserted_id)
     await add_story_to_user(user_id, story_id)
     return story_id
+
+
+async def add_chapter_to_story(story_id, chapter_id):
+    await STORIES.update_one({'_id': ObjectId(story_id)}, {'$push': {'chapters': chapter_id}})
+
+
+async def create_chapter(story_id, title=None):
+    chapter = {
+        'story_id':     story_id,
+        'title':        title,
+        'paragraphs':   list(),
+        'statistics':   None,
+    }
+    result = await CHAPTERS.insert_one(chapter) # type: pymongo.results.InsertOneResult
+    chapter_id = str(result.inserted_id)
+    await add_chapter_to_story(story_id, chapter_id)
+    return chapter_id
+
+
+async def get_chapter(chapter_id):
+    result = await CHAPTERS.find_one({'_id': ObjectId(chapter_id)})
+    return result
