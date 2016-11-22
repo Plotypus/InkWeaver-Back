@@ -28,9 +28,11 @@ class StoryHandler(GenericHandler):
             'story': await loom.database.get_story(loom.database.hex_string_to_bson_oid(story_id)),
         })
 
-    async def post(self):
+    async def post(self, story_id):
         try:
-            chapter_id = await loom.database.create_chapter(**self.decode_json(self.request.body))
+            data = self.decode_json(self.request.body)
+            data['story_id'] = loom.database.hex_string_to_bson_oid(story_id)
+            chapter_id = await loom.database.create_chapter(**data)
             self.write_json({
                 'chapter': chapter_id,
             })
