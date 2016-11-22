@@ -9,8 +9,8 @@ class UsersHandler(GenericHandler):
 
     async def post(self):
         try:
-            id = await loom.database.create_user(**self.decode_json(self.request.body))
-            self.success_write_json(dict(user_id=id))
+            user_id = await loom.database.create_user(**self.decode_json(self.request.body))
+            self.success_write_json(dict(user_id=user_id))
         except:
-            #TODO: This should probably do some things.
+            # TODO: This should probably do some things.
             raise

@@ -11,13 +11,13 @@ _PORT = 27017
 
 
 def set_db_host(host):
-    global DB_HOST
-    DB_HOST = host
+    global _HOST
+    _HOST = host
 
 
 def set_db_port(port):
-    global DB_PORT
-    DB_PORT = port
+    global _PORT
+    _PORT = port
 
 
 # Connect to the database.
@@ -50,12 +50,12 @@ async def get_user(user_id):
     return result
 
 
-async def create_user(user_name, password, name, email_address, pen_name=None):
+async def create_user(username, password, name, email, pen_name=None):
     user = {
-        'username':    user_name,
+        'username':    username,
         'password':    password,
         'name':        name,
-        'email':       email_address,
+        'email':       email,
         'pen_name':    pen_name,
         'avatar':      None,
         'stories':     list(),
@@ -66,3 +66,30 @@ async def create_user(user_name, password, name, email_address, pen_name=None):
     }
     result = await USERS.insert_one(user)       # type: pymongo.results.InsertOneResult
     return str(result.inserted_id)
+
+
+async def add_story_to_user(user_id, story_id):
+    await USERS.update_one({'_id': ObjectId(user_id)}, {'$push': {'stories': story_id}})
+
+
+async def get_story(story_id):
+    result = await STORIES.find_one({'_id': ObjectId(story_id)})
+    return result
+
+
+async def create_story(user_id, wiki_id, title, author_name=None, synopsis=None):
+    # TODO: Attach story to user
+    story = {
+        'user_id':     user_id,
+        'wiki_id':     wiki_id,
+        'title':       title,
+        'author_name': author_name,
+        'synopsis':    synopsis,
+        'statistics':  None,
+        'chapters':    list(),
+        'settings':    None,
+    }
+    result = await STORIES.insert_one(story)    # type: pymongo.results.InsertOneResult
+    story_id = str(result.inserted_id)
+    await add_story_to_user(user_id, story_id)
+    return story_id
