@@ -1,4 +1,4 @@
-import loom.constants
+import loom.routing
 import loom.database
 
 import tornado.ioloop
@@ -14,7 +14,8 @@ define_option('db-port', default=27017, help='MongoDB connection port', type=int
 def start_server(port, routes):
     app = tornado.web.Application(routes)
     app.listen(port)
-    print("Starting server... press ^C to quit.")
+    print("Starting server at {}:{}".format('localhost', port))
+    print("Press ^C to quit.")
     try:
         tornado.ioloop.IOLoop.current().start()
     except KeyboardInterrupt:
@@ -29,4 +30,4 @@ if __name__ == '__main__':
     loom.database.set_db_host(options.db_host)
     loom.database.set_db_port(options.db_port)
 
-    start_server(options.port, loom.constants.ROUTES)
+    start_server(options.port, loom.routing.ROUTES)

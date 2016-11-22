@@ -23,29 +23,21 @@ _DB_CLIENT = motor.motor_tornado.MotorClient(_HOST, _PORT)
 _DB = _DB_CLIENT.inkweaver
 
 # Define our collections.
-USERS               = _DB.users                 # type: motor.core.AgnosticCollection
-STORIES             = _DB.stories               # type: motor.core.AgnosticCollection
-CHAPTERS            = _DB.chapters              # type: motor.core.AgnosticCollection
-PARAGRAPHS          = _DB.paragraphs            # type: motor.core.AgnosticCollection
-WIKIS               = _DB.wikis                 # type: motor.core.AgnosticCollection
-CATEGORIES          = _DB.categories            # type: motor.core.AgnosticCollection
-PAGES               = _DB.pages                 # type: motor.core.AgnosticCollection
-SECTIONS            = _DB.sections              # type: motor.core.AgnosticCollection
-LINKS               = _DB.links                 # type: motor.core.AgnosticCollection
-STORY_REFERENCES    = _DB.story_references      # type: motor.core.AgnosticCollection
-WIKI_REFERENCES     = _DB.wiki_references       # type: motor.core.AgnosticCollection
+_USERS               = _DB.users                    # type: motor.core.AgnosticCollection
+_STORIES             = _DB.stories                  # type: motor.core.AgnosticCollection
+_CHAPTERS            = _DB.chapters                 # type: motor.core.AgnosticCollection
+_PARAGRAPHS          = _DB.paragraphs               # type: motor.core.AgnosticCollection
+_WIKIS               = _DB.wikis                    # type: motor.core.AgnosticCollection
+_CATEGORIES          = _DB.categories               # type: motor.core.AgnosticCollection
+_PAGES               = _DB.pages                    # type: motor.core.AgnosticCollection
+_SECTIONS            = _DB.sections                 # type: motor.core.AgnosticCollection
+_LINKS               = _DB.links                    # type: motor.core.AgnosticCollection
+_STORY_REFERENCES    = _DB.story_references         # type: motor.core.AgnosticCollection
+_WIKI_REFERENCES     = _DB.wiki_references          # type: motor.core.AgnosticCollection
 
 
-async def get_all_user_ids():
-    result = []
-    async for doc in USERS.find():
-        result.append(str(doc['_id']))
-    return result
-
-
-async def get_user(user_id):
-    result = await USERS.find_one({'_id': ObjectId(user_id)})
-    return result
+def hex_string_to_bson_oid(s):
+    return ObjectId(s)
 
 
 async def create_user(username, password, name, email, pen_name=None):
@@ -62,16 +54,19 @@ async def create_user(username, password, name, email, pen_name=None):
         'statistics':  None,
         'bio':         None,
     }
-    result = await USERS.insert_one(user)       # type: pymongo.results.InsertOneResult
-    return str(result.inserted_id)
+    result = await _USERS.insert_one(user)          # type: pymongo.results.InsertOneResult
+    return result.inserted_id
 
 
-async def add_story_to_user(user_id, story_id):
-    await USERS.update_one({'_id': ObjectId(user_id)}, {'$push': {'stories': story_id}})
+async def get_user(user_id):
+    result = await _USERS.find_one({'_id': user_id})
+    return result
 
 
-async def get_story(story_id):
-    result = await STORIES.find_one({'_id': ObjectId(story_id)})
+async def get_all_user_ids():
+    result = []
+    async for doc in _USERS.find():
+        result.append(doc['_id'])
     return result
 
 
@@ -86,14 +81,19 @@ async def create_story(user_id, wiki_id, title, author_name=None, synopsis=None)
         'chapters':    list(),
         'settings':    None,
     }
-    result = await STORIES.insert_one(story)    # type: pymongo.results.InsertOneResult
-    story_id = str(result.inserted_id)
-    await add_story_to_user(user_id, story_id)
+    result = await _STORIES.insert_one(story)       # type: pymongo.results.InsertOneResult
+    story_id = result.inserted_id
+    await _add_story_to_user(user_id, story_id)
     return story_id
 
 
-async def add_chapter_to_story(story_id, chapter_id):
-    await STORIES.update_one({'_id': ObjectId(story_id)}, {'$push': {'chapters': chapter_id}})
+async def get_story(story_id):
+    result = await _STORIES.find_one({'_id': story_id})
+    return result
+
+
+async def _add_story_to_user(user_id, story_id):
+    await _USERS.update_one({'_id': user_id}, {'$push': {'stories': story_id}})
 
 
 async def create_chapter(story_id, title=None):
@@ -103,12 +103,16 @@ async def create_chapter(story_id, title=None):
         'paragraphs':   list(),
         'statistics':   None,
     }
-    result = await CHAPTERS.insert_one(chapter) # type: pymongo.results.InsertOneResult
-    chapter_id = str(result.inserted_id)
-    await add_chapter_to_story(story_id, chapter_id)
+    result = await _CHAPTERS.insert_one(chapter)    # type: pymongo.results.InsertOneResult
+    chapter_id = result.inserted_id
+    await _add_chapter_to_story(story_id, chapter_id)
     return chapter_id
 
 
 async def get_chapter(chapter_id):
-    result = await CHAPTERS.find_one({'_id': ObjectId(chapter_id)})
+    result = await _CHAPTERS.find_one({'_id': chapter_id})
     return result
+
+
+async def _add_chapter_to_story(story_id, chapter_id):
+    await _STORIES.update_one({'_id': story_id}, {'$push': {'chapters': chapter_id}})
