@@ -1,5 +1,3 @@
-from . import constants
-
 import motor.motor_tornado
 import pymongo.results
 
