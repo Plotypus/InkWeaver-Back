@@ -122,7 +122,24 @@ class LoomHandler(GenericHandler):
             raise LoomWSUnimplementedError
 
     async def get_user_info(self, message_id):
-        pass
+        # TODO: Raise an error if user is not logged in/authenticated at this point
+        if not hasattr(self, 'user'):
+            self.on_failure(message_id, "Not logged in")
+            return
+        data = {
+            'reply_to': message_id,
+            'username': self.user['username'],
+            'avatar': self.user['avatar'],
+            'email': self.user['email'],
+            'name': self.user['name'],
+            'pen_name': self.user['pen_name'],
+            'stories': list(self.stories.keys()),
+            'wikis': list(self.wikis.keys()),
+            'bio': self.user['bio'],
+            'statistics': self.user['statistics'],
+            'preferences': self.user['preferences'],
+        }
+        self.write_json(data)
 
     async def load_story(self, message_id, story):
         pass
@@ -149,7 +166,30 @@ class LoomHandler(GenericHandler):
         raise LoomWSUnimplementedError
 
     async def create_story(self, message_id, story):
-        pass
+        # TODO: Raise an error if user is not logged in/authenticated at this point
+        if not hasattr(self, 'user'):
+            self.on_failure(message_id, "Not logged in")
+            return
+        user_id = self.user['_id']
+        wiki_id = self.wikis[story['wiki']]
+        title = story['title']
+        publication_name = story['publication_name']
+        synopsis = story.get('synopsis', None)
+        story_id = await loom.database.create_story(user_id,wiki_id, title, publication_name, synopsis)
+        # TODO: Come up with a better way to 'id' new story
+        self.stories[len(self.stories)] = story_id
+        # TODO: Return a better response
+        data = {
+            'reply_to':   message_id,
+            'title':      title,
+            'owner':      None,
+            'coauthors':  list(),
+            'statistics': None,
+            'settings':   None,
+            'synopsis':   synopsis,
+            'wiki': story ['wiki'],
+        }
+        self.write_json(data)
 
     async def create_chapter(self, message_id, title):
         pass
@@ -200,5 +240,30 @@ class LoomHandler(GenericHandler):
         pass
 
     DISPATCH = {
-        'get_user_info': get_user_info,
+        'get_user_info':                get_user_info,
+        'load_story':                   load_story,
+        'get_chapters':                 get_chapters,
+        'load_story_with_chapters':     load_story_with_chapters,
+        'load_chapter':                 load_chapter,
+        'get_paragraphs':               get_paragraphs,
+        'load_chapter_with_paragraphs': load_chapter_with_paragraphs,
+        'load_paragraph':               load_paragraph,
+        'load_paragraph_with_text':     load_paragraph_with_text,
+        'create_story':                 create_story,
+        'create_chapter':               create_chapter,
+        'create_end_chapter':           create_end_chapter,
+        'create_paragraph':             create_paragraph,
+        'create_end_paragraph':         create_end_paragraph,
+        'update_story':                 update_story,
+        'update_current_story':         update_current_story,
+        'update_chapter':               update_chapter,
+        'update_current_chapter':       update_current_chapter,
+        'update_paragraph':             update_paragraph,
+        'replace_paragraph':            replace_paragraph,
+        'delete_story':                 delete_story,
+        'delete_current_story':         delete_current_story,
+        'delete_chapter':               delete_chapter,
+        'delete_current_chapter':       delete_current_chapter,
+        'delete_paragraph':             delete_paragraph,
+        'delete_current_paragraph':     delete_current_paragraph,
     }
