@@ -10,8 +10,8 @@ in great detail to provide you (but mostly us) with comprehensive documentation.
 
 ## Reference
 
-| Event | Description |
-|-------|-------------|
+| Action | Description |
+|--------|-------------|
 
 ---
 
@@ -24,7 +24,7 @@ When a user logs in, the server sends them back their own user information.
 ```json
 {
   "message_id": 1,
-  "event": "get_user_info"
+  "action": "get_user_info"
 }
 ```
 
@@ -54,7 +54,7 @@ Prerequisite: Logged-in
 ```json
 {
   "message_id": 1,
-  "event": "load_story",
+  "action": "load_story",
   "story": {...}
 }
 ```
@@ -81,7 +81,7 @@ Prerequisites: Logged-in, story loaded
 ```json
 {
   "message_id": 1,
-  "event": "get_chapters"
+  "action": "get_chapters"
 }
 ```
 
@@ -101,7 +101,7 @@ Prerequisite: Logged-in
 ```json
 {
   "message_id": 1,
-  "event": "load_story_with_chapters",
+  "action": "load_story_with_chapters",
   "story": {...}
 }
 ```
@@ -131,7 +131,7 @@ Prerequisites: Logged-in, story loaded
 ```json
 {
   "message_id": 1,
-  "event": "load_chapter",
+  "action": "load_chapter",
   "chapter": {...}
 }
 ```
@@ -151,7 +151,7 @@ Prerequisites: Logged-in, story loaded, chapter loaded
 ```json
 {
   "message_id": 1,
-  "event": "get_paragraphs"
+  "action": "get_paragraphs"
 }
 ```
 
@@ -171,7 +171,7 @@ Prerequisites: Logged-in, story loaded
 ```json
 {
   "message_id": 1,
-  "event": "load_chapter_with_paragraphs",
+  "action": "load_chapter_with_paragraphs",
   "chapter": {...}
 }
 ```
@@ -194,7 +194,7 @@ Prerequisites: Logged-in, story loaded, chapter loaded
 ```json
 {
   "message_id": 1,
-  "event": "load_paragraph",
+  "action": "load_paragraph",
   "paragraph": {...}
 }
 ```
@@ -217,7 +217,7 @@ Prerequisites: Logged-in
 ```json
 {
   "message_id": 1,
-  "event": "create_story",
+  "action": "create_story",
   "story": {
     "title": "My Great Story 2",
     "synopsis": {...},
@@ -240,7 +240,7 @@ end of the story.
 ```json
 {
   "message_id": 1,
-  "event": "create_chapter",
+  "action": "create_chapter",
   "title": "Chapter 1"
 }
 ```
@@ -254,7 +254,7 @@ Prerequisites: Logged-in, story loaded
 ```json
 {
   "message_id": 1,
-  "event": "create_chapter_at_story_end",
+  "action": "create_end_chapter",
   "title": "Chapter 7"
 }
 ```
@@ -271,7 +271,7 @@ paragraph at the end of the chapter.
 ```json
 {
   "message_id": 1,
-  "event": "create_paragraph"
+  "action": "create_paragraph"
 }
 ```
 
@@ -284,7 +284,7 @@ Prerequisites: Logged-in, story loaded, chapter loaded
 ```json
 {
   "message_id": 1,
-  "event": "create_paragraph_at_end_of_chapter"
+  "action": "create_end_paragraph"
 }
 ```
 
@@ -297,9 +297,9 @@ Prerequisites: Logged-in
 ```json
 {
   "message_id": 1,
-  "event": "update_story",
+  "action": "update_story",
   "story": {...},
-  "update": {...}
+  "changes": {...}
 }
 ```
 
@@ -310,8 +310,8 @@ Prerequisite: Logged-in, story loaded
 ```json
 {
   "message_id": 1,
-  "event": "update_current_story",
-  "update": {...}
+  "action": "update_current_story",
+  "changes": {...}
 }
 ```
 
@@ -322,9 +322,9 @@ Prerequisite: Logged-in, story loaded
 ```json
 {
   "message_id": 1,
-  "event": "update_chapter",
+  "action": "update_chapter",
   "chapter": {...},
-  "update": {...}
+  "changes": {...}
 }
 ```
 
@@ -335,8 +335,8 @@ Prerequisite: Logged-in, story loaded, chapter loaded
 ```json
 {
   "message_id": 1,
-  "event": "update_current_chapter",
-  "update": {...}
+  "action": "update_current_chapter",
+  "changes": {...}
 }
 ```
 
@@ -351,7 +351,7 @@ Prerequisite: Logged-in, story loaded, chapter loaded, paragraph loaded
 ```json
 {
   "message_id": 1,
-  "event": "replace_paragraph",
+  "action": "replace_paragraph",
   "text": "Some text for the paragraph."
 }
 ```
@@ -363,7 +363,7 @@ Prerequisites: Logged-in
 ```json
 {
   "message_id": 1,
-  "event": "delete_story",
+  "action": "delete_story",
   "story": {...}
 }
 ```
@@ -375,7 +375,7 @@ Prerequisites: Logged-in, story loaded
 ```json
 {
   "message_id": 1,
-  "event": "delete_current_story"
+  "action": "delete_current_story"
 }
 ```
 
@@ -386,7 +386,7 @@ Prerequisites: Logged-in, story loaded
 ```json
 {
   "message_id": 1,
-  "event": "delete_chapter",
+  "action": "delete_chapter",
   "chapter": {...}
 }
 ```
@@ -398,7 +398,7 @@ Prerequisites: Logged-in, story loaded, chapter loaded
 ```json
 {
   "message_id": 1,
-  "event": "delete_current_chapter"
+  "action": "delete_current_chapter"
 }
 ```
 
@@ -409,7 +409,7 @@ Prerequisites: Logged-in, story loaded, chapter loaded
 ```json
 {
   "message_id": 1,
-  "event": "delete_paragraph",
+  "action": "delete_paragraph",
   "paragraph": {...}
 }
 ```
@@ -421,6 +421,6 @@ Prerequisites: Logged-in, story loaded, chapter loaded, paragraph loaded
 ```json
 {
   "message_id": 1,
-  "event": "delete_current_paragraph"
+  "action": "delete_current_paragraph"
 }
 ```
