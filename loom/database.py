@@ -92,16 +92,20 @@ async def get_all_user_ids():
     return result
 
 
-async def create_story(user_id, wiki_id, title, author_name=None, synopsis=None):
+async def create_story(user_id: ObjectId, wiki_id: ObjectId, title: str, publication_name: str, synopsis=None) -> ObjectId:
     story = {
-        'user_id':     user_id,
-        'wiki_id':     wiki_id,
-        'title':       title,
-        'author_name': author_name,
-        'synopsis':    synopsis,
-        'statistics':  None,
-        'chapters':    list(),
-        'settings':    None,
+        'owner':         {
+            "user_id":          user_id,
+            "publication_name": publication_name,
+        },
+        'wiki_id':       wiki_id,
+        'collaborators': list(),
+        'title':         title,
+        'synopsis':      synopsis,
+        'head_chapter':  None,
+        'tail_chapter':  None,
+        'statistics':    None,
+        'settings':      None,
     }
     result = await _STORIES.insert_one(story)           # type: pymongo.results.InsertOneResult
     story_id = result.inserted_id
@@ -109,7 +113,7 @@ async def create_story(user_id, wiki_id, title, author_name=None, synopsis=None)
     return story_id
 
 
-async def get_story(story_id):
+async def get_story(story_id: ObjectId):
     result = await _STORIES.find_one({'_id': story_id})
     return result
 
@@ -118,16 +122,31 @@ async def _add_story_to_user(user_id, story_id):
     await _USERS.update_one({'_id': user_id}, {'$push': {'stories': story_id}})
 
 
-async def create_chapter(story_id, title=None):
+async def add_collaborator_to_story(user_id: ObjectId, publication_name: str, story_id: ObjectId):
+    # TODO: Add user to story and story to user
+    pass
+
+
+async def update_head_chapter_of_story(story_id: ObjectId, chapter_id: ObjectId):
+    await _STORIES.update_one({'_id': story_id}, {'$set': {'head_chapter': chapter_id}})
+
+
+async def update_tail_chapter_of_story(story_id: ObjectId, chapter_id: ObjectId):
+    await _STORIES.update_one({'_id': story_id}, {'$set': {'tail_chapter': chapter_id}})
+
+
+async def create_chapter(story_id: ObjectId, title, preceding_id=None, succeeding_id=None) -> ObjectId:
     chapter = {
-        'story_id':     story_id,
-        'title':        title,
-        'paragraphs':   list(),
-        'statistics':   None,
+        'story_id':       story_id,
+        'title':          title,
+        'head_paragraph': None,
+        'tail_paragraph': None,
+        'preceded_by':    preceding_id,
+        'succeeded_by':   succeeding_id,
+        'statistics':     None,
     }
     result = await _CHAPTERS.insert_one(chapter)        # type: pymongo.results.InsertOneResult
     chapter_id = result.inserted_id
-    await _add_chapter_to_story(story_id, chapter_id)
     return chapter_id
 
 
@@ -136,20 +155,44 @@ async def get_chapter(chapter_id):
     return result
 
 
-async def _add_chapter_to_story(story_id, chapter_id):
-    await _STORIES.update_one({'_id': story_id}, {'$push': {'chapters': chapter_id}})
+async def update_head_paragraph_of_chapter(chapter_id: ObjectId, paragraph_id: ObjectId):
+    await _CHAPTERS.update_one({'_id': chapter_id}, {'$set': {'head_paragraph': paragraph_id}})
 
 
-async def create_paragraph(chapter_id, text=None):
+async def update_tail_paragraph_of_chapter(chapter_id: ObjectId, paragraph_id: ObjectId):
+    await _CHAPTERS.update_one({'_id': chapter_id}, {'$set': {'tail_paragraph': paragraph_id}})
+
+
+async def update_chapters_succeeded_by(preceding_id: ObjectId, new_chapter_id: ObjectId):
+    await _CHAPTERS.update_one({'_id': preceding_id}, {'$set': {'succeeded_by': new_chapter_id}})
+
+
+async def update_chapters_preceded_by(succeeding_id: ObjectId, new_chapter_id: ObjectId):
+    await _CHAPTERS.update_one({'_id': succeeding_id}, {'$set': {'preceded_by': new_chapter_id}})
+
+
+async def create_paragraph(chapter_id: ObjectId, preceding_id=None, succeeding_id=None, text=None):
     paragraph = {
         'chapter_id': chapter_id,
-        'text': text,
+        'text':       text,
         'statistics': None,
+        'preceded_by':  preceding_id,
+        'succeeded_by': succeeding_id,
     }
     result = await _PARAGRAPHS.insert_one(paragraph)    # type: pymongo.results.InsertOneResult
     paragraph_id = result.inserted_id
-    await _add_paragraph_to_chapter(chapter_id, paragraph_id)
+    return paragraph_id
 
 
-async def _add_paragraph_to_chapter(chapter_id, paragraph_id):
-    pass
+async def get_paragraph(paragraph_id: ObjectId):
+    result = await _PARAGRAPHS.find_one({'_id': paragraph_id})
+    return result
+
+
+async def update_paragraphs_succeeded_by(preceding_id: ObjectId, new_paragraph_id: ObjectId):
+    await _PARAGRAPHS.update_one({'_id': preceding_id}, {'$set': {'succeeded_by': new_paragraph_id}})
+
+
+async def update_paragraphs_preceded_by(succeeding_id: ObjectId, new_paragraph_id: ObjectId):
+    await _PARAGRAPHS.update_one({'_id': succeeding_id}, {'$set': {'preceded_by': new_paragraph_id}})
+
