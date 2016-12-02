@@ -35,6 +35,7 @@ When a user logs in, the server sends them back their own user information.
   "avatar": "user123.jpg",
   "email": "user123@email.com",
   "name": "Joe Schmoe",
+  "pen_name": "Schmozo",
   "stories": [
     {story-summary}
   ],
