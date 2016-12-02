@@ -155,7 +155,7 @@ class LoomHandler(GenericHandler):
 
     async def get_user_info(self, message_id):
         # TODO: Raise an error if user is not logged in/authenticated at this point
-        if not hasattr(self, 'user'):
+        if self.user is None:
             self.on_failure(message_id, "Not logged in")
             return
         data = {
@@ -175,11 +175,11 @@ class LoomHandler(GenericHandler):
 
     async def load_story(self, message_id, story):
         # TODO: Raise an error if user is not logged in/authenticated at this point
-        if not hasattr(self, 'user'):
+        if self.user is None:
             self.on_failure(message_id, "Not logged in")
             return
-        if self.stories.get(story):
-            story_id = self.stories[story]
+        story_id = self.stories.get(story)
+        if story_id:
             self.story = await loom.database.get_story(story_id)
             data = await self._format_story_response(message_id, self.story)
             self.write_json(data)
@@ -187,7 +187,15 @@ class LoomHandler(GenericHandler):
             self.on_failure(message_id, "Story does not exist")
 
     async def get_chapters(self, message_id):
-        pass
+        # TODO: Raise an error if user is not logged in/authenticated at this point
+        if self.user is None:
+            self.on_failure(message_id, "Not logged in")
+            return
+        # TODO: Raise an error if user hasn't loaded a story
+        if self.story is None:
+            self.on_failure(message_id, "No story loaded")
+            return
+        ...
 
     async def load_story_with_chapters(self, message_id, story):
         pass
@@ -209,7 +217,7 @@ class LoomHandler(GenericHandler):
 
     async def create_story(self, message_id, story):
         # TODO: Raise an error if user is not logged in/authenticated at this point
-        if not hasattr(self, 'user'):
+        if self.user is None:
             self.on_failure(message_id, "Not logged in")
             return
         user_id = self.user['_id']
