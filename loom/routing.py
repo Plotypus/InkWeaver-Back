@@ -19,7 +19,7 @@ PAGE        = WIKI      + r'/{page_id}'.format(page_id=RE_ObjectID)
 
 ROUTES = [
     (r'/ws/echo',   handlers.websockets.EchoHandler),
-    (r'/ws/v2',     handlers.websockets.GenericHandler),
+    (r'/ws/v2',     handlers.websockets.LoomHandler),
     (API,           handlers.rest.RedirectHandler,      dict(url='http://plotypus.github.io/api')),  # GET: redirect to plotypus.github.io/api
     #TODO: don't return a list here
     (USERS,         handlers.rest.user.UsersHandler),  # GET: list of users; POST: create user
