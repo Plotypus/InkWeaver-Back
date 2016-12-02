@@ -254,7 +254,7 @@ Prerequisites: Logged-in, story loaded
 ```json
 {
   "message_id": 1,
-  "action": "create_chapter_at_story_end",
+  "action": "create_end_chapter",
   "title": "Chapter 7"
 }
 ```
@@ -284,7 +284,7 @@ Prerequisites: Logged-in, story loaded, chapter loaded
 ```json
 {
   "message_id": 1,
-  "action": "create_paragraph_at_end_of_chapter"
+  "action": "create_end_paragraph"
 }
 ```
 
