@@ -299,7 +299,7 @@ Prerequisites: Logged-in
   "message_id": 1,
   "action": "update_story",
   "story": {...},
-  "update": {...}
+  "changes": {...}
 }
 ```
 
@@ -311,7 +311,7 @@ Prerequisite: Logged-in, story loaded
 {
   "message_id": 1,
   "action": "update_current_story",
-  "update": {...}
+  "changes": {...}
 }
 ```
 
@@ -324,7 +324,7 @@ Prerequisite: Logged-in, story loaded
   "message_id": 1,
   "action": "update_chapter",
   "chapter": {...},
-  "update": {...}
+  "changes": {...}
 }
 ```
 
@@ -336,7 +336,7 @@ Prerequisite: Logged-in, story loaded, chapter loaded
 {
   "message_id": 1,
   "action": "update_current_chapter",
-  "update": {...}
+  "changes": {...}
 }
 ```
 
