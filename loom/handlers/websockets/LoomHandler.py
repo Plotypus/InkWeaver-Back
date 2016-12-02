@@ -36,6 +36,10 @@ class LoomHandler(GenericHandler):
         super().open()
         # By default, small messages are coalesced. This can cause delay. We don't want delay.
         self.set_nodelay(True)
+        self.user = None
+        self.stories = None
+        self.wikis = None
+        self.story = None
 
     def on_failure(self, reply_to=None, reason=None, **fields):
         response = {
@@ -51,6 +55,34 @@ class LoomHandler(GenericHandler):
     def write_json(self, data: dict):
         json_string = self.encode_json(data)
         self.write_message(json_string)
+
+    def _get_id_for_client_from_stories(self, story_id):
+        for c_id, s_id in self.stories.items():
+            if s_id == story_id:
+                return c_id
+        raise ValueError("{} does not exist in stories".format(story_id))
+
+    def _get_id_for_client_from_wikis(self, wiki_id):
+        for c_id, w_id in self.wikis.items():
+            if w_id == wiki_id:
+                return c_id
+        raise ValueError("{} does not exist in wikis".format(wiki_id))
+
+    async def _format_story_response(self, message_id, story):
+        client_wiki_id = self._get_id_for_client_from_wikis(story['wiki_id'])
+        data = {
+            'reply_to':         message_id,
+            'title':            story['title'],
+            # 'owner':            self.story['owner'],
+            # 'coauthors':        self.story['collaborators'],
+            'owner':            None,  # TODO: Resolve these
+            'coauthors':        None,
+            'statistics':       story['statistics'],
+            'settings':         story['settings'],
+            'synopsis':         story['synopsis'],
+            'wiki':             client_wiki_id,
+        }
+        return data
 
     def on_message(self, message):
         # TODO: Remove this.
@@ -127,22 +159,32 @@ class LoomHandler(GenericHandler):
             self.on_failure(message_id, "Not logged in")
             return
         data = {
-            'reply_to': message_id,
-            'username': self.user['username'],
-            'avatar': self.user['avatar'],
-            'email': self.user['email'],
-            'name': self.user['name'],
-            'pen_name': self.user['pen_name'],
-            'stories': list(self.stories.keys()),
-            'wikis': list(self.wikis.keys()),
-            'bio': self.user['bio'],
-            'statistics': self.user['statistics'],
-            'preferences': self.user['preferences'],
+            'reply_to':         message_id,
+            'username':         self.user['username'],
+            'avatar':           self.user['avatar'],
+            'email':            self.user['email'],
+            'name':             self.user['name'],
+            'pen_name':         self.user['pen_name'],
+            'stories':          list(self.stories.keys()),
+            'wikis':            list(self.wikis.keys()),
+            'bio':              self.user['bio'],
+            'statistics':       self.user['statistics'],
+            'preferences':      self.user['preferences'],
         }
         self.write_json(data)
 
     async def load_story(self, message_id, story):
-        pass
+        # TODO: Raise an error if user is not logged in/authenticated at this point
+        if not hasattr(self, 'user'):
+            self.on_failure(message_id, "Not logged in")
+            return
+        if self.stories.get(story):
+            story_id = self.stories[story]
+            self.story = await loom.database.get_story(story_id)
+            data = await self._format_story_response(message_id, self.story)
+            self.write_json(data)
+        else:
+            self.on_failure(message_id, "Story does not exist")
 
     async def get_chapters(self, message_id):
         pass
@@ -178,17 +220,8 @@ class LoomHandler(GenericHandler):
         story_id = await loom.database.create_story(user_id,wiki_id, title, publication_name, synopsis)
         # TODO: Come up with a better way to 'id' new story
         self.stories[len(self.stories)] = story_id
-        # TODO: Return a better response
-        data = {
-            'reply_to':   message_id,
-            'title':      title,
-            'owner':      None,
-            'coauthors':  list(),
-            'statistics': None,
-            'settings':   None,
-            'synopsis':   synopsis,
-            'wiki': story ['wiki'],
-        }
+        self.story = await loom.database.get_story(story_id)
+        data = await self._format_story_response(message_id, self.story)
         self.write_json(data)
 
     async def create_chapter(self, message_id, title):
