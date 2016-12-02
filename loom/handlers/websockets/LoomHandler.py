@@ -78,7 +78,7 @@ class LoomHandler(GenericHandler):
             self.on_failure(reply_to=message_id, reason="`action` field not supplied")
             return
         try:
-            self.dispatch(message, action, message_id)
+            await self.dispatch(message, action, message_id)
         except LoomWSUnimplementedError:
             err_message = "invalid `action`: {}".format(action)
             self.on_failure(reply_to=message_id, reason=err_message)
