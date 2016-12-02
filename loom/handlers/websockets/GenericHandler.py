@@ -1,16 +1,29 @@
+from loom import serialize
+
 import tornado.websocket
 
 from uuid import uuid4 as generate_uuid
+
 
 class GenericHandler(tornado.websocket.WebSocketHandler):
     """
     The default Plotypus WebSocket Handler.
     """
+    @classmethod
+    def encode_json(cls, data):
+        return serialize.to_bson(data)
+
+    @classmethod
+    def decode_json(cls, data):
+        return serialize.from_bson(data)
 
     def __init__(self, *args, **kwargs):
-        print("INIT")
-        self.uuid = generate_uuid()
         super().__init__(*args, **kwargs)
+        self._uuid = generate_uuid()
+
+    @property
+    def uuid(self):
+        return self._uuid
 
     def open(self):
         """
@@ -25,7 +38,7 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
         :param message:
         :return:
         """
-        print("{} received: {}".format(self.uuid, message))
+        print("{} received: {}".format(self.uuid, repr(message)))
 
     def on_close(self):
         """
@@ -40,4 +53,6 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
         :param origin:
         :return:
         """
+        # TODO: Make this better. See:
+        # http://www.tornadoweb.org/en/stable/websocket.html#tornado.websocket.WebSocketHandler.check_origin
         return True
