@@ -12,6 +12,7 @@ _DB_CLIENT = motor.motor_tornado.MotorClient(_HOST, _PORT)
 _DB = _DB_CLIENT.inkweaver
 
 # Define our collections.
+_TEST                = _DB.test                         # type: motor.core.AgnosticCollection
 _USERS               = _DB.users                        # type: motor.core.AgnosticCollection
 _STORIES             = _DB.stories                      # type: motor.core.AgnosticCollection
 _CHAPTERS            = _DB.chapters                     # type: motor.core.AgnosticCollection
@@ -37,6 +38,28 @@ def set_db_port(port):
 
 def hex_string_to_bson_oid(s):
     return ObjectId(s)
+
+
+async def get_default_user():
+    default_user = await _TEST.find_one({'_id': 'default_user'})
+    if default_user:
+        return default_user
+    user = {
+        '_id': 'default_user',
+        'username':    'default',
+        'password':    'default',
+        'name':        'Default User',
+        'email':       'defaultuser@default.com',
+        'pen_name':    'Default Pen Name',
+        'avatar':      None,
+        'stories':     list(),
+        'wikis':       list(),
+        'preferences': None,
+        'statistics':  None,
+        'bio':         None,
+    }
+    await _TEST.insert_one(user)
+    return user
 
 
 async def create_user(username, password, name, email, pen_name=None):
