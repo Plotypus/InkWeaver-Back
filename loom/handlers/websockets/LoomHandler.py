@@ -41,6 +41,7 @@ class LoomHandler(GenericHandler):
         self.wikis = None
         self.story = None
         self.chapters = None
+        self.chapter = None
 
     def on_failure(self, reply_to=None, reason=None, **fields):
         response = {
@@ -117,7 +118,7 @@ class LoomHandler(GenericHandler):
             summaries.append(summary_copy)
         return summaries
 
-    async def _format_story_response(self, message_id, story):
+    def _format_story_response(self, message_id, story):
         client_wiki_id = self._get_id_for_client_from_wikis(story['wiki_id'])
         data = {
             'reply_to':         message_id,
@@ -130,6 +131,15 @@ class LoomHandler(GenericHandler):
             'settings':         story['settings'],
             'synopsis':         story['synopsis'],
             'wiki':             client_wiki_id,
+        }
+        return data
+
+    def _format_chapter_response(self, message_id, chapter):
+        print("in format chapter")
+        data = {
+            'reply_to':     message_id,
+            'title':        chapter['title'],
+            'statistics':   chapter['statistics'],
         }
         return data
 
@@ -258,10 +268,11 @@ class LoomHandler(GenericHandler):
         if self.user is None:
             self.on_failure(message_id, "Not logged in")
             return
-        story_id = self.stories.get(story)['id']
-        if story_id:
+        story_summary = self.stories.get(story)
+        if story_summary:
+            story_id = story_summary['id']
             self.story = await loom.database.get_story(story_id)
-            data = await self._format_story_response(message_id, self.story)
+            data = self._format_story_response(message_id, self.story)
             await self._create_chapter_ids_mapping()
             chapter_summaries = self._get_chapter_summaries()
             data['chapters'] = chapter_summaries
@@ -270,7 +281,24 @@ class LoomHandler(GenericHandler):
             self.on_failure(message_id, "Story does not exist")
 
     async def load_chapter(self, message_id, chapter):
-        pass
+        # TODO: Raise an error if user is not logged in/authenticated at this point
+        if self.user is None:
+            self.on_failure(message_id, "Not logged in")
+            return
+        # TODO: Raise an error if user hasn't loaded a story
+        if self.story is None:
+            self.on_failure(message_id, "No story loaded")
+            return
+        print("In load chapter")
+        chapter_summary = self.chapters.get(chapter)
+        if chapter_summary:
+            chapter_id = chapter_summary['id']
+            self.chapter = await loom.database.get_chapter(chapter_id)
+            print(self.chapter)
+            data = self._format_chapter_response(message_id, self.chapter)
+            self.write_json(data)
+        else:
+            self.on_failure(message_id, "Chapter does not exist")
 
     async def get_paragraphs(self, message_id):
         pass
