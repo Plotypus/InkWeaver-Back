@@ -193,6 +193,18 @@ def get_summary_from_chapter(chapter):
     return summary
 
 
+async def get_all_paragraph_summaries(chapter_id: ObjectId):
+    paragraphs = []
+    chapter = await get_chapter(chapter_id)
+    cur_id = chapter['head_paragraph']
+    while cur_id:
+        paragraph = await get_paragraph(cur_id)
+        summary = get_summary_from_paragraph(paragraph)
+        paragraphs.append(summary)
+        cur_id = paragraph['succeeded_by']
+    return paragraphs
+
+
 async def get_remaining_chapters(chapter_id: ObjectId):
     return await get_n_succeeding_chapters(chapter_id)
 
@@ -233,6 +245,29 @@ async def create_paragraph(chapter_id: ObjectId, preceding_id=None, succeeding_i
 async def get_paragraph(paragraph_id: ObjectId):
     result = await _PARAGRAPHS.find_one({'_id': paragraph_id})
     return result
+
+
+async def get_paragraph_summary(paragraph_id: ObjectId):
+    paragraph = await get_paragraph(paragraph_id)
+    return get_summary_from_paragraph(paragraph)
+
+
+def get_summary_from_paragraph(paragraph):
+    # TODO: Revise paragraph summary strucrure
+    summary = {
+        'text':         paragraph['text'],
+        'id':           paragraph['_id'],
+        'statistics':   paragraph['statistics'],
+    }
+    return summary
+
+
+async def get_remaining_paragraphs(paragraph_id: ObjectId):
+    return await get_n_succeeding_paragraphs(paragraph_id)
+
+
+async def get_n_succeeding_paragraphs(paragraph_id: ObjectId, num_paragraphs=None):
+    ...
 
 
 async def update_paragraphs_succeeded_by(preceding_id: ObjectId, new_paragraph_id: ObjectId):
