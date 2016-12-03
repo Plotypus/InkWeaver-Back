@@ -42,6 +42,7 @@ class LoomHandler(GenericHandler):
         self.story = None
         self.chapters = None
         self.chapter = None
+        self.paragraphs = None
 
     def on_failure(self, reply_to=None, reason=None, **fields):
         response = {
@@ -90,6 +91,10 @@ class LoomHandler(GenericHandler):
         chapter_summaries = await loom.database.get_all_chapter_summaries(self.story['_id'])
         self.chapters = {rand_id: chapter_summary for (rand_id, chapter_summary) in enumerate(chapter_summaries)}
 
+    async def _create_paragraph_ids_mapping(self):
+        paragraph_summaries = await loom.database.get_all_paragraph_summaries(self.chapter['_id'])
+        self.paragraphs = {rand_id: para_summary for (rand_id, para_summary) in enumerate(paragraph_summaries)}
+
     def _get_story_summaries(self):
         summaries = []
         for c_id, summary in self.stories.items():
@@ -118,6 +123,14 @@ class LoomHandler(GenericHandler):
             summaries.append(summary_copy)
         return summaries
 
+    def _get_paragraph_summaries(self):
+        summaries = []
+        for c_id, summary in self.paragraphs.items():
+            summary_copy = summary.copy()
+            summary_copy['id'] = c_id
+            summaries.append(summary_copy)
+        return summaries
+
     def _format_story_response(self, message_id, story):
         client_wiki_id = self._get_id_for_client_from_wikis(story['wiki_id'])
         data = {
@@ -135,7 +148,6 @@ class LoomHandler(GenericHandler):
         return data
 
     def _format_chapter_response(self, message_id, chapter):
-        print("in format chapter")
         data = {
             'reply_to':     message_id,
             'title':        chapter['title'],
@@ -289,22 +301,56 @@ class LoomHandler(GenericHandler):
         if self.story is None:
             self.on_failure(message_id, "No story loaded")
             return
-        print("In load chapter")
         chapter_summary = self.chapters.get(chapter)
         if chapter_summary:
             chapter_id = chapter_summary['id']
             self.chapter = await loom.database.get_chapter(chapter_id)
-            print(self.chapter)
             data = self._format_chapter_response(message_id, self.chapter)
             self.write_json(data)
         else:
             self.on_failure(message_id, "Chapter does not exist")
 
     async def get_paragraphs(self, message_id):
-        pass
+        # TODO: Raise an error if user is not logged in/authenticated at this point
+        if self.user is None:
+            self.on_failure(message_id, "Not logged in")
+            return
+        # TODO: Raise an error if user hasn't loaded a story
+        if self.story is None:
+            self.on_failure(message_id, "No story loaded")
+            return
+        # TODO: Raise an error if user hasn't loaded a chapter
+        if self.chapter is None:
+            self.on_failure(message_id, "No chapter loaded")
+            return
+        await self._create_paragraph_ids_mapping()
+        paragraph_summaries = self._get_paragraph_summaries()
+        data = {
+            'reply_to': message_id,
+            'paragraphs': paragraph_summaries,
+        }
+        self.write_json(data)
 
     async def load_chapter_with_paragraphs(self, message_id, chapter):
-        pass
+        # TODO: Raise an error if user is not logged in/authenticated at this point
+        if self.user is None:
+            self.on_failure(message_id, "Not logged in")
+            return
+        # TODO: Raise an error if user hasn't loaded a story
+        if self.story is None:
+            self.on_failure(message_id, "No story loaded")
+            return
+        chapter_summary = self.chapters.get(chapter)
+        if chapter_summary:
+            chapter_id = chapter_summary['id']
+            self.chapter = await loom.database.get_chapter(chapter_id)
+            data = self._format_chapter_response(message_id, self.chapter)
+            await self._create_paragraph_ids_mapping()
+            paragraph_summaries = self._get_paragraph_summaries()
+            data['paragraphs'] = paragraph_summaries
+            self.write_json(data)
+        else:
+            self.on_failure(message_id, "Chapter does not exist")
 
     async def load_paragraph(self, message_id, paragraph):
         pass
