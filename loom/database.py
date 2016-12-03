@@ -117,26 +117,30 @@ async def get_story(story_id: ObjectId):
     return result
 
 
+async def get_story_summary(story_id: ObjectId):
+    story = await get_story(story_id)
+    return get_summary_from_story(story)
+
+
+def get_summary_from_story(story):
+    # TODO: Revise story summary structure
+    summary = {
+        'title':    story['title'],
+        'id':       story['_id'],
+    }
+    return summary
+
+
 async def get_all_chapter_summaries(story_id: ObjectId):
     chapters = []
     story = await get_story(story_id)
     cur_id = story['head_chapter']
     while cur_id:
         chapter = await get_chapter(cur_id)
-        chapters.append({
-            'title':    chapter['title'],
-            'id':       cur_id
-        })  # TODO: Revise chapter summary structure
+        summary = get_summary_from_chapter(chapter)
+        chapters.append(summary)
         cur_id = chapter['succeeded_by']
     return chapters
-
-
-async def get_remaining_chapters(chapter_id: ObjectId):
-    return await get_n_succeeding_chapters(chapter_id)
-
-
-async def get_n_succeeding_chapters(chpater_id: ObjectId, num_chapters=None):
-    ...
 
 
 async def _add_story_to_user(user_id, story_id):
@@ -174,6 +178,27 @@ async def create_chapter(story_id: ObjectId, title, preceding_id=None, succeedin
 async def get_chapter(chapter_id):
     result = await _CHAPTERS.find_one({'_id': chapter_id})
     return result
+
+
+async def get_chapter_summary(chapter_id: ObjectId):
+    chapter = await get_chapter(chapter_id)
+    return get_summary_from_chapter(chapter)
+
+def get_summary_from_chapter(chapter):
+    # TODO: Revise chapter summary structure
+    summary = {
+        'title':    chapter['title'],
+        'id':       chapter['_id'],
+    }
+    return summary
+
+
+async def get_remaining_chapters(chapter_id: ObjectId):
+    return await get_n_succeeding_chapters(chapter_id)
+
+
+async def get_n_succeeding_chapters(chpater_id: ObjectId, num_chapters=None):
+    ...
 
 
 async def update_head_paragraph_of_chapter(chapter_id: ObjectId, paragraph_id: ObjectId):
