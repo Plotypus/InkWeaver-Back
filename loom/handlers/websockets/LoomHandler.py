@@ -373,7 +373,7 @@ class LoomHandler(GenericHandler):
         # TODO: Add story to self.user and self.stories
         self.stories[len(self.stories)] = story_id
         self.story = await loom.database.get_story(story_id)
-        data = await self._format_story_response(message_id, self.story)
+        data = self._format_story_response(message_id, self.story)
         self.write_json(data)
 
     async def create_chapter(self, message_id, title):
