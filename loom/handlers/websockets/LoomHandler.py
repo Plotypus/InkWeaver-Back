@@ -241,7 +241,7 @@ class LoomHandler(GenericHandler):
         if story_summary:
             story_id = story_summary['id']
             self.story = await loom.database.get_story(story_id)
-            data = await self._format_story_response(message_id, self.story)
+            data = self._format_story_response(message_id, self.story)
             self.write_json(data)
         else:
             self.on_failure(message_id, "Story does not exist")
