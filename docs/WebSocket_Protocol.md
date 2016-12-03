@@ -10,12 +10,34 @@ in great detail to provide you (but mostly us) with comprehensive documentation.
 
 ## Reference
 
-| Action | Description |
-|--------|-------------|
+| Action                                                            | Description |
+|-------------------------------------------------------------------|-------------|
+| [`get_user_info`](#get-user-info)                                 | Get relevant information about the current user. |
+| [`load_story`](#load-story)                                       | Load a specific story. |
+| [`get_all_chapters`](#get-all-chapters)                           | Get a list of all chapters in the current story. |
+| [`load_story_with_chapters`](#load-story-with-chapters)           | Load a specific story and get its chapters. |
+| [`load_chapter`](#load-chapter)                                   | Load a specific chapter. |
+| [`get_all_paragraphs`](#get-all-paragraphs)                       | Get a list of all paragraphs in the current chapter. |
+| [`load_chapter_with_paragraphs`](#load-chapter-with-paragraphs)   | Load a specific chapter and get its paragraphs. |
+| [`load_paragraph`](#load-paragraph)                               | Load a specific paragraph. |
+| [`create_story`](#create-story)                                   | Create a new story owned by the current user. |
+| [`create_chapter`](#create-chapter)                               | Create a new chapter in the current story. |
+| [`create_end_chapter`](#create-end-chapter)                       | Create a new chapter at the end of the current story. |
+| [`create_paragraph`](#create-paragraph)                           | Create a new paragraph in the current chapter. |
+| [`create_end_paragraph`](#create-end-paragraph)                   | Create a new paragraph at the end of the current chapter. |
+| [`update_story`](#update-story)                                   | Update an existing story. |
+| [`update_current_story`](#update-current-story)                   | Update the current story. |
+| [`update_chapter`](#update-chapter)                               | Update an existing chapter. |
+| [`update_current_chapter`](#update-current-chapter)               | Update the current chapter. |
+| [`replace_paragraph`](#replace-paragraph)                         | Replace the text in the current paragraph. |
+| [`delete_story`](#delete-story)                                   | Delete an existing story. |
+| [`delete_current_story`](#delete-current-story)                   | Delete the current story. |
+| [`delete_chapter`](#delete-chapter)                               | Delete an existing chapter. |
+| [`delete_current_chapter`](#delete-current-chapter)               | Delete the current chapter. |
+| [`delete_paragraph`](#delete-paragraph)                           | Delete an existing paragraph. |
+| [`delete_current_paragraph`](#delete-current-paragraph)           | Delete the current paragraph. |
 
----
-
-#### Load User Info
+#### Get User Info
 
 Prerequisite: Logged-in
 
@@ -48,7 +70,7 @@ When a user logs in, the server sends them back their own user information.
 }
 ```
 
-#### Load Story (Without Chapters)
+#### Load Story
 
 Prerequisite: Logged-in
 
@@ -75,14 +97,14 @@ Prerequisite: Logged-in
 }
 ```
 
-#### Get All Chapters in Story
+#### Get All Chapters
 
 Prerequisites: Logged-in, story loaded
 
 ```json
 {
   "message_id": 1,
-  "action": "get_chapters"
+  "action": "get_all_chapters"
 }
 ```
 
@@ -125,7 +147,7 @@ Prerequisite: Logged-in
 }
 ```
 
-#### Load Chapter (Without Paragraphs)
+#### Load Chapter
 
 Prerequisites: Logged-in, story loaded
 
@@ -145,14 +167,14 @@ Prerequisites: Logged-in, story loaded
 }
 ```
 
-#### Load All Paragraphs in Chapter
+#### Get All Paragraphs
 
 Prerequisites: Logged-in, story loaded, chapter loaded
 
 ```json
 {
   "message_id": 1,
-  "action": "get_paragraphs"
+  "action": "get_all_paragraphs"
 }
 ```
 
@@ -188,7 +210,7 @@ Prerequisites: Logged-in, story loaded
 }
 ```
 
-#### Load Paragraph (Without Text)
+#### Load Paragraph
 
 Prerequisites: Logged-in, story loaded, chapter loaded
 
@@ -248,7 +270,7 @@ end of the story.
 
 Note: See [Load Chapter (Without Paragraphs)](#load-chapter-without-paragraphs) for the response.
 
-#### Create Chapter at End of Story
+#### Create End Chapter
 
 Prerequisites: Logged-in, story loaded
 
@@ -278,7 +300,7 @@ paragraph at the end of the chapter.
 
 Note: See [Load Paragraph (Without Text)](#load-paragraph-without-text)
 
-#### Create Paragraph at End of Chapter
+#### Create End Paragraph
 
 Prerequisites: Logged-in, story loaded, chapter loaded
 
