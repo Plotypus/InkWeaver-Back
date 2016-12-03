@@ -13,5 +13,7 @@ class TestHandler(LoomHandler):
     async def setup_user_session(self):
         # TODO: For stories and wikis, get the titles as well
         self.user = await loom.database.get_default_user()
-        self.stories = {rand_id: story_id for (rand_id, story_id) in enumerate(self.user['stories'])}
-        self.wikis = {rand_id: wiki_id for (rand_id, wiki_id) in enumerate(self.user['wikis'])}
+        setup_stories_future = super()._create_story_ids_mapping()
+        setup_wikis_future = super()._create_wiki_ids_mapping()
+        await setup_stories_future
+        await setup_wikis_future

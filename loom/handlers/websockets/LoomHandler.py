@@ -69,6 +69,54 @@ class LoomHandler(GenericHandler):
                 return c_id
         raise ValueError("{} does not exist in wikis".format(wiki_id))
 
+    async def _create_story_ids_mapping(self):
+        story_summaries = []
+        for story_id in self.user['stories']:
+            summary = await loom.database.get_story_summary(story_id)
+            story_summaries.append(summary)
+        self.stories = {rand_id: story_summary for (rand_id, story_summary) in enumerate(story_summaries)}
+
+    async def _create_wiki_ids_mapping(self):
+        # TODO: Uncomment when wikis are implemented
+        # wiki_summaries = []
+        # for wiki_id in self.user['wikis']:
+        #     summary = await loom.database.get_wiki_summary(wiki_id)
+        #     wiki_summaries.append(summary)
+        # self.wikis = {rand_id: wiki_summary for (rand_id, wiki_summary) in enumerate(wiki_summaries)}
+        self.wikis = {rand_id: wiki_id for (rand_id, wiki_id) in enumerate(self.user['wikis'])}
+
+    async def _create_chapter_ids_mapping(self):
+        chapter_summaries = await loom.database.get_all_chapter_summaries(self.story['_id'])
+        self.chapters = {rand_id: chapter_summary for (rand_id, chapter_summary) in enumerate(chapter_summaries)}
+
+    def _get_story_summaries(self):
+        summaries = []
+        for c_id, summary in self.stories.items():
+            # Replace the database id with the mapped id
+            summary_copy = summary.copy()
+            summary_copy['id'] = c_id
+            summaries.append(summary_copy)
+        return summaries
+
+    def _get_wiki_summaries(self):
+        # TODO: Uncomment when wikis are implemented
+        # summaries = []
+        # for c_id, summary in self.wikis.items():
+        #     # Replace the database id with the mapped id
+        #     summary_copy = summary.copy()
+        #     summary_copy['id'] = c_id
+        #     summaries.append(summary_copy)
+        # return summaries
+        return self.wikis.keys()
+
+    def _get_chapter_summaries(self):
+        summaries = []
+        for c_id, summary in self.chapters.items():
+            summary_copy = summary.copy()
+            summary_copy['id'] = c_id
+            summaries.append(summary_copy)
+        return summaries
+
     async def _format_story_response(self, message_id, story):
         client_wiki_id = self._get_id_for_client_from_wikis(story['wiki_id'])
         data = {
@@ -166,8 +214,8 @@ class LoomHandler(GenericHandler):
             'email':            self.user['email'],
             'name':             self.user['name'],
             'pen_name':         self.user['pen_name'],
-            'stories':          list(self.stories.keys()),
-            'wikis':            list(self.wikis.keys()),
+            'stories':          self._get_story_summaries(),
+            'wikis':            self._get_wiki_summaries(),
             'bio':              self.user['bio'],
             'statistics':       self.user['statistics'],
             'preferences':      self.user['preferences'],
@@ -179,8 +227,9 @@ class LoomHandler(GenericHandler):
         if self.user is None:
             self.on_failure(message_id, "Not logged in")
             return
-        story_id = self.stories.get(story)
-        if story_id:
+        story_summary = self.stories.get(story)
+        if story_summary:
+            story_id = story_summary['id']
             self.story = await loom.database.get_story(story_id)
             data = await self._format_story_response(message_id, self.story)
             self.write_json(data)
@@ -196,18 +245,29 @@ class LoomHandler(GenericHandler):
         if self.story is None:
             self.on_failure(message_id, "No story loaded")
             return
-        story_id = self.story['_id']
-        chapters = await loom.database.get_all_chapter_summaries(story_id)
-        self.chapters = {rand_id: chapter_summary for rand_id, chapter_summary in enumerate(chapters)}
+        await self._create_chapter_ids_mapping()
+        chapter_summaries = self._get_chapter_summaries()
         data = {
             'reply_to': message_id,
-            'chapters': list(self.chapters.keys()),
+            'chapters': chapter_summaries,
         }
         self.write_json(data)
 
-
     async def load_story_with_chapters(self, message_id, story):
-        pass
+        # TODO: Raise an error if user is not logged in/authenticated at this point
+        if self.user is None:
+            self.on_failure(message_id, "Not logged in")
+            return
+        story_id = self.stories.get(story)['id']
+        if story_id:
+            self.story = await loom.database.get_story(story_id)
+            data = await self._format_story_response(message_id, self.story)
+            await self._create_chapter_ids_mapping()
+            chapter_summaries = self._get_chapter_summaries()
+            data['chapters'] = chapter_summaries
+            self.write_json(data)
+        else:
+            self.on_failure(message_id, "Story does not exist")
 
     async def load_chapter(self, message_id, chapter):
         pass
@@ -236,6 +296,7 @@ class LoomHandler(GenericHandler):
         synopsis = story.get('synopsis', None)
         story_id = await loom.database.create_story(user_id,wiki_id, title, publication_name, synopsis)
         # TODO: Come up with a better way to 'id' new story
+        # TODO: Add story to self.user and self.stories
         self.stories[len(self.stories)] = story_id
         self.story = await loom.database.get_story(story_id)
         data = await self._format_story_response(message_id, self.story)
