@@ -117,6 +117,28 @@ async def get_story(story_id: ObjectId):
     return result
 
 
+async def get_all_chapter_summaries(story_id: ObjectId):
+    chapters = []
+    story = await get_story(story_id)
+    cur_id = story['head_chapter']
+    while cur_id:
+        chapter = await get_chapter(cur_id)
+        chapters.append({
+            'title':    chapter['title'],
+            'id':       cur_id
+        })  # TODO: Revise chapter summary structure
+        cur_id = chapter['succeeded_by']
+    return chapters
+
+
+async def get_remaining_chapters(chapter_id: ObjectId):
+    return await get_n_succeeding_chapters(chapter_id)
+
+
+async def get_n_succeeding_chapters(chpater_id: ObjectId, num_chapters=None):
+    ...
+
+
 async def _add_story_to_user(user_id, story_id):
     await _USERS.update_one({'_id': user_id}, {'$push': {'stories': story_id}})
 

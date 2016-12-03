@@ -40,6 +40,7 @@ class LoomHandler(GenericHandler):
         self.stories = None
         self.wikis = None
         self.story = None
+        self.chapters = None
 
     def on_failure(self, reply_to=None, reason=None, **fields):
         response = {
@@ -195,7 +196,15 @@ class LoomHandler(GenericHandler):
         if self.story is None:
             self.on_failure(message_id, "No story loaded")
             return
-        ...
+        story_id = self.story['_id']
+        chapters = await loom.database.get_all_chapter_summaries(story_id)
+        self.chapters = {rand_id: chapter_summary for rand_id, chapter_summary in enumerate(chapters)}
+        data = {
+            'reply_to': message_id,
+            'chapters': list(self.chapters.keys()),
+        }
+        self.write_json(data)
+
 
     async def load_story_with_chapters(self, message_id, story):
         pass
