@@ -31,7 +31,50 @@ class LoomWSBadArgumentsError(LoomWSError):
     pass
 
 
+class LoomWSNoLoginError(LoomWSError):
+    """
+    Raised when a user should be logged in but isn't.
+    """
+    pass
+
+
+############################################################
+##
+## LoomHandler decorators
+##
+############################################################
+
+
+def _requires_values(*args):
+    # Original attempt.
+    # This was VERY BAD. I'm committing it for posterity, but don't do this.
+    exec('\n'.join([
+        "def wrap(func):",
+        "   def wrapper({0}):",
+        "       return func({0})",
+        "   return wrapper",
+        ]).format(', '.join(args)),
+        globals())
+    return wrap
+
+
+
+def _check_login(func):
+    def wrapper(self, *args, **kwargs):
+        if self.user is None:
+            raise LoomWSNoLoginError
+        return func(*args, **kwargs)
+    return wrapper
+
+
 class LoomHandler(GenericHandler):
+
+    ############################################################
+    ##
+    ## Generic websocket methods
+    ##
+    ############################################################
+
     def open(self):
         super().open()
         # By default, small messages are coalesced. This can cause delay. We don't want delay.
@@ -58,6 +101,12 @@ class LoomHandler(GenericHandler):
     def write_json(self, data: dict):
         json_string = self.encode_json(data)
         self.write_message(json_string)
+
+    ############################################################
+    ##
+    ## Private helper methods
+    ##
+    ############################################################
 
     def _get_id_for_client_from_stories(self, story_id):
         for c_id, s_id in self.stories.items():
@@ -155,6 +204,12 @@ class LoomHandler(GenericHandler):
         }
         return data
 
+    ############################################################
+    ##
+    ## Message handling
+    ##
+    ############################################################
+
     def on_message(self, message):
         # TODO: Remove this.
         super().on_message(message)
@@ -226,9 +281,9 @@ class LoomHandler(GenericHandler):
 
     async def get_user_info(self, message_id):
         # TODO: Raise an error if user is not logged in/authenticated at this point
-        if self.user is None:
-            self.on_failure(message_id, "Not logged in")
-            return
+        # if self.user is None:
+        #     self.on_failure(message_id, "Not logged in")
+        #     return
         data = {
             'reply_to':         message_id,
             'username':         self.user['username'],
