@@ -39,6 +39,21 @@ class LoomWSNoLoginError(LoomWSError):
     pass
 
 
+class LoomWSBadContextError(LoomWSError):
+    """
+    A generic class of errors for whenever there is an incomplete context.
+    """
+    pass
+
+
+class LoomWSNoStoryError(LoomWSBadContextError):
+    pass
+
+
+class LoomWSNoChapterError(LoomWSBadContextError):
+    pass
+
+
 ############################################################
 ##
 ## LoomHandler decorators
@@ -47,10 +62,26 @@ class LoomWSNoLoginError(LoomWSError):
 
 
 @decorator
-def check_login(func, *args, **kwargs):
+def requires_login(func, *args, **kwargs):
     self = args[0]
     if self.user is None:
         raise LoomWSNoLoginError
+    return func(*args, **kwargs)
+
+
+@decorator
+def requires_story_context(func, *args, **kwargs):
+    self = args[0]
+    if self.story is None:
+        raise LoomWSNoStoryError
+    return func(*args, **kwargs)
+
+
+@decorator
+def requires_chapter_context(func, *args, **kwargs):
+    self = args[0]
+    if self.chapter is None:
+        raise LoomWSNoChapterError
     return func(*args, **kwargs)
 
 
@@ -66,6 +97,7 @@ class LoomHandler(GenericHandler):
         super().open()
         # By default, small messages are coalesced. This can cause delay. We don't want delay.
         self.set_nodelay(True)
+        # Initialize stateful attributes.
         self.user = None
         self.stories = None
         self.wikis = None
@@ -264,11 +296,15 @@ class LoomHandler(GenericHandler):
                         raise
             except LoomWSNoLoginError:
                 self.on_failure(message_id, "not logged in")
+            except LoomWSNoStoryError:
+                self.on_failure(message_id, "no story loaded")
+            except LoomWSBadContextError:
+                self.on_failure(message_id, "incorrect context for given request")
         except KeyError:
             # The method is not implemented.
             raise LoomWSUnimplementedError
 
-    @check_login
+    @requires_login
     async def get_user_info(self, message_id):
         data = {
             'reply_to':         message_id,
@@ -285,7 +321,7 @@ class LoomHandler(GenericHandler):
         }
         self.write_json(data)
 
-    @check_login
+    @requires_login
     async def load_story(self, message_id, story):
         story_summary = self.stories.get(story)
         if story_summary:
@@ -296,12 +332,9 @@ class LoomHandler(GenericHandler):
         else:
             self.on_failure(message_id, "Story does not exist")
 
-    @check_login
+    @requires_login
+    @requires_story_context
     async def get_chapters(self, message_id):
-        # TODO: Raise an error if user hasn't loaded a story
-        if self.story is None:
-            self.on_failure(message_id, "No story loaded")
-            return
         await self._create_chapter_ids_mapping()
         chapter_summaries = self._get_chapter_summaries()
         data = {
@@ -310,7 +343,7 @@ class LoomHandler(GenericHandler):
         }
         self.write_json(data)
 
-    @check_login
+    @requires_login
     async def load_story_with_chapters(self, message_id, story):
         story_summary = self.stories.get(story)
         if story_summary:
@@ -324,12 +357,9 @@ class LoomHandler(GenericHandler):
         else:
             self.on_failure(message_id, "Story does not exist")
 
-    @check_login
+    @requires_login
+    @requires_story_context
     async def load_chapter(self, message_id, chapter):
-        # TODO: Raise an error if user hasn't loaded a story
-        if self.story is None:
-            self.on_failure(message_id, "No story loaded")
-            return
         chapter_summary = self.chapters.get(chapter)
         if chapter_summary:
             chapter_id = chapter_summary['id']
@@ -339,16 +369,10 @@ class LoomHandler(GenericHandler):
         else:
             self.on_failure(message_id, "Chapter does not exist")
 
-    @check_login
+    @requires_login
+    @requires_story_context
+    @requires_chapter_context
     async def get_paragraphs(self, message_id):
-        # TODO: Raise an error if user hasn't loaded a story
-        if self.story is None:
-            self.on_failure(message_id, "No story loaded")
-            return
-        # TODO: Raise an error if user hasn't loaded a chapter
-        if self.chapter is None:
-            self.on_failure(message_id, "No chapter loaded")
-            return
         await self._create_paragraph_ids_mapping()
         paragraph_summaries = self._get_paragraph_summaries()
         data = {
@@ -357,12 +381,9 @@ class LoomHandler(GenericHandler):
         }
         self.write_json(data)
 
-    @check_login
+    @requires_login
+    @requires_story_context
     async def load_chapter_with_paragraphs(self, message_id, chapter):
-        # TODO: Raise an error if user hasn't loaded a story
-        if self.story is None:
-            self.on_failure(message_id, "No story loaded")
-            return
         chapter_summary = self.chapters.get(chapter)
         if chapter_summary:
             chapter_id = chapter_summary['id']
@@ -375,15 +396,15 @@ class LoomHandler(GenericHandler):
         else:
             self.on_failure(message_id, "Chapter does not exist")
 
-    @check_login
+    @requires_login
     async def load_paragraph(self, message_id, paragraph):
         pass
 
-    @check_login
+    @requires_login
     async def load_paragraph_with_text(self, message_id, paragraph):
         raise LoomWSUnimplementedError
 
-    @check_login
+    @requires_login
     async def create_story(self, message_id, story):
         user_id = self.user['_id']
         wiki_id = self.wikis[story['wiki']]
@@ -398,67 +419,67 @@ class LoomHandler(GenericHandler):
         data = self._format_story_response(message_id, self.story)
         self.write_json(data)
 
-    @check_login
+    @requires_login
     async def create_chapter(self, message_id, title):
         pass
 
-    @check_login
+    @requires_login
     async def create_end_chapter(self, message_id, title):
         pass
 
-    @check_login
+    @requires_login
     async def create_paragraph(self, message_id):
         pass
 
-    @check_login
+    @requires_login
     async def create_end_paragraph(self, message_id):
         pass
 
-    @check_login
+    @requires_login
     async def update_story(self, message_id, story, changes):
         pass
 
-    @check_login
+    @requires_login
     async def update_current_story(self, message_id, changes):
         pass
 
-    @check_login
+    @requires_login
     async def update_chapter(self, message_id, chapter, changes):
         pass
 
-    @check_login
+    @requires_login
     async def update_current_chapter(self, message_id, changes):
         pass
 
-    @check_login
+    @requires_login
     async def update_paragraph(self, message_id, paragraph, changes):
         raise LoomWSUnimplementedError
 
-    @check_login
+    @requires_login
     async def replace_paragraph(self, message_id, text):
         pass
 
-    @check_login
+    @requires_login
     async def delete_story(self, message_id, story):
         pass
 
-    @check_login
+    @requires_login
     async def delete_current_story(self, message_id):
         pass
 
-    @check_login
+    @requires_login
     async def delete_chapter(self, message_id, chapter):
         pass
 
-    @check_login
+    @requires_login
     async def delete_current_chapter(self, message_id):
         pass
 
-    @check_login
+    @requires_login
     async def delete_paragraph(self, message_id, paragraph):
         pass
 
-    @check_login
+    @requires_login
     async def delete_current_paragraph(self, message_id):
         pass
 
