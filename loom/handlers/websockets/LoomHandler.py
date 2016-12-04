@@ -270,10 +270,6 @@ class LoomHandler(GenericHandler):
 
     @check_login
     async def get_user_info(self, message_id):
-        # TODO: Raise an error if user is not logged in/authenticated at this point
-        # if self.user is None:
-        #     self.on_failure(message_id, "Not logged in")
-        #     return
         data = {
             'reply_to':         message_id,
             'username':         self.user['username'],
@@ -289,11 +285,8 @@ class LoomHandler(GenericHandler):
         }
         self.write_json(data)
 
+    @check_login
     async def load_story(self, message_id, story):
-        # TODO: Raise an error if user is not logged in/authenticated at this point
-        if self.user is None:
-            self.on_failure(message_id, "Not logged in")
-            return
         story_summary = self.stories.get(story)
         if story_summary:
             story_id = story_summary['id']
@@ -303,11 +296,8 @@ class LoomHandler(GenericHandler):
         else:
             self.on_failure(message_id, "Story does not exist")
 
+    @check_login
     async def get_chapters(self, message_id):
-        # TODO: Raise an error if user is not logged in/authenticated at this point
-        if self.user is None:
-            self.on_failure(message_id, "Not logged in")
-            return
         # TODO: Raise an error if user hasn't loaded a story
         if self.story is None:
             self.on_failure(message_id, "No story loaded")
@@ -320,11 +310,8 @@ class LoomHandler(GenericHandler):
         }
         self.write_json(data)
 
+    @check_login
     async def load_story_with_chapters(self, message_id, story):
-        # TODO: Raise an error if user is not logged in/authenticated at this point
-        if self.user is None:
-            self.on_failure(message_id, "Not logged in")
-            return
         story_summary = self.stories.get(story)
         if story_summary:
             story_id = story_summary['id']
@@ -337,11 +324,8 @@ class LoomHandler(GenericHandler):
         else:
             self.on_failure(message_id, "Story does not exist")
 
+    @check_login
     async def load_chapter(self, message_id, chapter):
-        # TODO: Raise an error if user is not logged in/authenticated at this point
-        if self.user is None:
-            self.on_failure(message_id, "Not logged in")
-            return
         # TODO: Raise an error if user hasn't loaded a story
         if self.story is None:
             self.on_failure(message_id, "No story loaded")
@@ -355,11 +339,8 @@ class LoomHandler(GenericHandler):
         else:
             self.on_failure(message_id, "Chapter does not exist")
 
+    @check_login
     async def get_paragraphs(self, message_id):
-        # TODO: Raise an error if user is not logged in/authenticated at this point
-        if self.user is None:
-            self.on_failure(message_id, "Not logged in")
-            return
         # TODO: Raise an error if user hasn't loaded a story
         if self.story is None:
             self.on_failure(message_id, "No story loaded")
@@ -376,11 +357,8 @@ class LoomHandler(GenericHandler):
         }
         self.write_json(data)
 
+    @check_login
     async def load_chapter_with_paragraphs(self, message_id, chapter):
-        # TODO: Raise an error if user is not logged in/authenticated at this point
-        if self.user is None:
-            self.on_failure(message_id, "Not logged in")
-            return
         # TODO: Raise an error if user hasn't loaded a story
         if self.story is None:
             self.on_failure(message_id, "No story loaded")
@@ -397,17 +375,16 @@ class LoomHandler(GenericHandler):
         else:
             self.on_failure(message_id, "Chapter does not exist")
 
+    @check_login
     async def load_paragraph(self, message_id, paragraph):
         pass
 
+    @check_login
     async def load_paragraph_with_text(self, message_id, paragraph):
         raise LoomWSUnimplementedError
 
+    @check_login
     async def create_story(self, message_id, story):
-        # TODO: Raise an error if user is not logged in/authenticated at this point
-        if self.user is None:
-            self.on_failure(message_id, "Not logged in")
-            return
         user_id = self.user['_id']
         wiki_id = self.wikis[story['wiki']]
         title = story['title']
@@ -421,51 +398,67 @@ class LoomHandler(GenericHandler):
         data = self._format_story_response(message_id, self.story)
         self.write_json(data)
 
+    @check_login
     async def create_chapter(self, message_id, title):
         pass
 
+    @check_login
     async def create_end_chapter(self, message_id, title):
         pass
 
+    @check_login
     async def create_paragraph(self, message_id):
         pass
 
+    @check_login
     async def create_end_paragraph(self, message_id):
         pass
 
+    @check_login
     async def update_story(self, message_id, story, changes):
         pass
 
+    @check_login
     async def update_current_story(self, message_id, changes):
         pass
 
+    @check_login
     async def update_chapter(self, message_id, chapter, changes):
         pass
 
+    @check_login
     async def update_current_chapter(self, message_id, changes):
         pass
 
+    @check_login
     async def update_paragraph(self, message_id, paragraph, changes):
         raise LoomWSUnimplementedError
 
+    @check_login
     async def replace_paragraph(self, message_id, text):
         pass
 
+    @check_login
     async def delete_story(self, message_id, story):
         pass
 
+    @check_login
     async def delete_current_story(self, message_id):
         pass
 
+    @check_login
     async def delete_chapter(self, message_id, chapter):
         pass
 
+    @check_login
     async def delete_current_chapter(self, message_id):
         pass
 
+    @check_login
     async def delete_paragraph(self, message_id, paragraph):
         pass
 
+    @check_login
     async def delete_current_paragraph(self, message_id):
         pass
 
