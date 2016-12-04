@@ -2,6 +2,7 @@ from.GenericHandler import *
 
 import loom.database
 
+from decorator import decorator
 from inspect import signature
 from tornado.ioloop import IOLoop
 from typing import Dict
@@ -45,26 +46,12 @@ class LoomWSNoLoginError(LoomWSError):
 ############################################################
 
 
-def _requires_values(*args):
-    # Original attempt.
-    # This was VERY BAD. I'm committing it for posterity, but don't do this.
-    exec('\n'.join([
-        "def wrap(func):",
-        "   def wrapper({0}):",
-        "       return func({0})",
-        "   return wrapper",
-        ]).format(', '.join(args)),
-        globals())
-    return wrap
-
-
-
-def _check_login(func):
-    def wrapper(self, *args, **kwargs):
-        if self.user is None:
-            raise LoomWSNoLoginError
-        return func(*args, **kwargs)
-    return wrapper
+@decorator
+def check_login(func, *args, **kwargs):
+    self = args[0]
+    if self.user is None:
+        raise LoomWSNoLoginError
+    return func(*args, **kwargs)
 
 
 class LoomHandler(GenericHandler):
@@ -275,10 +262,13 @@ class LoomHandler(GenericHandler):
                     else:
                         # It was something else entirely.
                         raise
+            except LoomWSNoLoginError:
+                self.on_failure(message_id, "not logged in")
         except KeyError:
             # The method is not implemented.
             raise LoomWSUnimplementedError
 
+    @check_login
     async def get_user_info(self, message_id):
         # TODO: Raise an error if user is not logged in/authenticated at this point
         # if self.user is None:
