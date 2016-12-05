@@ -447,3 +447,125 @@ Prerequisites: Logged-in, story loaded, chapter loaded, paragraph loaded
   "action": "delete_current_paragraph"
 }
 ```
+
+#### Load Wiki Hierarchy
+
+Prerequisite: Logged-in
+
+```json
+{
+  "message_id": 1,
+  "action": "load_wiki_hierarchy",
+  "wiki": {...}
+}
+```
+
+```json
+{
+  "reply_to": 1,
+  "hierarchy": {
+    "title": "My Wiki",
+    "id": {...},
+    "segments": [
+      {
+        "title": "Character",
+        "id": {...},
+        "segments": [
+          {...}
+        ],
+        "pages": [
+          {...}
+        ]
+      },
+      {
+        "title": "Location",
+        "id": {...},
+        "segments": [],
+        "pages": [
+          {...}
+        ]
+      }
+    ],
+    "pages": [
+      {
+        "title": "Uncategorized Wiki Page",
+        "id": {...}
+      }
+    ]
+  }
+}
+```
+
+#### Load Wiki Segment
+
+Prerequisite: Logged-in
+
+#### Get All Children
+
+#### Get All Segments
+
+#### Get All Pages
+
+#### Load Wiki Segment With Children
+
+#### Load Wiki Segment With Segments
+
+(Unimplemented)
+
+#### Load Wiki Segment With Pages
+
+(Unimplemented)
+
+#### Load Wiki Page
+
+#### Get All Sections
+
+#### Load Wiki Page With Sections
+
+```json
+{
+  "message_id": 1,
+  "wiki_page": {...}
+}
+```
+
+```json
+{
+  "reply_to": 1,
+  "wiki_page": {
+    "title": "Sauruman",
+    "id": {...},
+    "aliases": [...],
+    "references": [...],
+    "sections": [
+      {
+        "title": "Background",
+        "id": {...},
+        "paragraphs": [
+          {...}
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### Load Section
+
+(TODO: Revise this implementation.)
+
+#### Get All Paragraphs
+
+(Unimplemented)
+
+#### Load Section With Paragraphs
+
+(Unimplemented)
+
+#### Load Paragraph
+
+(Unimplemented)
+
+#### Load Paragraph With Text
+
+(Unimplemented)
