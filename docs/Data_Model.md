@@ -123,3 +123,58 @@ These are the data models for documents in the database.
 | `text`            | the contents of the paragraph |
 | `statistics`      | ** not yet implemented |
 
+## Wiki Segments
+
+```json
+{
+  "_id": ObjectId,
+  "title": "Example Wiki Title",
+  "description": "Description of example wiki segment.",
+  "categories": [
+    {...}
+  ],
+  "pages": [
+    {...}
+  ],
+  "statistics": {...},
+  "template_sections": [
+    {...}
+  ]
+}
+```
+
+| Field                 | Description |
+|-----------------------|-------------|
+| `_id`                 | a unique id of the wiki segment |
+| `title`               | the title of the wiki segment |
+| `description`         | a description of the wiki segment |
+| `categories`          | the unique ids (or summaries?) of subcategories |
+| `pages`               | the unique ids (or summaries?) of pages in the segment |
+| `statistics`          | ** not yet implemented |
+| `template_sections`   | the unique ids (or summaries?) of template sections for categories |
+
+## Wiki Pages
+
+```json
+{
+  "_id": ObjectId,
+  "title": "Peter Parker",
+  "sections": [
+    {...}
+  ],
+  "references": [
+    {...}
+  ],
+  "aliases": [
+    {...}
+  ]
+}
+```
+
+| Field         | Description |
+|---------------|-------------|
+| `_id`         | a unique id of the wiki page |
+| `title`       | the title of the wiki page |
+| `sections`    | ** not yet implemented |
+| `references`  | ** not yet implemented |
+| `aliases`     | ** not yet implemented |
