@@ -12,17 +12,20 @@ _DB_CLIENT = motor.motor_tornado.MotorClient(_HOST, _PORT)
 _DB = _DB_CLIENT.inkweaver
 
 # Define our collections.
-_USERS               = _DB.users                        # type: motor.core.AgnosticCollection
-_STORIES             = _DB.stories                      # type: motor.core.AgnosticCollection
-_CHAPTERS            = _DB.chapters                     # type: motor.core.AgnosticCollection
-_PARAGRAPHS          = _DB.paragraphs                   # type: motor.core.AgnosticCollection
-_WIKIS               = _DB.wikis                        # type: motor.core.AgnosticCollection
-_CATEGORIES          = _DB.categories                   # type: motor.core.AgnosticCollection
-_PAGES               = _DB.pages                        # type: motor.core.AgnosticCollection
-_SECTIONS            = _DB.sections                     # type: motor.core.AgnosticCollection
-_LINKS               = _DB.links                        # type: motor.core.AgnosticCollection
-_STORY_REFERENCES    = _DB.story_references             # type: motor.core.AgnosticCollection
-_WIKI_REFERENCES     = _DB.wiki_references              # type: motor.core.AgnosticCollection
+_USERS              = _DB.users                         # type: motor.core.AgnosticCollection
+
+_STORIES            = _DB.stories                       # type: motor.core.AgnosticCollection
+_CHAPTERS           = _DB.chapters                      # type: motor.core.AgnosticCollection
+_PARAGRAPHS         = _DB.paragraphs                    # type: motor.core.AgnosticCollection
+
+_WIKI_SEGMENTS      = _DB.wiki_segments                 # type: motor.core.AgnosticCollection
+_WIKI_PAGES         = _DB.wiki_pages                    # type: motor.core.AgnosticCollection
+_WIKI_SECTIONS      = _DB.wiki_sections                 # type: motor.core.AgnosticCollection
+_WIKI_PARAGRAPHS    = _DB.wiki_paragraphs               # type: motor.core.AgnosticCollection
+
+_LINKS              = _DB.links                         # type: motor.core.AgnosticCollection
+_STORY_REFERENCES   = _DB.story_references              # type: motor.core.AgnosticCollection
+_WIKI_REFERENCES    = _DB.wiki_references               # type: motor.core.AgnosticCollection
 
 
 def set_db_host(host):
