@@ -317,6 +317,20 @@ async def get_wiki_page(page_id: ObjectId):
     return result
 
 
+async def get_wiki_page_summary(page_id: ObjectId):
+    page = await get_wiki_page(page_id)
+    return get_summary_from_page(page)
+
+
+def get_summary_from_page(page):
+    # TODO: Revise page summary strucrure
+    summary = {
+        'title':    page['title'],
+        'id':       page['_id'],
+    }
+    return summary
+
+
 async def add_wiki_page_to_segment(segment_id: ObjectId, page_id: ObjectId):
     await _WIKI_SEGMENTS.update_one({'_id': segment_id}, {'$push': {'pages': page_id}})
 
