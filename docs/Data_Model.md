@@ -130,7 +130,7 @@ These are the data models for documents in the database.
   "_id": ObjectId,
   "title": "Example Wiki Title",
   "description": "Description of example wiki segment.",
-  "categories": [
+  "segments": [
     {...}
   ],
   "pages": [
@@ -148,7 +148,7 @@ These are the data models for documents in the database.
 | `_id`                 | a unique id of the wiki segment |
 | `title`               | the title of the wiki segment |
 | `description`         | a description of the wiki segment |
-| `categories`          | the unique ids (or summaries?) of subcategories |
+| `segments`            | the unique ids (or summaries?) of segments belonging to this segment |
 | `pages`               | the unique ids (or summaries?) of pages in the segment |
 | `statistics`          | ** not yet implemented |
 | `template_sections`   | the unique ids (or summaries?) of template sections for categories |
