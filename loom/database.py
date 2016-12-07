@@ -263,7 +263,7 @@ async def get_paragraph_summary(paragraph_id: ObjectId):
 
 
 def get_summary_from_paragraph(paragraph):
-    # TODO: Revise paragraph summary strucrure
+    # TODO: Revise paragraph summary structure
     summary = {
         'text':         paragraph['text'],
         'id':           paragraph['_id'],
@@ -329,6 +329,22 @@ async def get_wiki_segment(segment_id: ObjectId):
     return await _WIKI_SEGMENTS.find_one({'_id': segment_id})
 
 
+async def get_wiki_segment_summary(segment_id: ObjectId):
+    segment = await get_wiki_segment(segment_id)
+    return get_summary_from_wiki_segment(segment)
+
+
+def get_summary_from_wiki_segment(segment):
+    # TODO: Revise segment summary structure
+    summary = {
+        'title':        segment['title'],
+        'id':           segment['_id'],
+        'description':  segment['description']
+    }
+    return summary
+
+
+
 async def add_wiki_segment_to_parent(parent_id: ObjectId, child_id: ObjectId):
     await _WIKI_SEGMENTS.update_one({'_id': parent_id}, {'$push': {'segments': child_id}})
 
@@ -362,7 +378,7 @@ async def get_wiki_page_summary(page_id: ObjectId):
 
 
 def get_summary_from_page(page):
-    # TODO: Revise page summary strucrure
+    # TODO: Revise page summary structure
     summary = {
         'title':    page['title'],
         'id':       page['_id'],
@@ -425,7 +441,7 @@ async def get_wiki_section_summary(section_id: ObjectId):
 
 
 def get_summary_from_wiki_section(section):
-    # TODO: Revise section summary strucrure
+    # TODO: Revise section summary structure
     summary = {
         'title':    section['title'],
         'id':       section['_id'],
@@ -509,7 +525,7 @@ async def get_wiki_paragraph_summary(paragraph_id: ObjectId):
 
 
 def get_summary_from_wiki_paragraph(paragraph):
-    # TODO: Revise paragraph summary strucrure
+    # TODO: Revise paragraph summary structure
     summary = {
         'text': paragraph['text'],
         'id':   paragraph['_id'],
