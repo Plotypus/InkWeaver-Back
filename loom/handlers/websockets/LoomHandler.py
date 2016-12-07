@@ -483,6 +483,70 @@ class LoomHandler(GenericHandler):
     async def delete_current_paragraph(self, message_id):
         pass
 
+    @requires_login
+    async def get_wiki_hierarchy(self, message_id, wiki):
+        pass
+
+    @requires_login
+    async def load_wiki_segment(self, message_id, wiki_segment):
+        pass
+
+    @requires_login
+    async def get_all_children(self, message_id):
+        pass
+
+    @requires_login
+    async def get_all_segments(self, message_id):
+        pass
+
+    @requires_login
+    async def get_all_pages(self, message_id):
+        pass
+
+    @requires_login
+    async def load_wiki_segment_with_children(self, message_id, wiki_segment):
+        pass
+
+    @requires_login
+    async def load_wiki_segment_with_segments(self, message_id, wiki_segment):
+        raise LoomWSUnimplementedError
+
+    @requires_login
+    async def load_wiki_segment_with_pages(self, message_id, wiki_segment):
+        raise LoomWSUnimplementedError
+
+    @requires_login
+    async def load_wiki_page(self, message_id, wiki_page):
+        pass
+
+    @requires_login
+    async def get_all_sections(self, message_id):
+        pass
+
+    @requires_login
+    async def load_wiki_page_with_sections(self, message_id, wiki_page):
+        pass
+
+    @requires_login
+    async def load_section(self, message_id, section):
+        pass
+
+    @requires_login
+    async def get_all_section_paragraphs(self, message_id):
+        pass
+
+    @requires_login
+    async def load_section_with_paragraphs(self, message_id, section):
+        pass
+
+    @requires_login
+    async def load_section_paragraph(self, message_id, paragraph):
+        pass
+
+    @requires_login
+    async def load_section_paragraph_with_text(self, message_id, paragraph):
+        pass
+
     DISPATCH = {
         'get_user_info':                get_user_info,
         'load_story':                   load_story,

@@ -448,14 +448,14 @@ Prerequisites: Logged-in, story loaded, chapter loaded, paragraph loaded
 }
 ```
 
-#### Load Wiki Hierarchy
+#### Get Wiki Hierarchy
 
 Prerequisite: Logged-in
 
 ```json
 {
   "message_id": 1,
-  "action": "load_wiki_hierarchy",
+  "action": "get_wiki_hierarchy",
   "wiki": {...}
 }
 ```
@@ -525,6 +525,7 @@ Prerequisite: Logged-in
 ```json
 {
   "message_id": 1,
+  "action": "load_wiki_page_with_sections",
   "wiki_page": {...}
 }
 ```
@@ -554,7 +555,7 @@ Prerequisite: Logged-in
 
 (TODO: Revise this implementation.)
 
-#### Get All Paragraphs
+#### Get All Section Paragraphs
 
 (Unimplemented)
 
@@ -562,10 +563,10 @@ Prerequisite: Logged-in
 
 (Unimplemented)
 
-#### Load Paragraph
+#### Load Section Paragraph
 
 (Unimplemented)
 
-#### Load Paragraph With Text
+#### Load Section Paragraph With Text
 
 (Unimplemented)
