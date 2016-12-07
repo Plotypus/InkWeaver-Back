@@ -12,4 +12,6 @@
   - [ ] Create decorators
     - [ ] Check user login
     - [ ] Check appropriate context
+  - [ ] Fix dispatch error handling
+    - Currently assumed *all* `KeyError`s are due to invalid dispatches... which is not the case
 - Discussion
