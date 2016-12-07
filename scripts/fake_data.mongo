@@ -1,8 +1,12 @@
 // To use: 
 // mongo < fake_data.js
 
+// Use the `inkweaver` database and drop everything currently in it.
+
 use inkweaver
 db.dropDatabase()
+
+// Create the user.
 
 db.users.insert({
     '_id': 'default_user',
@@ -18,6 +22,8 @@ db.users.insert({
     'statistics': null,
     'bio': null
 })
+
+// Create a story.
 
 db.stories.insert({
     '_id': 'default_story',
@@ -91,4 +97,115 @@ db.paragraphs.insert({
     'statistics': null,
     'preceded_by': null,
     'succeeded_by': null
+})
+
+// Create a wiki.
+
+db.wiki_segments.insert({
+    '_id': 'default_wiki_segment_1',
+    'title': 'Greatest Wiki Ever Built',
+    'description': 'A wiki about cool stuff.',
+    'segments': [
+        'default_wiki_segment_2'
+    ],
+    'pages': [
+        'default_page_1'
+    ],
+    'statistics': null,
+    'template_sections': [
+        'default_template_section_1',
+        'default_template_section_2'
+    ]
+})
+
+db.wiki_segments.insert({
+    '_id': 'default_wiki_segment_2',
+    'title': 'A Subsection Wiki Segment',
+    'description': 'Testing sub-segments and stuff.',
+    'segments': [],
+    'pages': [],
+    'statistics': null,
+    'template_sections': []
+})
+
+db.wiki_pages.insert({
+    '_id': 'default_page_1',
+    'title': 'Lorem',
+    'sections': [
+        'default_section_1',
+        'default_section_2'
+    ],
+    'references': null,
+    'aliases': null
+})
+
+db.wiki_sections.insert({
+    '_id': 'default_template_section_1',
+    'title': 'Background',
+    'head_paragraph': null,
+    'tail_paragraph': null,
+    'preceded_by': null,
+    'succeeded_by': null
+})
+
+db.wiki_sections.insert({
+    '_id': 'default_template_section_2',
+    'title': 'Motives',
+    'head_paragraph': null,
+    'tail_paragraph': null,
+    'preceded_by': null,
+    'succeeded_by': null
+})
+
+db.wiki_sections.insert({
+    '_id': 'default_section_1',
+    'title': 'Background',
+    'head_paragraph': 'default_section_paragraph_1',
+    'tail_paragraph': 'default_section_paragraph_3',
+    'preceded_by': null,
+    'succeeded_by': 'default_section_2'
+})
+
+db.wiki_sections.insert({
+    '_id': 'default_section_2',
+    'title': 'Motives',
+    'head_paragraph': 'default_section_paragraph_4',
+    'tail_paragraph': 'default_section_paragraph_5',
+    'preceded_by': 'default_section_1',
+    'succeeded_by': null
+})
+
+db.wiki_paragraphs.insert({
+    '_id': 'default_section_paragraph_1',
+    'preceded_by': null,
+    'succeeded_by': 'default_section_paragraph_2',
+    'text': 'Fusce in lobortis orci, nec vulputate mauris. Curabitur finibus faucibus libero. Fusce tincidunt, elit sed aliquet interdum, metus ex mollis ipsum, ut volutpat elit orci in mauris. Aliquam vitae velit in lorem bibendum tincidunt. Curabitur nec ex ut nisl tristique pharetra et in quam. Quisque in pulvinar est, vitae rhoncus nisl. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae.'
+})
+
+db.wiki_paragraphs.insert({
+    '_id': 'default_section_paragraph_2',
+    'preceded_by': 'default_section_paragraph_1',
+    'succeeded_by': 'default_section_paragraph_3',
+    'text': 'Mauris iaculis placerat nulla vitae tempus. Phasellus et interdum nulla. Nunc neque mauris, facilisis sed sagittis in, finibus sed urna. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Vivamus aliquam libero nec tellus euismod finibus. Aenean metus risus, consequat sit amet libero quis, tempus pharetra libero. Nulla rutrum tempus porttitor. Nunc ultricies quis leo nec sollicitudin. Donec luctus, elit vitae ultrices interdum, turpis est feugiat nisi, et congue elit mi et turpis.'
+})
+
+db.wiki_paragraphs.insert({
+    '_id': 'default_section_paragraph_3',
+    'preceded_by': 'default_section_paragraph_2',
+    'succeeded_by': null,
+    'text': 'Fusce pharetra elit ut ipsum lobortis, eu ornare augue convallis. Suspendisse molestie scelerisque arcu, et sodales nibh aliquam vitae. Phasellus at risus ultrices augue sagittis consequat. Ut maximus, leo non dapibus dapibus, quam massa laoreet leo, non tempus leo mi at libero. Donec sed massa non nisl maximus condimentum. Pellentesque in lorem vel justo ultricies blandit. Cras ullamcorper rutrum felis, commodo imperdiet ligula fringilla vel. Pellentesque elementum, justo et aliquam accumsan, lectus orci elementum orci, vitae finibus metus tortor a erat. Nullam at blandit sapien. Mauris condimentum, tellus vel efficitur viverra, tellus ex tincidunt ipsum, non auctor purus diam et lacus. Proin non mauris sit amet metus posuere ultrices. Nam sagittis condimentum lorem, nec gravida nulla sagittis a. Donec sed elementum mauris. In semper sapien eu nibh ultrices ultrices. In hac habitasse platea dictumst.'
+})
+
+db.wiki_paragraphs.insert({
+    '_id': 'default_section_paragraph_4',
+    'preceded_by': null,
+    'succeeded_by': 'default_section_paragraph_5',
+    'text': 'Curabitur vitae aliquam eros, eu eleifend magna. Etiam id mollis leo. Vivamus sit amet magna at purus gravida volutpat. Integer nisi velit, tempus at odio a, accumsan feugiat nisi. Phasellus tristique tortor sem, non lobortis lacus aliquam sit amet. Etiam at lacus cursus, ultricies risus a, porta nisl. Nunc tempor congue augue et aliquam. Fusce mattis erat erat, id finibus neque elementum quis. Nulla facilisi.'
+})
+
+db.wiki_paragraphs.insert({
+    '_id': 'default_section_paragraph_5',
+    'preceded_by': 'default_section_paragraph_4',
+    'succeeded_by': null,
+    'text': 'Sed elementum dui erat. Vivamus sed leo id lorem sollicitudin fringilla. Nullam non orci urna. Phasellus laoreet nisi eget arcu fringilla porta. Suspendisse tristique dapibus libero, eu posuere orci aliquam non. Maecenas ultricies facilisis ex, ut bibendum neque dapibus a. Nam iaculis tempor est, vitae luctus nisl aliquam a.'
 })
