@@ -137,10 +137,12 @@ class LoomHandler(GenericHandler):
         raise ValueError("{} does not exist in stories".format(story_id))
 
     def _get_id_for_client_from_wikis(self, wiki_id):
-        for c_id, w_id in self.wiki_segments.items():
-            if w_id == wiki_id:
-                return c_id
-        raise ValueError("{} does not exist in wikis".format(wiki_id))
+        # TODO: Fix this, please.
+        return wiki_id
+        # for w_id, wiki_summary in self.wiki_segments.items():
+        #     if w_id == wiki_id:
+        #         return wiki_summary
+        # raise ValueError("{} does not exist in wikis".format(wiki_id))
 
     async def _create_story_ids_mapping(self):
         story_summaries = []
@@ -202,7 +204,7 @@ class LoomHandler(GenericHandler):
         return summaries
 
     def _format_story_response(self, message_id, story):
-        client_wiki_id = self._get_id_for_client_from_wikis(story['wiki_id'])
+        client_wiki_id = story['wiki_id']
         data = {
             'reply_to':         message_id,
             'title':            story['title'],

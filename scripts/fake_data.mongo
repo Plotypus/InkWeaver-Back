@@ -31,7 +31,7 @@ db.stories.insert({
         'user_id': 'default_user',
         'publication_name': 'Schmoman'
     },
-    'wiki_id': 'default_wiki',
+    'wiki_id': 'default_wiki_segment_1',
     'collaborators': [],
     'title': 'Greatest Story Ever Written',
     'synopsis': 'Need I say more?',
