@@ -321,13 +321,11 @@ async def add_wiki_page_to_segment(segment_id: ObjectId, page_id: ObjectId):
     await _WIKI_SEGMENTS.update_one({'_id': segment_id}, {'$push': {'pages': page_id}})
 
 
-async def create_wiki_section(page_id: ObjectId, title: str, preceded_by=None, succeeded_by=None):
+async def create_wiki_section(page_id: ObjectId, title: str):
     section = {
-        'title':      title,
+        'title':          title,
         'head_paragraph': None,
         'tail_paragraph': None,
-        'preceded_by': preceded_by,
-        'succeeded_by': succeeded_by,
     }
     result = await _WIKI_SECTIONS.insert_one(section)   # type: pymongo.results.InsertOnResult
     section_id = result.inserted_id
@@ -342,6 +340,20 @@ async def add_wiki_section_to_page(page_id: ObjectId, section_id: ObjectId):
 async def get_wiki_section(section_id: ObjectId):
     result = await _WIKI_SECTIONS.find_one({'_id': section_id})
     return result
+
+
+async def get_wiki_section_summary(section_id: ObjectId):
+    section = await get_wiki_section(section_id)
+    return get_summary_from_wiki_section(section)
+
+
+def get_summary_from_wiki_section(section):
+    # TODO: Revise section summary strucrure
+    summary = {
+        'title':    section['title'],
+        'id':       section['_id'],
+    }
+    return summary
 
 
 async def get_all_wiki_paragraph_summaries(section_id: ObjectId):
@@ -366,7 +378,7 @@ async def update_tail_paragraph_of_section(section_id: ObjectId, new_tail_id: Ob
 
 async def create_wiki_paragraph(section_id: ObjectId, text: str, preceded_by_id: ObjectId, succeeded_by_id: ObjectId):
     if preceded_by_id is None and succeeded_by_id is None:
-        raise ValueError("Preceding_id and succeeding_id can not both be null.")
+        raise ValueError("preceding_id and succeeding_id can not both be null when creating a paragraph.")
     preceding = await get_wiki_paragraph(preceded_by_id)
     succeeding = await get_wiki_paragraph(succeeded_by_id)
     # Wishes to create paragraph at beginning of section
