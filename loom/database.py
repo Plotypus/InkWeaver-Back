@@ -344,6 +344,18 @@ async def get_wiki_section(section_id: ObjectId):
     return result
 
 
+async def get_all_wiki_paragraph_summaries(section_id: ObjectId):
+    paragraphs = []
+    section = await get_wiki_section(section_id)
+    cur_id = section['head_paragraph']
+    while cur_id:
+        paragraph = await get_wiki_paragraph(cur_id)
+        summary = get_summary_from_wiki_paragraph(paragraph)
+        paragraphs.append(summary)
+        cur_id = paragraph['succeeded_by']
+    return paragraphs
+
+
 async def update_head_paragraph_of_section(section_id: ObjectId, new_head_id: ObjectId):
     await _WIKI_SECTIONS.update_one({'_id': section_id}, {'$set': {'head_paragraph': new_head_id}})
 
@@ -400,6 +412,21 @@ async def _create_wiki_paragraph(text: str, preceded_by: ObjectId, succeeded_by:
 async def get_wiki_paragraph(paragraph_id: ObjectId):
     result = await _WIKI_PARAGRAPHS.find_one({'_id': paragraph_id})
     return result
+
+
+async def get_wiki_paragraph_summary(paragraph_id: ObjectId):
+    paragraph = await get_wiki_paragraph(paragraph_id)
+    return get_summary_from_wiki_paragraph(paragraph)
+
+
+def get_summary_from_wiki_paragraph(paragraph):
+    # TODO: Revise paragraph summary strucrure
+    summary = {
+        'text': paragraph['text'],
+        'id':   paragraph['_id'],
+    }
+    return summary
+
 
 async def update_wiki_paragraph_succeeded_by(paragraph_id: ObjectId, succeeding_id: ObjectId):
     await _WIKI_PARAGRAPHS.update_one({'_id': paragraph_id}, {'$set': {'succeeded_by': succeeding_id}})
