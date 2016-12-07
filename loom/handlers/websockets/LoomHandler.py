@@ -551,7 +551,27 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def load_wiki_page_with_sections(self, message_id, wiki_page):
-        pass
+        page = await loom.database.get_wiki_page(wiki_page)
+        sections = []
+        for section_id in page['sections']:
+            section_summary = await loom.database.get_wiki_section_summary(section_id)
+            paragraphs = await loom.database.get_all_wiki_paragraph_summaries(section_id)
+            sections.append({
+                'title':      section_summary.get('title'),
+                'id':         section_summary.get('id'),
+                'paragraphs': paragraphs,
+            })
+        data = {
+            'reply_to': message_id,
+            'wiki_page': {
+                'title':      page.get('title'),
+                'id':         page.get('_id'),
+                'aliases':    page.get('aliases'),
+                'references': page.get('references'),
+                'sections':   sections,
+            }
+        }
+        self.write_json(data)
 
     @requires_login
     async def load_section(self, message_id, section):
