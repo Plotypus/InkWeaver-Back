@@ -143,18 +143,14 @@ db.wiki_sections.insert({
     '_id': 'default_template_section_1',
     'title': 'Background',
     'head_paragraph': null,
-    'tail_paragraph': null,
-    'preceded_by': null,
-    'succeeded_by': null
+    'tail_paragraph': null
 })
 
 db.wiki_sections.insert({
     '_id': 'default_template_section_2',
     'title': 'Motives',
     'head_paragraph': null,
-    'tail_paragraph': null,
-    'preceded_by': null,
-    'succeeded_by': null
+    'tail_paragraph': null
 })
 
 db.wiki_sections.insert({
@@ -162,8 +158,6 @@ db.wiki_sections.insert({
     'title': 'Background',
     'head_paragraph': 'default_section_paragraph_1',
     'tail_paragraph': 'default_section_paragraph_3',
-    'preceded_by': null,
-    'succeeded_by': 'default_section_2'
 })
 
 db.wiki_sections.insert({
@@ -171,8 +165,6 @@ db.wiki_sections.insert({
     'title': 'Motives',
     'head_paragraph': 'default_section_paragraph_4',
     'tail_paragraph': 'default_section_paragraph_5',
-    'preceded_by': 'default_section_1',
-    'succeeded_by': null
 })
 
 db.wiki_paragraphs.insert({
