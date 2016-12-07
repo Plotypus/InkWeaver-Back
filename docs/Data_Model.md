@@ -175,6 +175,46 @@ These are the data models for documents in the database.
 |---------------|-------------|
 | `_id`         | a unique id of the wiki page |
 | `title`       | the title of the wiki page |
-| `sections`    | ** not yet implemented |
+| `sections`    | a list of unique ids of sections |
 | `references`  | ** not yet implemented |
 | `aliases`     | ** not yet implemented |
+
+## Wiki Sections
+
+```json
+{
+  "_id": ObjectId,
+  "title": "Background",
+  "head_paragraph": ObjectId,
+  "tail_paragraph": ObjectId,
+  "preceded_by": ObjectId,
+  "succeeded_by": ObjectId
+}
+```
+
+| Field             | Description |
+|-------------------|-------------|
+| `_id`             | a unique id of the wiki page |
+| `title`           | the title of the wiki page |
+| `head_paragraph`  | the unique id of the first paragraph in the section |
+| `tail_paragraph`  | the unique id of the last paragraph in the section|
+| `preceded_by`     | the unique id of the preceding section in the page |
+| `succeeded_by`    | the unique id of the succeeding section in the page |
+
+## Wiki Paragraphs
+
+```json
+{
+  "_id": ObjectId,
+  "preceded_by": ObjectId,
+  "succeeded_by": ObjectId,
+  "text": "It was the best of times, it was the worst of times..."
+}
+```
+
+| Field             | Description |
+|-------------------|-------------|
+| `_id`             | a unique id of the wiki page |
+| `text`            | the contents of the paragraph |
+| `preceded_by`     | the unique id of the preceding paragraph in the section |
+| `succeeded_by`    | the unique id of the succeeding paragraph in the section |
