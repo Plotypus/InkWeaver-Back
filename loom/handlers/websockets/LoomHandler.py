@@ -99,12 +99,15 @@ class LoomHandler(GenericHandler):
         self.set_nodelay(True)
         # Initialize stateful attributes.
         self.user = None
+
         self.stories = None
-        self.wikis = None
         self.story = None
         self.chapters = None
         self.chapter = None
         self.paragraphs = None
+
+        self.wiki_segments = None
+        self.wiki_pages = None
 
     def on_failure(self, reply_to=None, reason=None, **fields):
         response = {
@@ -134,7 +137,7 @@ class LoomHandler(GenericHandler):
         raise ValueError("{} does not exist in stories".format(story_id))
 
     def _get_id_for_client_from_wikis(self, wiki_id):
-        for c_id, w_id in self.wikis.items():
+        for c_id, w_id in self.wiki_segments.items():
             if w_id == wiki_id:
                 return c_id
         raise ValueError("{} does not exist in wikis".format(wiki_id))
@@ -147,13 +150,12 @@ class LoomHandler(GenericHandler):
         self.stories = {rand_id: story_summary for (rand_id, story_summary) in enumerate(story_summaries)}
 
     async def _create_wiki_ids_mapping(self):
-        # TODO: Uncomment when wikis are implemented
-        # wiki_summaries = []
-        # for wiki_id in self.user['wikis']:
-        #     summary = await loom.database.get_wiki_summary(wiki_id)
-        #     wiki_summaries.append(summary)
-        # self.wikis = {rand_id: wiki_summary for (rand_id, wiki_summary) in enumerate(wiki_summaries)}
-        self.wikis = {rand_id: wiki_id for (rand_id, wiki_id) in enumerate(self.user['wikis'])}
+        wiki_summaries = []
+        for wiki_id in self.user['wikis']:
+            summary = await loom.database.get_wiki_segment_summary(wiki_id)
+            wiki_summaries.append(summary)
+        self.wiki_segments = {wiki_summary['id']: wiki_summary for wiki_summary in wiki_summaries}
+
 
     async def _create_chapter_ids_mapping(self):
         chapter_summaries = await loom.database.get_all_chapter_summaries(self.story['_id'])
@@ -181,7 +183,7 @@ class LoomHandler(GenericHandler):
         #     summary_copy['id'] = c_id
         #     summaries.append(summary_copy)
         # return summaries
-        return self.wikis.keys()
+        return self.wiki_segments.keys()
 
     def _get_chapter_summaries(self):
         summaries = []
@@ -222,6 +224,24 @@ class LoomHandler(GenericHandler):
             'statistics':   chapter['statistics'],
         }
         return data
+
+    async def _get_wiki_segment_hierarchy(self, wiki_segment):
+        hierarchy = {}
+        segment = await loom.database.get_wiki_segment(wiki_segment)
+        if segment is not None:
+            hierarchy['id'] = segment['_id']
+            hierarchy['title'] = segment['title']
+            hierarchy['pages'] = []
+            for page in segment['pages']:
+                hierarchy['pages'].append(await self._get_wiki_page_summary_for_hierarchy(page))
+            hierarchy['segments'] = []
+            for sub_segment in segment['segments']:
+                hierarchy['segments'].append(await self._get_wiki_segment_hierarchy(sub_segment))
+        return hierarchy
+
+    async def _get_wiki_page_summary_for_hierarchy(self, wiki_page):
+        page_summary = await loom.database.get_wiki_page_summary(wiki_page)
+        return page_summary
 
     ############################################################
     ##
@@ -407,7 +427,7 @@ class LoomHandler(GenericHandler):
     @requires_login
     async def create_story(self, message_id, story):
         user_id = self.user['_id']
-        wiki_id = self.wikis[story['wiki']]
+        wiki_id = self.wiki_segments[story['wiki']]
         title = story['title']
         publication_name = story['publication_name']
         synopsis = story.get('synopsis', None)
@@ -485,7 +505,13 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def get_wiki_hierarchy(self, message_id, wiki):
-        pass
+        print("getting hierarchy for wiki: {}".format(wiki))
+        hierarchy = await self._get_wiki_segment_hierarchy(wiki)
+        data = {
+            'reply_to': message_id,
+            'hierarchy': hierarchy,
+        }
+        self.write_json(data)
 
     @requires_login
     async def load_wiki_segment(self, message_id, wiki_segment):
