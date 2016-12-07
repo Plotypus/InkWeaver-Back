@@ -295,7 +295,7 @@ async def update_paragraphs_preceded_by(succeeding_id: ObjectId, new_paragraph_i
 ############################################################
 
 
-async def create_wiki_root(title: str, description: str):
+async def create_wiki_root(user_id: ObjectId, title: str, description: str):
     segment = {
         'title':             title,
         'description':       description,
@@ -306,6 +306,7 @@ async def create_wiki_root(title: str, description: str):
     }
     result = await _WIKI_SEGMENTS.insert_one(segment)  # type: pymongo.results.InsertOneResult
     segment_id = result.inserted_id
+    await add_wiki_root_to_user(user_id, segment_id)
     return segment_id
 
 
@@ -330,6 +331,10 @@ async def get_wiki_segment(segment_id: ObjectId):
 
 async def add_wiki_segment_to_parent(parent_id: ObjectId, child_id: ObjectId):
     await _WIKI_SEGMENTS.update_one({'_id': parent_id}, {'$push': {'segments': child_id}})
+
+
+async def add_wiki_root_to_user(user_id: ObjectId, root_id: ObjectId):
+    await _USERS.update_one({'_id': user_id}, {'$push': {'wikis': root_id}})
 
 
 async def create_wiki_page(segment_id: ObjectId, title: str):
@@ -376,7 +381,6 @@ async def add_wiki_template_sections_to_page(segment_id: ObjectId, page_id: Obje
         template = await get_wiki_section(template_id)
         template_copy_id = await create_wiki_section(page_id, template['title'])
         await add_wiki_section_to_page(template_copy_id)
-
 
 
 async def create_wiki_section(page_id: ObjectId, title: str):
