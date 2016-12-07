@@ -17,7 +17,7 @@ db.users.insert({
     'pen_name': 'Schmozo',
     'avatar': null,
     'stories': ['default_story'],
-    'wikis': ['default_wiki'],
+    'wikis': ['default_wiki_segment_1'],
     'preferences': null,
     'statistics': null,
     'bio': null
