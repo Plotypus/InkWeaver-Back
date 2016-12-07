@@ -186,9 +186,7 @@ These are the data models for documents in the database.
   "_id": ObjectId,
   "title": "Background",
   "head_paragraph": ObjectId,
-  "tail_paragraph": ObjectId,
-  "preceded_by": ObjectId,
-  "succeeded_by": ObjectId
+  "tail_paragraph": ObjectId
 }
 ```
 
@@ -198,8 +196,6 @@ These are the data models for documents in the database.
 | `title`           | the title of the wiki page |
 | `head_paragraph`  | the unique id of the first paragraph in the section |
 | `tail_paragraph`  | the unique id of the last paragraph in the section|
-| `preceded_by`     | the unique id of the preceding section in the page |
-| `succeeded_by`    | the unique id of the succeeding section in the page |
 
 ## Wiki Paragraphs
 
