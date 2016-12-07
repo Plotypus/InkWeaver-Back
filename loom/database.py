@@ -94,6 +94,13 @@ async def get_all_user_ids():
     return result
 
 
+############################################################
+##
+## Story Related Methods
+##
+############################################################
+
+
 async def create_story(user_id: ObjectId, wiki_id: ObjectId, title: str, publication_name: str, synopsis=None) -> ObjectId:
     story = {
         'owner':         {
@@ -280,3 +287,69 @@ async def update_paragraphs_succeeded_by(preceding_id: ObjectId, new_paragraph_i
 async def update_paragraphs_preceded_by(succeeding_id: ObjectId, new_paragraph_id: ObjectId):
     await _PARAGRAPHS.update_one({'_id': succeeding_id}, {'$set': {'preceded_by': new_paragraph_id}})
 
+
+############################################################
+##
+## Wiki Related Methods
+##
+############################################################
+
+
+async def get_wiki_segment(segment_id: ObjectId):
+    return await _WIKI_SEGMENTS.find_one({'_id': segment_id})
+
+
+async def create_wiki_page(segment_id: ObjectId, title: str):
+    page = {
+        'title':      title,
+        'sections':   list(),
+        'references': list(),
+        'aliases':    list(),
+    }
+    result = await _WIKI_PAGES.insert_one(page)           # type: pymongo.results.InsertOneResult
+    page_id = result.inserted_id
+    await add_wiki_page_to_segment(segment_id, page_id)
+    return page_id
+
+
+async def get_wiki_page(page_id: ObjectId):
+    result = await _WIKI_PAGES.find_one({'_id': page_id})
+    return result
+
+
+async def add_wiki_page_to_segment(segment_id: ObjectId, page_id: ObjectId):
+    await _WIKI_SEGMENTS.update_one({'_id': segment_id}, {'$push': {'pages': page_id}})
+
+
+async def create_wiki_section(page_id: ObjectId, title: str, preceded_by=None, succeeded_by=None):
+    section = {
+        'title':      title,
+        'head_paragraph': None,
+        'tail_paragraph': None,
+        'preceded_by': preceded_by,
+        'succeeded_by': succeeded_by,
+    }
+    result = await _WIKI_SECTIONS.insert_one(section)   # type: pymongo.results.InsertOnResult
+    section_id = result.inserted_id
+    await add_wiki_section_to_page(page_id, section_id)
+    return section_id
+
+
+async def add_wiki_section_to_page(page_id: ObjectId, section_id: ObjectId):
+    await _WIKI_PAGES.insert_one({'_id': page_id}, {'$push': {'sections': section_id}})
+
+
+async def get_wiki_section(section_id: ObjectId):
+    result = await _WIKI_SECTIONS.find_one({'_id': section_id})
+    return result
+
+
+async def create_wiki_paragraph(text: str, preceded_by=None, succeeded_by=None):
+    paragraph = {
+        'text':         text,
+        'preceded_by':  preceded_by,
+        'succeeded_by': succeeded_by,
+    }
+    result = await _WIKI_PARAGRAPHS.insert_one(paragraph)
+    paragraph_id = result.inserted_id
+    return paragraph_id
