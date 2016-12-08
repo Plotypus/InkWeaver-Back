@@ -42,6 +42,10 @@ def hex_string_to_bson_oid(s):
     return ObjectId(s)
 
 
+async def drop_database():
+    await _DB_CLIENT.drop_database(_DB)
+
+
 async def get_default_user():
     default_user = await _USERS.find_one({'_id': 'default_user'})
     if default_user:
