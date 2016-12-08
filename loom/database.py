@@ -113,7 +113,7 @@ async def get_all_user_ids():
 ############################################################
 
 
-async def create_story(user_id: ObjectId, wiki_id: ObjectId, title: str, publication_name: str, synopsis=None) -> ObjectId:
+async def create_story(user_id: ObjectId, wiki_id: ObjectId, title: str, publication_name=None, synopsis=None) -> ObjectId:
     story = {
         'owner':         {
             "user_id":          user_id,
