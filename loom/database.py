@@ -38,6 +38,14 @@ def set_db_port(port):
     _PORT = port
 
 
+def get_db_host():
+    return _HOST
+
+
+def get_db_port():
+    return _PORT
+
+
 def hex_string_to_bson_oid(s):
     return ObjectId(s)
 
