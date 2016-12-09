@@ -537,7 +537,7 @@ async def create_wiki_template_section(segment_id: ObjectId, title: str):
 
 
 async def add_wiki_section_to_page(page_id: ObjectId, section_id: ObjectId):
-    await _WIKI_PAGES.insert_one({'_id': page_id}, {'$push': {'sections': section_id}})
+    await _WIKI_PAGES.update_one({'_id': page_id}, {'$push': {'sections': section_id}})
 
 
 async def add_wiki_template_section_to_segment(segment_id: ObjectId, template_id: ObjectId):
