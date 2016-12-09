@@ -9,8 +9,8 @@ _HOST = 'localhost'
 _PORT = 27017
 
 # Connect to the database.
-_DB_CLIENT = motor.motor_tornado.MotorClient(_HOST, _PORT)
-# _DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(_HOST, _PORT)
+# _DB_CLIENT = motor.motor_tornado.MotorClient(_HOST, _PORT)
+_DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(_HOST, _PORT)
 _DB = _DB_CLIENT.inkweaver
 
 # Define our collections.
@@ -28,6 +28,34 @@ _WIKI_PARAGRAPHS    = _DB.wiki_paragraphs               # type: motor.core.Agnos
 _LINKS              = _DB.links                         # type: motor.core.AgnosticCollection
 _STORY_REFERENCES   = _DB.story_references              # type: motor.core.AgnosticCollection
 _WIKI_REFERENCES    = _DB.wiki_references               # type: motor.core.AgnosticCollection
+
+
+def update_collections():
+    global _USERS
+    _USERS = _DB.users  # type: motor.core.AgnosticCollection
+
+    global _STORIES
+    global _CHAPTERS
+    global _PARAGRAPHS
+    _STORIES = _DB.stories  # type: motor.core.AgnosticCollection
+    _CHAPTERS = _DB.chapters  # type: motor.core.AgnosticCollection
+    _PARAGRAPHS = _DB.paragraphs  # type: motor.core.AgnosticCollection
+
+    global _WIKI_SEGMENTS
+    global _WIKI_PAGES
+    global _WIKI_SECTIONS
+    global _WIKI_PARAGRAPHS
+    _WIKI_SEGMENTS = _DB.wiki_segments  # type: motor.core.AgnosticCollection
+    _WIKI_PAGES = _DB.wiki_pages  # type: motor.core.AgnosticCollection
+    _WIKI_SECTIONS = _DB.wiki_sections  # type: motor.core.AgnosticCollection
+    _WIKI_PARAGRAPHS = _DB.wiki_paragraphs  # type: motor.core.AgnosticCollection
+
+    global _LINKS
+    global _STORY_REFERENCES
+    global _WIKI_REFERENCES
+    _LINKS = _DB.links  # type: motor.core.AgnosticCollection
+    _STORY_REFERENCES = _DB.story_references  # type: motor.core.AgnosticCollection
+    _WIKI_REFERENCES = _DB.wiki_references  # type: motor.core.AgnosticCollection
 
 
 def set_db_host(host):
@@ -79,6 +107,7 @@ async def get_default_user():
 
 
 async def create_user(username, password, name, email, pen_name=None):
+    print("current db type: {}".format(type(_DB_CLIENT)))
     user = {
         'username':    username,
         'password':    password,

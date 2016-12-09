@@ -5,6 +5,8 @@ from loom import database
 
 import asyncio
 import glob
+import json
+import motor.motor_asyncio
 import os.path
 import re
 
@@ -53,27 +55,80 @@ def find_books(bookdir):
     return bookfiles
 
 
-def main(bookdir, user_id, wiki_id, event_loop):
-    bookfiles = find_books(bookdir)
-    for bookfile in bookfiles:
-        event_loop.run_until_complete(import_book(bookfile, user_id, wiki_id))
+async def process_datafile(jsonfile):
+    with open(jsonfile) as jf:
+        data = json.load(jf)
+    if not isinstance(data, list):
+        raise ValueError("Invalid JSON data: {}".format(jsonfile))
+
+    ids = {}
+
+    for obj in data:
+        datatype    = obj['datatype']
+        identifier  = obj['identifier']
+        values      = obj['values']
+        template = re.compile(r'^\{\{([^\}]+)\}\}$')
+        for key, value in values.items():
+            if not value:
+                continue
+            match = template.match(value)
+            if match is not None:
+                val = match.group(1)
+                db_id = ids.get(val)
+                if db_id is not None:
+                    values[key] = db_id
+                else:
+                    print("No corresponding database ID for identifier: {}".format(val))
+        if datatype == 'user':
+            print("Creating user from values: {}".format(values))
+            print("new type: {}".format(type(database._DB_CLIENT)))
+            user_id = await database.create_user(**values)
+            ids[identifier] = user_id
+        elif datatype == 'wiki_root':
+            ...
+        elif datatype == 'wiki_segment':
+            ...
+        elif datatype == 'wiki_page':
+            ...
+        elif datatype == 'wiki_section':
+            ...
+        elif datatype == 'wiki_paragraph':
+            ...
+        else:
+            ...
+
+
+def main(jsonfile, bookdir):
+    answer = input("This will drop your database... continue? [y/N] ")
+    if not answer.lower().startswith('y'):
+        print("Quitting...")
+        return
+    print("Continuing.")
+    old_client = database._DB_CLIENT
+    print("old type: {}".format(type(database._DB_CLIENT)))
+    database._DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(database.get_db_host(), database.get_db_port())
+    database.update_collections()
+    print("new type: {}".format(type(database._DB_CLIENT)))
+
+    event_loop = asyncio.get_event_loop()
+
+    event_loop.run_until_complete(database.drop_database())
+
+    event_loop.run_until_complete(process_datafile(jsonfile))
+
+    # bookfiles = find_books(bookdir)
+    # for bookfile in bookfiles:
+    #     event_loop.run_until_complete(import_book(bookfile, user_id, wiki_id))
+
+    event_loop.close()
+    database._DB_CLIENT = old_client
 
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument('data')
     parser.add_argument('bookdir')
-    parser.add_argument('user_id')
-    # parser.add_argument('wiki_id')
     args = parser.parse_args()
 
-    answer = input("This will drop your database... continue? [y/N] ")
-    if answer.lower().startswith('y'):
-        print("Continuing.")
-        event_loop = asyncio.get_event_loop()
-        # database.drop_database()
-        # event_loop.run_until_complete(database.drop_database())
-        main(args.bookdir, args.user_id, None, event_loop)
-        event_loop.close()
-    else:
-        print("Quitting...")
+    main(args.data, args.bookdir)

@@ -1,0 +1,111 @@
+[
+  {
+    "datatype": "user",
+    "identifier": "user1",
+    "values": {
+      "username": "dadams",
+      "password": "42",
+      "name": "Douglas Adams",
+      "email": "douglas.adams@deepthought.mag",
+      "pen_name": "Dirk Gently"
+    }
+  },
+  {
+    "datatype": "wiki_root",
+    "identifier": "wr",
+    "values": {
+      "user_id": "{{user1}}",
+      "title": "Hitchhiker's Guide Wiki",
+      "description": null
+    }
+  },
+  {
+    "datatype": "wiki_segment",
+    "identifier": "ws1",
+    "values": {
+      "parent": "{{wr}}",
+      "title": "Character",
+      "description": "The characters, both major and minor, within the story."
+    }
+  },
+  {
+    "datatype": "wiki_page",
+    "identifier": "wp1",
+    "values": {
+      "segment_id": "{{ws1}}",
+      "title": "Arthur Dent"
+    }
+  },
+  {
+    "datatype": "wiki_section",
+    "identifier": "wsec1",
+    "values": {
+      "page_id": "{{wp1}}",
+      "title": "Background"
+    }
+  },
+  {
+    "datatype": "wiki_paragraph",
+    "identifier": "wpar1",
+    "values": {
+      "section_id": "{{wsec1}}",
+      "text": "Paragraph 1 for Arthur's background.",
+      "preceded_by_id": null,
+      "succeeded_by_id": null
+    }
+  },
+  {
+    "datatype": "wiki_paragraph",
+    "identifier": "wpar2",
+    "values": {
+      "section_id": "{{wsec1}}",
+      "text": "Paragraph 2 for Arthur's background.",
+      "preceded_by_id": "{{wpar1}}",
+      "succeeded_by_id": null
+    }
+  },
+  {
+    "datatype": "wiki_section",
+    "identifier": "wsec2",
+    "values": {
+      "page_id": "{{wp1}}",
+      "title": "Motives"
+    }
+  },
+  {
+    "datatype": "wiki_paragraph",
+    "identifier": "wpar3",
+    "values": {
+      "section_id": "{{wsec2}}",
+      "text": "None. Arthur just wants to get back home... which is difficult, since it's been destroyed.",
+      "preceded_by_id": null,
+      "succeeded_by_id": null
+    }
+  },
+  {
+    "datatype": "wiki_page",
+    "identifier": "wp2",
+    "values": {
+      "segment_id": "{{ws1}}",
+      "title": "Ford Prefect"
+    }
+  },
+  {
+    "datatype": "wiki_section",
+    "identifier": "wsec3",
+    "values": {
+      "page_id": "{{wp2}}",
+      "title": "Background"
+    }
+  },
+  {
+    "datatype": "wiki_paragraph",
+    "identifier": "wpar4",
+    "values": {
+      "section_id": "{{wsec3}}",
+      "text": "Ford comes from a small planet somewhere in the vicinity of the star Betelgeuse.",
+      "preceded_by_id": null,
+      "succeeded_by_id": null
+    }
+  }
+]
