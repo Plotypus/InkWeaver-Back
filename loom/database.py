@@ -1,4 +1,5 @@
-import motor.motor_tornado
+import motor.motor_asyncio
+# import motor.motor_tornado
 import pymongo.results
 
 from bson.objectid import ObjectId
@@ -8,7 +9,8 @@ _HOST = 'localhost'
 _PORT = 27017
 
 # Connect to the database.
-_DB_CLIENT = motor.motor_tornado.MotorClient(_HOST, _PORT)
+# _DB_CLIENT = motor.motor_tornado.MotorClient(_HOST, _PORT)
+_DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(_HOST, _PORT)
 _DB = _DB_CLIENT.inkweaver
 
 # Define our collections.

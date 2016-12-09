@@ -94,3 +94,6 @@ ENV/
 
 # macOS
 .DS_Store
+
+# Stuff
+*.book
