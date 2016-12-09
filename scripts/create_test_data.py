@@ -64,6 +64,7 @@ async def process_datafile(jsonfile):
     ids = {}
     first_user = None
     first_wiki = None
+    # TODO: Allow dynamic default value setting (e.g. automatically assign "default_user_1", etc.)
     for obj in data:
         datatype    = obj['datatype']
         identifier  = obj['identifier']
@@ -87,25 +88,31 @@ async def process_datafile(jsonfile):
                 first_user = user_id
         elif datatype == 'user':
             user_id = await database.create_user(**values)
+            print("Created user: {}".format(user_id))
             ids[identifier] = user_id
             if first_user is None:
                 first_user = user_id
         elif datatype == 'wiki_root':
             root_id = await database.create_wiki_root(**values)
+            print("Created wiki root: {}".format(root_id))
             ids[identifier] = root_id
             if first_wiki is None:
                 first_wiki = root_id
         elif datatype == 'wiki_segment':
             segment_id = await database.create_wiki_segment(**values)
+            print("Created wiki segment: {}".format(segment_id))
             ids[identifier] = segment_id
         elif datatype == 'wiki_page':
             page_id = await database.create_wiki_page(**values)
+            print("Created wiki page: {}".format(page_id))
             ids[identifier] = page_id
         elif datatype == 'wiki_section':
             section_id = await database.create_wiki_section(**values)
+            print("Created wiki section: {}".format(section_id))
             ids[identifier] = section_id
         elif datatype == 'wiki_paragraph':
             paragraph_id = await database.create_wiki_paragraph(**values)
+            print("Created wiki paragraph: {}".format(paragraph_id))
             ids[identifier] = paragraph_id
         else:
             raise ValueError("Unsupported datatype: {}".format(datatype))
@@ -119,10 +126,8 @@ def main(jsonfile, bookdir):
         return
     print("Continuing.")
     old_client = database._DB_CLIENT
-    print("old type: {}".format(type(database._DB_CLIENT)))
     database._DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(database.get_db_host(), database.get_db_port())
     database.update_connections()
-    print("new type: {}".format(type(database._DB_CLIENT)))
 
     event_loop = asyncio.get_event_loop()
 
