@@ -62,7 +62,8 @@ async def process_datafile(jsonfile):
         raise ValueError("Invalid JSON data: {}".format(jsonfile))
 
     ids = {}
-
+    first_user = None
+    first_wiki = None
     for obj in data:
         datatype    = obj['datatype']
         identifier  = obj['identifier']
@@ -80,22 +81,29 @@ async def process_datafile(jsonfile):
                 else:
                     print("No corresponding database ID for identifier: {}".format(val))
         if datatype == 'user':
-            print("Creating user from values: {}".format(values))
-            print("new type: {}".format(type(database._DB_CLIENT)))
             user_id = await database.create_user(**values)
             ids[identifier] = user_id
+            if first_user is None:
+                first_user = user_id
         elif datatype == 'wiki_root':
-            ...
+            root_id = await database.create_wiki_root(**values)
+            ids[identifier] = root_id
+            if first_wiki is None:
+                first_wiki = root_id
         elif datatype == 'wiki_segment':
-            ...
+            segment_id = await database.create_wiki_segment(**values)
+            ids[identifier] = segment_id
         elif datatype == 'wiki_page':
-            ...
+            page_id = await database.create_wiki_page(**values)
+            ids[identifier] = page_id
         elif datatype == 'wiki_section':
-            ...
+            section_id = await database.create_wiki_section(**values)
+            ids[identifier] = section_id
         elif datatype == 'wiki_paragraph':
-            ...
+            paragraph_id = await database.create_wiki_paragraph(**values)
+            ids[identifier] = paragraph_id
         else:
-            ...
+            raise ValueError("Unsupported datatype: {}".format(datatype))
 
 
 def main(jsonfile, bookdir):
