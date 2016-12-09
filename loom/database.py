@@ -30,7 +30,10 @@ _STORY_REFERENCES   = _DB.story_references              # type: motor.core.Agnos
 _WIKI_REFERENCES    = _DB.wiki_references               # type: motor.core.AgnosticCollection
 
 
-def update_collections():
+def update_connections():
+    global _DB
+    _DB = _DB_CLIENT.inkweaver
+
     global _USERS
     _USERS = _DB.users  # type: motor.core.AgnosticCollection
 
@@ -106,8 +109,26 @@ async def get_default_user():
     return user
 
 
+async def create_default_user(username, password, name, email, pen_name=None):
+    user = {
+        '_id':         'default_user',
+        'username':    username,
+        'password':    password,
+        'name':        name,
+        'email':       email,
+        'pen_name':    pen_name,
+        'avatar':      None,
+        'stories':     list(),
+        'wikis':       list(),
+        'preferences': None,
+        'statistics':  None,
+        'bio':         None,
+    }
+    result = await _USERS.insert_one(user)
+    return result.inserted_id
+
+
 async def create_user(username, password, name, email, pen_name=None):
-    print("current db type: {}".format(type(_DB_CLIENT)))
     user = {
         'username':    username,
         'password':    password,
