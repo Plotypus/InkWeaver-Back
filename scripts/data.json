@@ -49,7 +49,7 @@
     "identifier": "wpar1",
     "values": {
       "section_id": "{{wsec1}}",
-      "text": "Paragraph 1 for Arthur's background.",
+      "text": "Arthur Philip Dent is an almost entirely unremarkable human from the planet Earth. He has an uncanny knack for finding trouble without meaning to.",
       "preceded_by_id": null,
       "succeeded_by_id": null
     }
@@ -59,7 +59,7 @@
     "identifier": "wpar2",
     "values": {
       "section_id": "{{wsec1}}",
-      "text": "Paragraph 2 for Arthur's background.",
+      "text": "In his younger days, Arthur attended a fancy dress party in Islington where he met Tricia McMillan and Zaphod Beeblebrox, although he would not come to recognize the significane of this event until his narrow escape from Earth's ill-fated demise.",
       "preceded_by_id": "{{wpar1}}",
       "succeeded_by_id": null
     }
@@ -77,7 +77,7 @@
     "identifier": "wpar3",
     "values": {
       "section_id": "{{wsec2}}",
-      "text": "None. Arthur just wants to get back home... which is difficult, since it's been destroyed.",
+      "text": "None. Arthur just wants to get back home... which is difficult, since his home has been destroyed to make way for a hyperspace bypass.",
       "preceded_by_id": null,
       "succeeded_by_id": null
     }
@@ -103,7 +103,42 @@
     "identifier": "wpar4",
     "values": {
       "section_id": "{{wsec3}}",
-      "text": "Ford comes from a small planet somewhere in the vicinity of the star Betelgeuse.",
+      "text": "Ford comes from a small planet somewhere in the vicinity of the star Betelgeuse, and not Guildford like he usually claims. During his fifteen years stranded on Earth he wrote a comprehensive entry for the renowned Hitchhiker's Guide to the Galaxy.",
+      "preceded_by_id": null,
+      "succeeded_by_id": null
+    }
+  },
+  {
+    "datatype": "wiki_segment",
+    "identifier": "ws2",
+    "values": {
+      "parent": "{{wr}}",
+      "title": "Location",
+      "description": "Various places throughout the universe visited by the protagonists or referenced throughout the story."
+    }
+  },
+  {
+    "datatype": "wiki_page",
+    "identifier": "wp3",
+    "values": {
+      "segment_id": "{{ws2}}",
+      "title": "Earth"
+    }
+  },
+  {
+    "datatype": "wiki_section",
+    "identifier": "wsec11",
+    "values": {
+      "page_id": "{{wp3}}",
+      "title": "Description"
+    }
+  },
+  {
+    "datatype": "wiki_paragraph",
+    "identifier": "wpar11",
+    "values": {
+      "section_id": "{{wsec11}}",
+      "text": "Mostly harmless.",
       "preceded_by_id": null,
       "succeeded_by_id": null
     }
