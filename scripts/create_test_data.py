@@ -40,10 +40,10 @@ async def import_book(bookfile, user_id, wiki_id):
     for i in range(len(chapters)):
         chapter_title = chapter_titles[i]
         chapter = chapters[i]
-        chapter_id = await database.create_chapter(story_id, chapter_title, previous_chapter_id)
+        chapter_id = await database.create_chapter(story_id, chapter_title, previous_chapter_id, None)
         previous_paragraph_id = None
         for paragraph in chapter:
-            previous_paragraph_id = await database.create_paragraph(chapter_id, previous_paragraph_id, text=paragraph)
+            previous_paragraph_id = await database.create_paragraph(chapter_id, paragraph, previous_paragraph_id, None)
         previous_chapter_id = chapter_id
     return story_id
 
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('bookdir')
     parser.add_argument('user_id')
-    parser.add_argument('wiki_id')
+    # parser.add_argument('wiki_id')
     args = parser.parse_args()
 
     answer = input("This will drop your database... continue? [y/N] ")
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         event_loop = asyncio.get_event_loop()
         # database.drop_database()
         # event_loop.run_until_complete(database.drop_database())
-        main(args.bookdir, args.user_id, args.wiki_id, event_loop)
+        main(args.bookdir, args.user_id, None, event_loop)
         event_loop.close()
     else:
         print("Quitting...")
