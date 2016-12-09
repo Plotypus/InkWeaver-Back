@@ -104,6 +104,7 @@ async def process_datafile(jsonfile):
             ids[identifier] = paragraph_id
         else:
             raise ValueError("Unsupported datatype: {}".format(datatype))
+    return first_user, first_wiki
 
 
 def main(jsonfile, bookdir):
@@ -122,11 +123,11 @@ def main(jsonfile, bookdir):
 
     event_loop.run_until_complete(database.drop_database())
 
-    event_loop.run_until_complete(process_datafile(jsonfile))
+    user_id, wiki_id = event_loop.run_until_complete(process_datafile(jsonfile))
 
-    # bookfiles = find_books(bookdir)
-    # for bookfile in bookfiles:
-    #     event_loop.run_until_complete(import_book(bookfile, user_id, wiki_id))
+    bookfiles = find_books(bookdir)
+    for bookfile in bookfiles:
+        event_loop.run_until_complete(import_book(bookfile, user_id, wiki_id))
 
     event_loop.close()
     database._DB_CLIENT = old_client
