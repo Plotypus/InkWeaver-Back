@@ -61,6 +61,26 @@ def update_connections():
     _WIKI_REFERENCES = _DB.wiki_references  # type: motor.core.AgnosticCollection
 
 
+def use_tornado(host=None, port=None):
+    if host is not None:
+        set_db_host(host)
+    if port is not None:
+        set_db_port(port)
+    global _DB_CLIENT
+    _DB_CLIENT = motor.motor_tornado.MotorClient(_HOST, _PORT)
+    update_connections()
+
+
+def use_asyncio(host=None, port=None):
+    if host is not None:
+        set_db_host(host)
+    if port is not None:
+        set_db_port(port)
+    global _DB_CLIENT
+    _DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(_HOST, _PORT)
+    update_connections()
+
+
 def set_db_host(host):
     global _HOST
     _HOST = host

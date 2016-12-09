@@ -125,9 +125,7 @@ def main(jsonfile, bookdir):
         print("Quitting...")
         return
     print("Continuing.")
-    old_client = database._DB_CLIENT
-    database._DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(database.get_db_host(), database.get_db_port())
-    database.update_connections()
+    database.use_asyncio()
 
     event_loop = asyncio.get_event_loop()
 
@@ -140,7 +138,6 @@ def main(jsonfile, bookdir):
         event_loop.run_until_complete(import_book(bookfile, user_id, wiki_id))
 
     event_loop.close()
-    database._DB_CLIENT = old_client
 
 
 if __name__ == '__main__':

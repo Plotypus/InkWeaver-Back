@@ -3,7 +3,7 @@
     "datatype": "user",
     "identifier": "user1",
     "values": {
-      "_id": "h2g2_user_1",
+      "_id": "default_user",
       "username": "dadams",
       "password": "42",
       "name": "Douglas Adams",

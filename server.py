@@ -28,7 +28,6 @@ def start_server(port, routes):
 if __name__ == '__main__':
     parse_options()
 
-    loom.database.set_db_host(options.db_host)
-    loom.database.set_db_port(options.db_port)
+    loom.database.use_tornado(options.db_host, options.db_port)
 
     start_server(options.port, loom.routing.ROUTES)
