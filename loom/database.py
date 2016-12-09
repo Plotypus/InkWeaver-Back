@@ -9,8 +9,8 @@ _HOST = 'localhost'
 _PORT = 27017
 
 # Connect to the database.
-# _DB_CLIENT = motor.motor_tornado.MotorClient(_HOST, _PORT)
-_DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(_HOST, _PORT)
+_DB_CLIENT = motor.motor_tornado.MotorClient(_HOST, _PORT)
+# _DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(_HOST, _PORT)
 _DB = _DB_CLIENT.inkweaver
 
 # Define our collections.
@@ -184,17 +184,52 @@ async def update_tail_chapter_of_story(story_id: ObjectId, chapter_id: ObjectId)
     await _STORIES.update_one({'_id': story_id}, {'$set': {'tail_chapter': chapter_id}})
 
 
-async def create_chapter(story_id: ObjectId, title, preceding_id=None, succeeding_id=None) -> ObjectId:
+async def create_chapter(story_id: ObjectId, title: str, preceded_by_id: ObjectId, succeeded_by_id: ObjectId) -> ObjectId:
+    if preceded_by_id is None and succeeded_by_id is None:
+        story = await get_story(story_id)
+        if story['head_chapter'] is not None and story['tail_story'] is not None:
+            raise ValueError("preceding_id and succeeding_id can not both be null when creating a chapter.")
+        else:
+            chapter_id = await _create_chapter(story_id, title, preceded_by_id, succeeded_by_id)
+            await update_head_chapter_of_story(story_id, chapter_id)
+            await update_tail_chapter_of_story(story_id, chapter_id)
+            return chapter_id
+    preceding = await get_chapter(preceded_by_id)
+    succeeding = await get_chapter(succeeded_by_id)
+    if preceding is None:
+        story = await get_story(story_id)
+        if story['head_chapter'] != succeeded_by_id or succeeding['preceded_by'] is not None:
+            raise ValueError("Provided chapter is not the head of the story.")
+        chapter_id = await _create_chapter(story_id, title, preceded_by_id, succeeded_by_id)
+        await update_head_chapter_of_story(story_id, chapter_id)
+        await update_chapters_preceded_by(succeeded_by_id, chapter_id)
+    elif succeeding is None:
+        story = await get_story(story_id)
+        if story['tail_chapter'] != preceded_by_id or preceding['succeeded_by'] is not None:
+            raise ValueError("Provided chapter is not the tail of the story.")
+        chapter_id = await _create_chapter(story_id, title, preceded_by_id, succeeded_by_id)
+        await update_tail_chapter_of_story(story_id, chapter_id)
+        await update_chapters_succeeded_by(preceded_by_id, chapter_id)
+    else:
+        if preceding['succeeded_by'] != succeeded_by_id or succeeding['preceded_by'] != preceded_by_id:
+            raise ValueError("Provided chapters are not adjacent. Cannot insert between the two.")
+        chapter_id = await _create_chapter(story_id, title, preceded_by_id, succeeded_by_id)
+        await update_chapters_preceded_by(succeeded_by_id, chapter_id)
+        await update_chapters_succeeded_by(preceded_by_id, chapter_id)
+    return chapter_id
+
+
+async def _create_chapter(story_id: ObjectId, title: str, preceded_by_id: ObjectId, succeeded_by_id: ObjectId):
     chapter = {
         'story_id':       story_id,
         'title':          title,
         'head_paragraph': None,
         'tail_paragraph': None,
-        'preceded_by':    preceding_id,
-        'succeeded_by':   succeeding_id,
+        'preceded_by':    preceded_by_id,
+        'succeeded_by':   succeeded_by_id,
         'statistics':     None,
     }
-    result = await _CHAPTERS.insert_one(chapter)        # type: pymongo.results.InsertOneResult
+    result = await _CHAPTERS.insert_one(chapter)
     chapter_id = result.inserted_id
     return chapter_id
 
@@ -253,15 +288,50 @@ async def update_chapters_preceded_by(succeeding_id: ObjectId, new_chapter_id: O
     await _CHAPTERS.update_one({'_id': succeeding_id}, {'$set': {'preceded_by': new_chapter_id}})
 
 
-async def create_paragraph(chapter_id: ObjectId, preceding_id=None, succeeding_id=None, text=None):
+async def create_paragraph(chapter_id: ObjectId, text: str, preceded_by_id: ObjectId, succeeded_by_id: ObjectId):
+    if preceded_by_id is None and succeeded_by_id is None:
+        chapter = await get_chapter(chapter_id)
+        if chapter['head_paragraph'] is not None and chapter['tail_paragraph'] is not None:
+            raise ValueError("preceding_id and succeeding_id can not both be null when creating a paragraph.")
+        else:
+            paragraph_id = await _create_paragraph(chapter_id, text, preceded_by_id, succeeded_by_id)
+            await update_head_paragraph_of_chapter(chapter_id, paragraph_id)
+            await update_tail_paragraph_of_chapter(chapter_id, paragraph_id)
+            return paragraph_id
+    preceding = await get_paragraph(preceded_by_id)
+    succeeding = await get_paragraph(succeeded_by_id)
+    if preceding is None:
+        chapter = await get_chapter(chapter_id)
+        if chapter['head_paragraph'] != succeeded_by_id or succeeding['preceded_by'] is not None:
+            raise ValueError("Provided paragraph is not the head of the chapter.")
+        paragraph_id = await _create_paragraph(chapter_id, text, preceded_by_id, succeeded_by_id)
+        await update_head_paragraph_of_chapter(chapter_id, paragraph_id)
+        await update_paragraphs_preceded_by(succeeded_by_id, paragraph_id)
+    elif succeeding is None:
+        chapter = await get_chapter(chapter_id)
+        if chapter['tail_paragraph'] != preceded_by_id or preceding['succeeded_by'] is not None:
+            raise ValueError("Provided paragraph is not the tail of the chapter.")
+        paragraph_id = await _create_paragraph(chapter_id, text, preceded_by_id, succeeded_by_id)
+        await update_tail_paragraph_of_chapter(chapter_id, paragraph_id)
+        await update_paragraphs_succeeded_by(preceded_by_id, paragraph_id)
+    else:
+        if preceding['succeeded_by'] != succeeded_by_id or succeeding['preceded_by'] != preceded_by_id:
+            raise ValueError("Provided paragraph are not adjacent. Cannot insert between the two.")
+        paragraph_id = await _create_paragraph(chapter_id, text, preceded_by_id, succeeded_by_id)
+        await update_paragraphs_preceded_by(succeeded_by_id, paragraph_id)
+        await update_paragraphs_succeeded_by(preceded_by_id, paragraph_id)
+    return paragraph_id
+
+
+async def _create_paragraph(chapter_id: ObjectId, text: str, preceded_by_id: ObjectId, succeeded_by_id: ObjectId):
     paragraph = {
-        'chapter_id': chapter_id,
-        'text':       text,
-        'statistics': None,
-        'preceded_by':  preceding_id,
-        'succeeded_by': succeeding_id,
+        'chapter_id':   chapter_id,
+        'text':         text,
+        'statistics':   None,
+        'preceded_by':  preceded_by_id,
+        'succeeded_by': succeeded_by_id,
     }
-    result = await _PARAGRAPHS.insert_one(paragraph)    # type: pymongo.results.InsertOneResult
+    result = await _PARAGRAPHS.insert_one(paragraph)  # type: pymongo.results.InsertOneResult
     paragraph_id = result.inserted_id
     return paragraph_id
 
@@ -485,7 +555,14 @@ async def update_tail_paragraph_of_section(section_id: ObjectId, new_tail_id: Ob
 
 async def create_wiki_paragraph(section_id: ObjectId, text: str, preceded_by_id: ObjectId, succeeded_by_id: ObjectId):
     if preceded_by_id is None and succeeded_by_id is None:
-        raise ValueError("preceding_id and succeeding_id can not both be null when creating a paragraph.")
+        section = await get_wiki_section(section_id)
+        if section['head_paragraph'] is not None and section['tail_paragraph'] is not None:
+            raise ValueError("preceding_id and succeeding_id can not both be null when creating a paragraph.")
+        else:
+            paragraph_id = await _create_wiki_paragraph(text, preceded_by_id, succeeded_by_id)
+            await update_head_paragraph_of_section(section_id, paragraph_id)
+            await update_tail_paragraph_of_section(section_id, paragraph_id)
+            return paragraph_id
     preceding = await get_wiki_paragraph(preceded_by_id)
     succeeding = await get_wiki_paragraph(succeeded_by_id)
     # Wishes to create paragraph at beginning of section
@@ -497,6 +574,7 @@ async def create_wiki_paragraph(section_id: ObjectId, text: str, preceded_by_id:
         # Create paragraph, update succeeding and section head
         paragraph_id = await _create_wiki_paragraph(text, preceded_by_id, succeeded_by_id)
         await update_head_paragraph_of_section(section_id, paragraph_id)
+        await update_wiki_paragraph_preceded_by(succeeded_by_id, paragraph_id)
     # Wishes to create paragraph at end of section
     elif succeeding is None:
         # Check paragraph is end of section
@@ -506,6 +584,7 @@ async def create_wiki_paragraph(section_id: ObjectId, text: str, preceded_by_id:
         # Create paragraph, update preceding and section tail
         paragraph_id = await _create_wiki_paragraph(text, preceded_by_id, succeeded_by_id)
         await update_tail_paragraph_of_section(section_id, paragraph_id)
+        await update_wiki_paragraph_succeeded_by(preceded_by_id, paragraph_id)
     # Wish to create paragraph between two paragraphs
     else:
         # Check adjacency of paragraphs
