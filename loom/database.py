@@ -187,7 +187,7 @@ async def update_tail_chapter_of_story(story_id: ObjectId, chapter_id: ObjectId)
 async def create_chapter(story_id: ObjectId, title: str, preceded_by_id: ObjectId, succeeded_by_id: ObjectId) -> ObjectId:
     if preceded_by_id is None and succeeded_by_id is None:
         story = await get_story(story_id)
-        if story['head_chapter'] is not None and story['tail_story'] is not None:
+        if story['head_chapter'] is not None and story['tail_chapter'] is not None:
             raise ValueError("preceding_id and succeeding_id can not both be null when creating a chapter.")
         else:
             chapter_id = await _create_chapter(story_id, title, preceded_by_id, succeeded_by_id)
