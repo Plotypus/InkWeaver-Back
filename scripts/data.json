@@ -1,6 +1,6 @@
 [
   {
-    "datatype": "user",
+    "datatype": "default_user",
     "identifier": "user1",
     "values": {
       "username": "dadams",

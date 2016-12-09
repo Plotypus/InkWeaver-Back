@@ -80,7 +80,12 @@ async def process_datafile(jsonfile):
                     values[key] = db_id
                 else:
                     print("No corresponding database ID for identifier: {}".format(val))
-        if datatype == 'user':
+        if datatype == 'default_user':
+            user_id = await database.create_default_user(**values)
+            ids[identifier] = user_id
+            if first_user is None:
+                first_user = user_id
+        elif datatype == 'user':
             user_id = await database.create_user(**values)
             ids[identifier] = user_id
             if first_user is None:
@@ -116,7 +121,7 @@ def main(jsonfile, bookdir):
     old_client = database._DB_CLIENT
     print("old type: {}".format(type(database._DB_CLIENT)))
     database._DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(database.get_db_host(), database.get_db_port())
-    database.update_collections()
+    database.update_connections()
     print("new type: {}".format(type(database._DB_CLIENT)))
 
     event_loop = asyncio.get_event_loop()
