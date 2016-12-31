@@ -264,16 +264,28 @@ class LoomMongoDBClient:
         return result.inserted_id
 
     async def create_section(self, title: str, content_id: ObjectId, _id=None) -> ObjectId:
-        # TODO: Write header doc.
-        """
+        """Inserts a new section to the sections collection.
+
+        Adds a new section to the sections collection. Sections are nodes in a
+        tree that represent a story. Each section can contain text (content) and
+        also sub-sections. As a leaf node, sections can be thought of as a
+        chapter. Pre-sections can be used to represent a prologue and
+        post-sections an epilogue. `_id` is optional, and if provided will add a
+        section to the collection with the given `_id`, otherwise a BSON
+        ObjectId will be generated in its place. Currently, statistics are not
+        implemented.
 
         Args:
-            title:
-            content_id:
-            _id:
+            title: The title of the section.
+            content_id: The unique ID of the list of paragraphs which go in this
+                section before all the sub-sections.
+            _id (ObjectId): `_id` is optional, but if provided will create a
+                section with the provided ObjectId.
 
         Returns:
-
+            The ObjectId that is associated with the newly created section. If
+            `_id` was provided, `_id`, will be returned. Otherwise, the `_id`
+            associated with the section will be returned.
         """
         section = {
             'title':         title,
@@ -289,14 +301,15 @@ class LoomMongoDBClient:
         return result.inserted_id
 
     async def get_story_information(self, story_id: ObjectId):
-        # TODO: Write header doc.
-        """
+        """Grabs the information associated with the provided story.
+
+        Finds the story in the database and returns the document.
 
         Args:
-            story_id:
+            story_id: BSON ObjectId of story to query for.
 
         Returns:
-
+            A copy of the document of the story.
         """
         result = await self.stories.find_one({'_id': story_id})
         return result
@@ -308,18 +321,35 @@ class LoomMongoDBClient:
     ###########################################################################
 
     async def create_wiki(self, title: str, user_description, summary: str, segment_id: ObjectId, _id=None) -> ObjectId:
-        # TODO: Write header doc.
-        """
+        """Inserts a new wiki to the wikis collection.
+
+        Adds a new wiki to the wikis collection. A segment for the wiki should
+        be created before calling this function, in which the `segment_id` is
+        specified. `_id` is optional and if provided will create the wiki with
+        the given `_id`, rather than the generated BSON Object Id. Currently,
+        statistics and settings are unimplemented.
 
         Args:
-            title:
-            user_description:
-            summary:
-            segment_id:
-            _id:
+            title: The title of the wiki.
+            user_description: A dict containing the information of the wiki's
+                owner. A user description contains a `user_id`, `name`, and
+                `access_level`.
+
+                `user_description` args:
+                    user_id (ObjectId): The unique ID of the user.
+                    name (str): The name of the user.
+                    access_level (str): A description of the user's privileges
+                    in the story.
+            summary: A brief summary of the the wiki.
+            segment_id: The unique ID of the wiki's recursive segment
+                representation.
+            _id (ObjectId): `_id` is optional, but if provided will create a
+                wiki with the provided ObjectId.
 
         Returns:
-
+            The ObjectId that is associated with the newly created wiki. If
+            `_id` was provided, `_id` will be returned. Otherwise, a randomly
+            generated BSON ObjectId will be returned.
         """
         wiki = {
             'title':      title,
@@ -335,15 +365,27 @@ class LoomMongoDBClient:
         return result.inserted_id
 
     async def create_segment(self, title: str, _id=None) -> ObjectId:
-        # TODO: Write header doc.
-        """
+        """Inserts a new segment to the segments collection.
+
+        Adds a new segment to the segments collection. Segments are nodes in a
+        tree that represent a wiki. Each segment can contain sub-segments and
+        pages. Segments can be thought of as non-leaf nodes in the tree, where
+        pages are the leaf nodes. `template_headings` track headings that are
+        added to pages when pages are first created. Note, `template_headings`
+        only apply to pages directly under this segment. `_id` is optional, and
+        if provided will add a segment to the collection with the given `_id`,
+        otherwise a BSON ObjectId will be generated in its place. Currently,
+        statistics are not implemented.
 
         Args:
-            title:
-            _id:
+            title: The title of the wiki segment.
+            _id (ObjectId): `_id` is optional, but if provided will create a
+                segment with the provided ObjectId.
 
         Returns:
-
+            The ObjectId that is associated with the newly created segment. If
+            `_id` was provided, `_id`, will be returned. Otherwise, the `_id`
+            associated with the segment will be returned.
         """
         segment = {
             'title':             title,
@@ -358,14 +400,24 @@ class LoomMongoDBClient:
         return result.inserted_id
 
     async def create_page(self, title: str, _id=None) -> ObjectId:
-        # TODO: Write header doc.
-        """
+        """Inserts a new page to the pages collection.
+
+        Adds a new page to the pages collection. Pages are leaf nodes in a tree
+        that represent a wiki. Each page contains `headings`, which hold the
+        content for a wiki page. `_id` is optional, and if provided will add a
+        page to the collection with the given `_id`, otherwise a BSON ObjectId
+        will be generated in its place. Currently, references and aliases are
+        not implemented.
 
         Args:
-            title:
-            _id:
+            title: The title of the wiki page.
+            _id (ObjectId): `_id` is optional, but if provided will create a
+                page with the provided ObjectId.
 
         Returns:
+            The ObjectId that is associated with the newly created page. If
+            `_id` was provided, `_id`, will be returned. Otherwise, the `_id`
+            associated with the page will be returned.
 
         """
         page = {
