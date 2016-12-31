@@ -1,5 +1,4 @@
-import loom.routing
-import loom.database
+from loom import database, routing
 
 import tornado.ioloop
 import tornado.web
@@ -11,11 +10,11 @@ define_option('db-host', default='localhost', help='address of the MongoDB serve
 define_option('db-port', default=27017, help='MongoDB connection port', type=int)
 
 
-def start_server(port, routes):
-    app = tornado.web.Application(routes)
+def start_server(db_client, port, routes):
+    app = tornado.web.Application(routes, {'db_client': db_client})
     app.listen(port)
     print("Starting server at {}:{}".format('localhost', port))
-    print("Using database at {}:{}".format(loom.database.get_db_host(), loom.database.get_db_port()))
+    print("Using database at {}:{}".format(app.settings['db_client'].host, app.settings['db_client'].port))
     print("Press ^C to quit.")
     try:
         tornado.ioloop.IOLoop.current().start()
@@ -28,6 +27,6 @@ def start_server(port, routes):
 if __name__ == '__main__':
     parse_options()
 
-    loom.database.use_tornado(options.db_host, options.db_port)
+    client = database.LoomMongoDBMotorTornadoClient(options.db_host, options.db_port)
 
-    start_server(options.port, loom.routing.ROUTES)
+    start_server(client, options.port, routing.ROUTES)
