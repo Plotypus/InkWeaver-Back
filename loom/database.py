@@ -248,7 +248,9 @@ class LoomMongoDBClient:
             The ObjectId that is associated with the newly created story. If
             `_id` was provided, `_id` will be returned. Otherwise, a randomly
             generated BSON ObjectId will be returned.
+
         """
+        # TODO: Implement statistics and settings.
         story = {
             'title':      title,
             'wiki_id':    wiki_id,
@@ -286,7 +288,9 @@ class LoomMongoDBClient:
             The ObjectId that is associated with the newly created section. If
             `_id` was provided, `_id`, will be returned. Otherwise, the `_id`
             associated with the section will be returned.
+
         """
+        # TODO: Implement statistics.
         section = {
             'title':         title,
             'content_id':    content_id,
@@ -310,6 +314,7 @@ class LoomMongoDBClient:
 
         Returns:
             A copy of the document of the story.
+
         """
         result = await self.stories.find_one({'_id': story_id})
         return result
@@ -326,7 +331,7 @@ class LoomMongoDBClient:
         Adds a new wiki to the wikis collection. A segment for the wiki should
         be created before calling this function, in which the `segment_id` is
         specified. `_id` is optional and if provided will create the wiki with
-        the given `_id`, rather than the generated BSON Object Id. Currently,
+        the given `_id`, rather than the generated BSON ObjectId. Currently,
         statistics and settings are unimplemented.
 
         Args:
@@ -350,7 +355,9 @@ class LoomMongoDBClient:
             The ObjectId that is associated with the newly created wiki. If
             `_id` was provided, `_id` will be returned. Otherwise, a randomly
             generated BSON ObjectId will be returned.
+
         """
+        # TODO: Implement statistics and settings.
         wiki = {
             'title':      title,
             'users':      [user_description],
@@ -386,7 +393,9 @@ class LoomMongoDBClient:
             The ObjectId that is associated with the newly created segment. If
             `_id` was provided, `_id`, will be returned. Otherwise, the `_id`
             associated with the segment will be returned.
+
         """
+        # TODO: Implement statistics.
         segment = {
             'title':             title,
             'segments':          list(),
@@ -420,6 +429,7 @@ class LoomMongoDBClient:
             associated with the page will be returned.
 
         """
+        # TODO: Implement references and aliases.
         page = {
             'title':      title,
             'headings':   list(),
@@ -432,15 +442,25 @@ class LoomMongoDBClient:
         return result.inserted_id
 
     async def create_heading(self, title: str, content_id: ObjectId, _id=None) -> ObjectId:
-        # TODO: Write header doc.
-        """
+        """Inserts a new heading to the headings collection.
+
+        Adds a new heading to the headings collection. Headings are text blocks
+        on a wiki page. For example, "Background" and "Motives" are considered
+        headings. A heading points to a `content` object, which should be
+        created before calling this function, in which the `content_id` is
+        specified. `_id` is optional and if provided will create the heading
+        with the given `_id`, rather than the generated BSON ObjectID.
 
         Args:
-            title:
-            content_id:
-            _id:
+            title: The title of the heading.
+            content_id: The unique ID for the content of this heading.
+            _id (ObjectId): `_id` is optional, but if provided will create a
+                heading with the provided ObjectId.
 
         Returns:
+            The ObjectId that is associated with the newly created heading. If
+            `_id` was provided, `_id` will be returned. Otherwise, a randomly
+            generated BSON ObjectId will be returned.
 
         """
         heading = {
@@ -459,13 +479,22 @@ class LoomMongoDBClient:
     ###########################################################################
 
     async def create_content(self, _id=None) -> ObjectId:
-        # TODO: Write header doc.
-        """
+        """Inserts new content to the content collection.
+
+        Adds new content to the content collection. Content is a collection of
+        paragraphs. Content is used on wiki pages, specifically in a heading.
+        Additionally, content holds the paragraphs for a section. `_id` is
+        optional and if provided will create the content with the given `_id`,
+        rather than the generated BSON ObjectId.
 
         Args:
-            _id:
+            _id (ObjectId): `_id` is optional, but if provided will create a
+                content document with the provided ObjectId.
 
         Returns:
+            The ObjectId tha tis associated with the newly created content
+            document. If `_id` was provided, `_id` will be returned. Otherwise,
+            a randomly generated BSON ObjectId will be returned.
 
         """
         content = {
@@ -477,16 +506,25 @@ class LoomMongoDBClient:
         return result.inserted_id
 
     async def create_paragraph(self, text: str, _id=None) -> ObjectId:
-        # TODO: Write header doc.
-        """
+        """Inserts a new paragraph to the paragraphs collection.
+
+        Adds a new paragraph to the paragraphs collection. Paragraphs hold the
+        text used in content objects. `_id` is optional and if provided will
+        create the paragraph with the given `_id`, rather than the generated
+        BSON ObjectId. Currently, statistics are unimplemented.
 
         Args:
-            text:
-            _id:
+            text: The contents of the paragraph.
+            _id (ObjectId): `_id` is optional, but if provided will create a
+                paragraph with the provided ObjectId.
 
         Returns:
+            The ObjectId that is associated with the newly created paragraph. If
+            `_id` was provided, `_id` will be returned. Otherwise, a randomly
+            generated BSON ObjectId will be returned.
 
         """
+        # TODO: Implement statistics.
         paragraph = {
             'text':       text,
             'statistics': None,
