@@ -304,7 +304,7 @@ class LoomMongoDBClient:
         result = await self.sections.insert_one(section)
         return result.inserted_id
 
-    async def get_story_information(self, story_id: ObjectId):
+    async def get_story(self, story_id: ObjectId) -> Dict:
         """Grabs the information associated with the provided story.
 
         Finds the story in the database and returns the document.
@@ -317,6 +317,19 @@ class LoomMongoDBClient:
 
         """
         result = await self.stories.find_one({'_id': story_id})
+        return result
+
+    async def get_section(self, section_id: ObjectId) -> Dict:
+        # TODO: Add docstring
+        """
+
+        Args:
+            section_id:
+
+        Returns:
+
+        """
+        result = await self.sections.find_one({'_id': section_id})
         return result
 
     ###########################################################################
@@ -472,6 +485,58 @@ class LoomMongoDBClient:
         result = await self.headings.insert_one(heading)
         return result.inserted_id
 
+    async def get_wiki(self, wiki_id: ObjectId) -> Dict:
+        # TODO: Add docstring
+        """
+
+        Args:
+            wiki_id:
+
+        Returns:
+
+        """
+        result = await self.wikis.find_one({'_id': wiki_id})
+        return result
+
+    async def get_segment(self, segment_id: ObjectId) -> Dict:
+        # TODO: Add docstring
+        """
+
+        Args:
+            segment_id:
+
+        Returns:
+
+        """
+        result = await self.segments.find_one({'_id': segment_id})
+        return result
+
+    async def get_page(self, page_id: ObjectId) -> Dict:
+        # TODO: Add docstring
+        """
+
+        Args:
+            page_id:
+
+        Returns:
+
+        """
+        result = await self.pages.find_one({'_id': page_id})
+        return result
+
+    async def get_heading(self, heading_id: ObjectId) -> Dict:
+        # TODO: Add docstring
+        """
+
+        Args:
+            heading_id:
+
+        Returns:
+
+        """
+        result = await self.headings.find_one({'_id': heading_id})
+        return result
+
     ###########################################################################
     #
     # Content Methods
@@ -534,6 +599,31 @@ class LoomMongoDBClient:
         result = await self.paragraphs.insert_one(paragraph)
         return result.inserted_id
 
+    async def get_content(self, content_id: ObjectId) -> Dict:
+        # TODO: Add docstring
+        """
+
+        Args:
+            content_id:
+
+        Returns:
+
+        """
+        result = await self.content.find_one({'_id': content_id})
+        return result
+
+    async def get_paragraph(self, paragraph_id: ObjectId) -> Dict:
+        # TODO: Add docstring
+        """
+
+        Args:
+            paragraph_id:
+
+        Returns:
+
+        """
+        result = await self.paragraphs.find_one({'_id': paragraph_id})
+        return result
 
 class LoomMongoDBMotorTornadoClient(LoomMongoDBClient):
     def __init__(self, collection='inkweaver', host='localhost', port=27017):
