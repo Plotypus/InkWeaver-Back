@@ -62,6 +62,9 @@ class LoomMongoDBClient:
     def paragraphs(self) -> AgnosticCollection:
         return self.collection.paragraphs
 
+    async def drop_database(self):
+        await self.client.drop_database(self.collection)
+
     ###########################################################################
     #
     # User Methods
