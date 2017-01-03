@@ -182,8 +182,9 @@ class LoomHandler(GenericHandler):
     ## User Information
 
     @requires_login
-    def get_user_preferences(self, message_id):
-        pass
+    async def get_user_preferences(self, message_id):
+        preferences = await self.db_client.get_user_preferences(self.user_id)
+        self.write_json(preferences, with_reply_id=message_id)
 
     @requires_login
     def get_user_stories(self, message_id):
