@@ -1,7 +1,10 @@
 # Travis-CI Settings
 language: python
 python:
-  - "3.5"
+  - 3.5
+
+services:
+  - mongodb
 
 # Install dependencies
 install:
