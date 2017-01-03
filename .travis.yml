@@ -2,7 +2,6 @@
 language: python
 python:
   - 3.5
-
 services:
   - mongodb
 
@@ -12,3 +11,11 @@ install:
 
 # Run tests
 script: pytest
+
+# Send notifications
+notifications:
+  slack:
+    rooms:
+      secure: fCPapYY3ots+HJBTHMvwr1McnNVodaLPnjySHcmENRarNp17nw3T6Scm61Rpzzeyifh5gKuyfKnR4fi7Ll74bN8bGFn1NUAdoYKxhbXJJzk07skkd1O1WONCHHLMEj/kWNVcFcVrgm9DNGxLIzlcGPeTtH1wTpNq4ijDKhms8b027RPyFsjnBv8yeQBSg7ckfMNxM+tjlBnahcoNHxg16ONdlRGrRxwHyh36f6ZHc9d4Ob/Szqth76rxDfizuGc7NvvL1vznhfNPpcxPO0mlb/wbuu3aOL+HhCoU6QZZOiGtSkLIWomuRvTyyAMpnTWZdhsGtaIO1740OdqqZX2HJUn5axRkRCJUaY/s+3tmwRRHYErERmROjGTIglf//TJcry3CWlpZFJ1Lo6qs8vkq5DFz7w0Q5ygTsmvWll54FmymGzxiysHUXRFis4YaSu/MKV/x4XLYEAeDm8RSe+/C1gbAdh7A+DEawlcyObVGr/dL8vp/giqH4KtpEZ9UGUx+usEMTzTRdmZjmjLXMDdPG2prJrLDon8Qk3ZkAcWoTzoGH7dMlSdDFaxLrQB8NT/Um9+hU27eQi88H+yBS7Noobo/6HkFRShWGtJtBPjXVmi3HBr3lAl3LAqTa8M+IajUNQipILg3ZP4pJWV/FqHJv7hNxlunsI/K7kwB8+7i3O0=
+    on_success: always
+    on_failure: always
