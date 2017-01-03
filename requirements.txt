@@ -2,4 +2,6 @@ decorator==4.0.10
 motor==1.0
 pytest==3.0.5
 pytest-asyncio==0.5.0
+pytest-cov==2.4.0
+python-coveralls==2.9.0
 tornado==4.4.1
