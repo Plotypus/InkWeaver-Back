@@ -1,7 +1,8 @@
-from.GenericHandler import *
+from .GenericHandler import *
 
-import loom.database
+from loom.database import LoomMongoDBClient
 
+from bson import ObjectId
 from decorator import decorator
 from inspect import signature
 from tornado.ioloop import IOLoop
@@ -80,9 +81,19 @@ class LoomHandler(GenericHandler):
         json = self.encode_json(response)
         self.write_message(json)
 
-    def write_json(self, data: Dict):
+    def write_json(self, data: Dict, with_reply_id=None):
+        if with_reply_id is not None:
+            data.update({'reply_to_id': with_reply_id})
         json_string = self.encode_json(data)
         self.write_message(json_string)
+
+    @property
+    def db_client(self) -> LoomMongoDBClient:
+        return self.settings['db_client']
+
+    @property
+    def user_id(self) -> ObjectId:
+        pass
 
     ############################################################
     ##
