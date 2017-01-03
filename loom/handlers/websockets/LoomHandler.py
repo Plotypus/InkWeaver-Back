@@ -187,8 +187,24 @@ class LoomHandler(GenericHandler):
         self.write_json(preferences, with_reply_id=message_id)
 
     @requires_login
-    def get_user_stories(self, message_id):
-        pass
+    async def get_user_stories(self, message_id):
+        story_ids = await self.db_client.get_user_story_ids(self.user_id)
+        stories = []
+        for story_id in story_ids:
+            story = await self.db_client.get_story(story_id)
+            users = story['users']
+            access_level = None
+            for user in users:
+                if user['_id'] == self.user_id:
+                    access_level = user['access_level']
+                    break
+            stories.append({
+                'story_id':     story['_id'],
+                'title':        story['title'],
+                'access_level': access_level,
+            })
+        message = {'stories': stories}
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     def get_user_wikis(self, message_id):
