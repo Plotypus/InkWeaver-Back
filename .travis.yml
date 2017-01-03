@@ -12,6 +12,9 @@ install:
 # Run tests
 script: pytest --cov=loom
 
+# Push to coveralls.io upon completion
+after_script: coveralls
+
 # Send notifications
 notifications:
   slack:
