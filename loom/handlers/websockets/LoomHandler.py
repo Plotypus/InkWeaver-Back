@@ -179,6 +179,11 @@ class LoomHandler(GenericHandler):
     ##
     ############################################################
 
+    def _get_current_user_access_level_in_object(self, obj):
+        for user in obj['users']:
+            if user['_id'] == self.user_id:
+                return user['access_level']
+
     ## User Information
 
     @requires_login
@@ -221,12 +226,7 @@ class LoomHandler(GenericHandler):
                 obj = await self.db_client.get_wiki(object_id)
             else:
                 raise ValueError("invalid object type: {}".format(object_type))
-            users = obj['users']
-            access_level = None
-            for user in users:
-                if user['_id'] == self.user_id:
-                    access_level = user['access_level']
-                    break
+            access_level = self._get_current_user_access_level_in_object(obj)
             objects.append({
                 'story_id':     obj['_id'],
                 'title':        obj['title'],
@@ -237,8 +237,17 @@ class LoomHandler(GenericHandler):
     ## Stories
 
     @requires_login
-    def get_story_information(self, message_id, story_id):
-        pass
+    async def get_story_information(self, message_id, story_id):
+        story = await self.db_client.get_story(story_id)
+        message = {
+            'story_title':  story['title'],
+            'access_level': self._get_current_user_access_level_in_object(story),
+            'section_id':   story['section_id'],
+            'wiki_id':      story['wiki_id'],
+            'users':        story['users'],
+            'summary':      story['summary'],
+        }
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     def get_section_hierarchy(self, message_id, section_id):
