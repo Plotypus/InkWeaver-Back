@@ -411,7 +411,7 @@ class LoomMongoDBClient:
             associated with the segment will be returned.
 
         """
-        # TODO: Implement statistics.
+        # TODO: Implement statistics. 
         segment = {
             'title':             title,
             'segments':          list(),
