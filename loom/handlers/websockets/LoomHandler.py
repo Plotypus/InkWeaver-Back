@@ -260,8 +260,16 @@ class LoomHandler(GenericHandler):
     ## Wikis
 
     @requires_login
-    def get_wiki_information(self, message_id, wiki_id):
-        pass
+    async def get_wiki_information(self, message_id, wiki_id):
+        wiki = await self.db_client.get_wiki(wiki_id)
+        message = {
+            'wiki_title':   wiki['title'],
+            'access_level': self._get_current_user_access_level_in_object(wiki),
+            'segment_id':   wiki['segment_id'],
+            'users':        wiki['users'],
+            'summary':      wiki['summary',]
+        }
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     def get_wiki_segment_hierarchy(self, message_id, segment_id):
