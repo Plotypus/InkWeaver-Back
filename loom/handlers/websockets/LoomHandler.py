@@ -189,30 +189,50 @@ class LoomHandler(GenericHandler):
     @requires_login
     async def get_user_stories(self, message_id):
         story_ids = await self.db_client.get_user_story_ids(self.user_id)
-        stories = []
-        for story_id in story_ids:
-            story = await self.db_client.get_story(story_id)
-            users = story['users']
+        stories = await self._get_stories_or_wikis_by_ids(story_ids, 'story')
+        message = {'stories': stories}
+        self.write_json(message, with_reply_id=message_id)
+
+    @requires_login
+    async def get_user_wikis(self, message_id):
+        wiki_ids = await self.db_client.get_user_wiki_ids(self.user_id)
+        wikis = await self._get_stories_or_wikis_by_ids(wiki_ids, 'wiki')
+        message = {'wikis': wikis}
+        self.write_json(message, with_reply_id=message_id)
+
+    @requires_login
+    async def get_user_stories_and_wikis(self, message_id):
+        story_ids = await self.db_client.get_user_story_ids(self.user_id)
+        wiki_ids = await self.db_client.get_user_wiki_ids(self.user_id)
+        stories = await self._get_stories_or_wikis_by_ids(story_ids, 'story')
+        wikis = await self._get_stories_or_wikis_by_ids(wiki_ids, 'wiki')
+        message = {
+            'stories': stories,
+            'wikis': wikis,
+        }
+        self.write_json(message, with_reply_id=message_id)
+
+    async def _get_stories_or_wikis_by_ids(self, object_ids, object_type):
+        objects = []
+        for object_id in object_ids:
+            if object_type == 'story':
+                obj = await self.db_client.get_story(object_id)
+            elif object_type == 'wiki':
+                obj = await self.db_client.get_wiki(object_id)
+            else:
+                raise ValueError("invalid object type: {}".format(object_type))
+            users = obj['users']
             access_level = None
             for user in users:
                 if user['_id'] == self.user_id:
                     access_level = user['access_level']
                     break
-            stories.append({
-                'story_id':     story['_id'],
-                'title':        story['title'],
+                objects.append({
+                'story_id':     obj['_id'],
+                'title':        obj['title'],
                 'access_level': access_level,
-            })
-        message = {'stories': stories}
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    def get_user_wikis(self, message_id):
-        pass
-
-    @requires_login
-    def get_user_stories_and_wikis(self, message_id):
-        pass
+                })
+        return objects
 
     ## Stories
 
