@@ -1,0 +1,14 @@
+# Travis-CI Settings
+language: python
+python:
+  - 3.5
+
+services:
+  - mongodb
+
+# Install dependencies
+install:
+  - pip install -r requirements.txt
+
+# Run tests
+script: pytest
