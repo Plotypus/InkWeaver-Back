@@ -227,11 +227,11 @@ class LoomHandler(GenericHandler):
                 if user['_id'] == self.user_id:
                     access_level = user['access_level']
                     break
-                objects.append({
+            objects.append({
                 'story_id':     obj['_id'],
                 'title':        obj['title'],
                 'access_level': access_level,
-                })
+            })
         return objects
 
     ## Stories
