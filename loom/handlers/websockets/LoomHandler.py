@@ -260,7 +260,7 @@ class LoomHandler(GenericHandler):
         section = await self.db_client.get_section(section_id)
         if section is not None:
             hierarchy = {
-                'title': section['title'],
+                'title':      section['title'],
                 'section_id': section_id,
                 'pre_sections':
                     [await self._get_section_hierarchy(pre_sec_id) for pre_sec_id in section['pre_sections']],
@@ -292,8 +292,31 @@ class LoomHandler(GenericHandler):
         self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    def get_wiki_segment_hierarchy(self, message_id, segment_id):
-        pass
+    async def get_wiki_segment_hierarchy(self, message_id, segment_id):
+        message = {
+            'hierarchy': await self._get_wiki_segment_hierarchy(segment_id)
+        }
+        self.write_json(message, with_reply_id=message_id)
+
+    async def _get_wiki_segment_hierarchy(self, segment_id):
+        segment = await self.db_client.get_segment(segment_id)
+        if segment is not None:
+            hierarchy = {
+                'title':      segment['title'],
+                'segment_id': segment_id,
+                'segments':   [await self._get_wiki_segment_hierarchy(seg_id) for seg_id in segment['segments']],
+                'pages':      [await self._get_wiki_page_for_hierarchy(page_id) for page_id in segment['pages']],
+            }
+            return hierarchy
+        else:
+            raise ValueError("invalid segment ID: {}".format(segment_id))
+
+    async def _get_wiki_page_for_hierarchy(self, page_id):
+        page = await self.db_client.get_page(page_id)
+        return {
+            'title':   page['title'],
+            'page_id': page_id,
+        }
 
     @requires_login
     def get_wiki_page(self, message_id, page_id):
