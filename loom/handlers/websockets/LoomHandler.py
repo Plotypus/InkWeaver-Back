@@ -250,8 +250,28 @@ class LoomHandler(GenericHandler):
         self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    def get_section_hierarchy(self, message_id, section_id):
-        pass
+    async def get_section_hierarchy(self, message_id, section_id):
+        message = {
+            'hierarchy': await self._get_section_hierarchy(section_id)
+        }
+        self.write_json(message, with_reply_id=message_id)
+
+    async def _get_section_hierarchy(self, section_id):
+        section = await self.db_client.get_section(section_id)
+        if section is not None:
+            hierarchy = {
+                'title': section['title'],
+                'section_id': section_id,
+                'pre_sections':
+                    [await self._get_section_hierarchy(pre_sec_id) for pre_sec_id in section['pre_sections']],
+                'sections':
+                    [await self._get_section_hierarchy(sec_id) for sec_id in section['sections']],
+                'post_sections':
+                    [await self._get_section_hierarchy(post_sec_id) for post_sec_id in section['post_sections']],
+            }
+            return hierarchy
+        else:
+            raise ValueError("invalid section ID: {}".format(section_id))
 
     @requires_login
     def get_section_content(self, message_id, section_id):
