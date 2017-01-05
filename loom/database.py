@@ -489,52 +489,60 @@ class LoomMongoDBClient:
         return result.inserted_id
 
     async def get_wiki(self, wiki_id: ObjectId) -> Dict:
-        # TODO: Add docstring
-        """
+        """Grabs the information associated with the provided wiki.
+
+        Finds the wiki in the database and returns the document.
 
         Args:
-            wiki_id:
+            wiki_id: BSON ObjectId of wiki to query for.
 
         Returns:
+            A copy of the document of the wiki.
 
         """
         result = await self.wikis.find_one({'_id': wiki_id})
         return result
 
     async def get_segment(self, segment_id: ObjectId) -> Dict:
-        # TODO: Add docstring
-        """
+        """Grabs the information associated with the provided segment.
+
+        Finds the segment in the database and returns the document.
 
         Args:
-            segment_id:
+            segment_id: BSON ObjectId of segment to query for.
 
         Returns:
+            A copy of the document of the segment.
 
         """
         result = await self.segments.find_one({'_id': segment_id})
         return result
 
     async def get_page(self, page_id: ObjectId) -> Dict:
-        # TODO: Add docstring
-        """
+        """Grabs the information associated with the provided page.
+
+        Finds the page in the database and returns the document.
 
         Args:
-            page_id:
+            page_id: BSON ObjectId of page to query for.
 
         Returns:
+            A copy of the document of the page.
 
         """
         result = await self.pages.find_one({'_id': page_id})
         return result
 
     async def get_heading(self, heading_id: ObjectId) -> Dict:
-        # TODO: Add docstring
-        """
+        """Grabs the information associated with the provided heading.
+
+        Finds the heading int he database and returns the document.
 
         Args:
-            heading_id:
+            heading_id: BSON ObjectId of heading to query for.
 
         Returns:
+            A copy of the document of the heading.
 
         """
         result = await self.headings.find_one({'_id': heading_id})
@@ -603,26 +611,30 @@ class LoomMongoDBClient:
         return result.inserted_id
 
     async def get_content(self, content_id: ObjectId) -> Dict:
-        # TODO: Add docstring
-        """
+        """Grabs the information associated with the provided content.
+
+        Finds the content in the database and returns the document.
 
         Args:
-            content_id:
+            content_id: BSON ObjectId of content to query for.
 
         Returns:
+            A copy of the document of the content.
 
         """
         result = await self.content.find_one({'_id': content_id})
         return result
 
     async def get_paragraph(self, paragraph_id: ObjectId) -> Dict:
-        # TODO: Add docstring
-        """
+        """Grabs the information associated with the provided paragraph.
+
+        Finds the paragraph in the database and returns the document.
 
         Args:
-            paragraph_id:
+            paragraph_id: BSON ObjectId of paragraph to query for.
 
         Returns:
+            A copy of the document of the paragraph.
 
         """
         result = await self.paragraphs.find_one({'_id': paragraph_id})
