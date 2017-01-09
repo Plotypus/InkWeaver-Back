@@ -237,6 +237,26 @@ class LoomHandler(GenericHandler):
     ## Stories
 
     @requires_login
+    async def create_story(self, message_id, title, wiki_id, summary):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def add_presection(self, message_id, title, to_parent):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def add_subsection(self, message_id, title, to_parent):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def add_postsection(self, message_id, title, to_parent):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
     async def get_story_information(self, message_id, story_id):
         story = await self.db_client.get_story(story_id)
         message = {
@@ -275,9 +295,25 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     def get_section_content(self, message_id, section_id):
+        # TODO: Implement this.
         pass
 
     ## Wikis
+
+    @requires_login
+    async def create_wiki(self, message_id, title, summary):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def add_segment(self, message_id, title, to_parent):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def add_page(self, message_id, title, to_parent):
+        # TODO: Implement this.
+        pass
 
     @requires_login
     async def get_wiki_information(self, message_id, wiki_id):
@@ -320,6 +356,7 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     def get_wiki_page(self, message_id, page_id):
+        # TODO: Implement this.
         pass
 
     DISPATCH = {
