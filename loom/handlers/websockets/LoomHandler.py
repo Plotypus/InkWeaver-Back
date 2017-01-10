@@ -1,7 +1,8 @@
-from.GenericHandler import *
+from .GenericHandler import *
 
-import loom.database
+from loom.database import LoomMongoDBClient
 
+from bson import ObjectId
 from decorator import decorator
 from inspect import signature
 from tornado.ioloop import IOLoop
@@ -39,21 +40,6 @@ class LoomWSNoLoginError(LoomWSError):
     pass
 
 
-class LoomWSBadContextError(LoomWSError):
-    """
-    A generic class of errors for whenever there is an incomplete context.
-    """
-    pass
-
-
-class LoomWSNoStoryError(LoomWSBadContextError):
-    pass
-
-
-class LoomWSNoChapterError(LoomWSBadContextError):
-    pass
-
-
 ############################################################
 ##
 ## LoomHandler decorators
@@ -69,22 +55,6 @@ def requires_login(func, *args, **kwargs):
     return func(*args, **kwargs)
 
 
-@decorator
-def requires_story_context(func, *args, **kwargs):
-    self = args[0]
-    if self.story is None:
-        raise LoomWSNoStoryError
-    return func(*args, **kwargs)
-
-
-@decorator
-def requires_chapter_context(func, *args, **kwargs):
-    self = args[0]
-    if self.chapter is None:
-        raise LoomWSNoChapterError
-    return func(*args, **kwargs)
-
-
 class LoomHandler(GenericHandler):
 
     ############################################################
@@ -94,20 +64,11 @@ class LoomHandler(GenericHandler):
     ############################################################
 
     def open(self):
+        # TODO: Check for secure cookies and finish login procedure.
+        self.user = None
         super().open()
         # By default, small messages are coalesced. This can cause delay. We don't want delay.
         self.set_nodelay(True)
-        # Initialize stateful attributes.
-        self.user = None
-
-        self.stories = None
-        self.story = None
-        self.chapters = None
-        self.chapter = None
-        self.paragraphs = None
-
-        self.wiki_segments = None
-        self.wiki_pages = None
 
     def on_failure(self, reply_to=None, reason=None, **fields):
         response = {
@@ -120,130 +81,19 @@ class LoomHandler(GenericHandler):
         json = self.encode_json(response)
         self.write_message(json)
 
-    def write_json(self, data: dict):
+    def write_json(self, data: Dict, with_reply_id=None):
+        if with_reply_id is not None:
+            data.update({'reply_to_id': with_reply_id})
         json_string = self.encode_json(data)
         self.write_message(json_string)
 
-    ############################################################
-    ##
-    ## Private helper methods
-    ##
-    ############################################################
+    @property
+    def db_client(self) -> LoomMongoDBClient:
+        return self.settings['db_client']
 
-    def _get_id_for_client_from_stories(self, story_id):
-        for c_id, s_id in self.stories.items():
-            if s_id == story_id:
-                return c_id
-        raise ValueError("{} does not exist in stories".format(story_id))
-
-    def _get_id_for_client_from_wikis(self, wiki_id):
-        # TODO: Fix this, please.
-        return wiki_id
-        # for w_id, wiki_summary in self.wiki_segments.items():
-        #     if w_id == wiki_id:
-        #         return wiki_summary
-        # raise ValueError("{} does not exist in wikis".format(wiki_id))
-
-    async def _create_story_ids_mapping(self):
-        story_summaries = []
-        for story_id in self.user['stories']:
-            summary = await loom.database.get_story_summary(story_id)
-            story_summaries.append(summary)
-        self.stories = {rand_id: story_summary for (rand_id, story_summary) in enumerate(story_summaries)}
-
-    async def _create_wiki_ids_mapping(self):
-        wiki_summaries = []
-        for wiki_id in self.user['wikis']:
-            summary = await loom.database.get_wiki_segment_summary(wiki_id)
-            wiki_summaries.append(summary)
-        self.wiki_segments = {wiki_summary['id']: wiki_summary for wiki_summary in wiki_summaries}
-
-
-    async def _create_chapter_ids_mapping(self):
-        chapter_summaries = await loom.database.get_all_chapter_summaries(self.story['_id'])
-        self.chapters = {rand_id: chapter_summary for (rand_id, chapter_summary) in enumerate(chapter_summaries)}
-
-    async def _create_paragraph_ids_mapping(self):
-        paragraph_summaries = await loom.database.get_all_paragraph_summaries(self.chapter['_id'])
-        self.paragraphs = {rand_id: para_summary for (rand_id, para_summary) in enumerate(paragraph_summaries)}
-
-    def _get_story_summaries(self):
-        summaries = []
-        for c_id, summary in self.stories.items():
-            # Replace the database id with the mapped id
-            summary_copy = summary.copy()
-            summary_copy['id'] = c_id
-            summaries.append(summary_copy)
-        return summaries
-
-    def _get_wiki_summaries(self):
-        # TODO: Uncomment when wikis are implemented
-        # summaries = []
-        # for c_id, summary in self.wikis.items():
-        #     # Replace the database id with the mapped id
-        #     summary_copy = summary.copy()
-        #     summary_copy['id'] = c_id
-        #     summaries.append(summary_copy)
-        # return summaries
-        return self.wiki_segments.keys()
-
-    def _get_chapter_summaries(self):
-        summaries = []
-        for c_id, summary in self.chapters.items():
-            summary_copy = summary.copy()
-            summary_copy['id'] = c_id
-            summaries.append(summary_copy)
-        return summaries
-
-    def _get_paragraph_summaries(self):
-        summaries = []
-        for c_id, summary in self.paragraphs.items():
-            summary_copy = summary.copy()
-            summary_copy['id'] = c_id
-            summaries.append(summary_copy)
-        return summaries
-
-    def _format_story_response(self, message_id, story):
-        client_wiki_id = story['wiki_id']
-        data = {
-            'reply_to':         message_id,
-            'title':            story['title'],
-            # 'owner':            self.story['owner'],
-            # 'coauthors':        self.story['collaborators'],
-            'owner':            None,  # TODO: Resolve these
-            'coauthors':        None,
-            'statistics':       story['statistics'],
-            'settings':         story['settings'],
-            'synopsis':         story['synopsis'],
-            'wiki':             client_wiki_id,
-        }
-        return data
-
-    def _format_chapter_response(self, message_id, chapter):
-        data = {
-            'reply_to':     message_id,
-            'title':        chapter['title'],
-            'statistics':   chapter['statistics'],
-        }
-        return data
-
-    async def _get_wiki_segment_hierarchy(self, wiki_segment):
-        hierarchy = {}
-        segment = await loom.database.get_wiki_segment(wiki_segment)
-        if segment is not None:
-            hierarchy['id'] = segment['_id']
-            hierarchy['title'] = segment['title']
-            hierarchy['pages'] = []
-            for page in segment['pages']:
-                hierarchy['pages'].append(await self._get_wiki_page_summary_for_hierarchy(page))
-            hierarchy['segments'] = []
-            for sub_segment in segment['segments']:
-                hierarchy['segments'].append(await self._get_wiki_segment_hierarchy(sub_segment))
-        return hierarchy
-
-    async def _get_wiki_page_summary_for_hierarchy(self, wiki_page):
-        page_summary = await loom.database.get_wiki_page_summary(wiki_page)
-        return page_summary
+    @property
+    def user_id(self) -> ObjectId:
+        pass
 
     ############################################################
     ##
@@ -259,7 +109,7 @@ class LoomHandler(GenericHandler):
         except:
             self.on_failure(reason="Message received was not valid JSON.", received_message=message)
             return
-        # on_message may not be a coroutine (as of Tornado 4.3).
+        # `on_message` may not be a coroutine (as of Tornado 4.3).
         # To work around this, we call spawn_callback to start a coroutine.
         # However, this results in errors not propagating back up.
         # Side effect: More messages may be received before the one below is fully executed.
@@ -272,6 +122,7 @@ class LoomHandler(GenericHandler):
     async def handle_message(self, message: JSON):
         message_id = message.get('message_id', None)
         try:
+            # Remove the `action` key/value. It's only needed for dispatch, so the dispatch methods don't use it.
             action = message.pop('action')
         except KeyError:
             self.on_failure(reply_to=message_id, reason="`action` field not supplied")
@@ -318,326 +169,210 @@ class LoomHandler(GenericHandler):
                         raise
             except LoomWSNoLoginError:
                 self.on_failure(message_id, "not logged in")
-            except LoomWSNoStoryError:
-                self.on_failure(message_id, "no story loaded")
-            except LoomWSBadContextError:
-                self.on_failure(message_id, "incorrect context for given request")
         except KeyError:
             # The method is not implemented.
             raise LoomWSUnimplementedError
 
+    ############################################################
+    ##
+    ## Protocol implementation
+    ##
+    ############################################################
+
+    def _get_current_user_access_level_in_object(self, obj):
+        for user in obj['users']:
+            if user['_id'] == self.user_id:
+                return user['access_level']
+
+    ## User Information
+
     @requires_login
-    async def get_user_info(self, message_id):
-        data = {
-            'reply_to':         message_id,
-            'username':         self.user['username'],
-            'avatar':           self.user['avatar'],
-            'email':            self.user['email'],
-            'name':             self.user['name'],
-            'pen_name':         self.user['pen_name'],
-            'stories':          self._get_story_summaries(),
-            'wikis':            self._get_wiki_summaries(),
-            'bio':              self.user['bio'],
-            'statistics':       self.user['statistics'],
-            'preferences':      self.user['preferences'],
+    async def get_user_preferences(self, message_id):
+        preferences = await self.db_client.get_user_preferences(self.user_id)
+        self.write_json(preferences, with_reply_id=message_id)
+
+    @requires_login
+    async def get_user_stories(self, message_id):
+        story_ids = await self.db_client.get_user_story_ids(self.user_id)
+        stories = await self._get_stories_or_wikis_by_ids(story_ids, 'story')
+        message = {'stories': stories}
+        self.write_json(message, with_reply_id=message_id)
+
+    @requires_login
+    async def get_user_wikis(self, message_id):
+        wiki_ids = await self.db_client.get_user_wiki_ids(self.user_id)
+        wikis = await self._get_stories_or_wikis_by_ids(wiki_ids, 'wiki')
+        message = {'wikis': wikis}
+        self.write_json(message, with_reply_id=message_id)
+
+    @requires_login
+    async def get_user_stories_and_wikis(self, message_id):
+        story_ids = await self.db_client.get_user_story_ids(self.user_id)
+        wiki_ids = await self.db_client.get_user_wiki_ids(self.user_id)
+        stories = await self._get_stories_or_wikis_by_ids(story_ids, 'story')
+        wikis = await self._get_stories_or_wikis_by_ids(wiki_ids, 'wiki')
+        message = {
+            'stories': stories,
+            'wikis': wikis,
         }
-        self.write_json(data)
+        self.write_json(message, with_reply_id=message_id)
 
-    @requires_login
-    async def load_story(self, message_id, story):
-        story_summary = self.stories.get(story)
-        if story_summary:
-            story_id = story_summary['id']
-            self.story = await loom.database.get_story(story_id)
-            data = self._format_story_response(message_id, self.story)
-            self.write_json(data)
-        else:
-            self.on_failure(message_id, "Story does not exist")
-
-    @requires_login
-    @requires_story_context
-    async def get_chapters(self, message_id):
-        await self._create_chapter_ids_mapping()
-        chapter_summaries = self._get_chapter_summaries()
-        data = {
-            'reply_to': message_id,
-            'chapters': chapter_summaries,
-        }
-        self.write_json(data)
-
-    @requires_login
-    async def load_story_with_chapters(self, message_id, story):
-        story_summary = self.stories.get(story)
-        if story_summary:
-            story_id = story_summary['id']
-            self.story = await loom.database.get_story(story_id)
-            data = self._format_story_response(message_id, self.story)
-            await self._create_chapter_ids_mapping()
-            chapter_summaries = self._get_chapter_summaries()
-            data['chapters'] = chapter_summaries
-            self.write_json(data)
-        else:
-            self.on_failure(message_id, "Story does not exist")
-
-    @requires_login
-    @requires_story_context
-    async def load_chapter(self, message_id, chapter):
-        chapter_summary = self.chapters.get(chapter)
-        if chapter_summary:
-            chapter_id = chapter_summary['id']
-            self.chapter = await loom.database.get_chapter(chapter_id)
-            data = self._format_chapter_response(message_id, self.chapter)
-            self.write_json(data)
-        else:
-            self.on_failure(message_id, "Chapter does not exist")
-
-    @requires_login
-    @requires_story_context
-    @requires_chapter_context
-    async def get_paragraphs(self, message_id):
-        await self._create_paragraph_ids_mapping()
-        paragraph_summaries = self._get_paragraph_summaries()
-        data = {
-            'reply_to': message_id,
-            'paragraphs': paragraph_summaries,
-        }
-        self.write_json(data)
-
-    @requires_login
-    @requires_story_context
-    async def load_chapter_with_paragraphs(self, message_id, chapter):
-        chapter_summary = self.chapters.get(chapter)
-        if chapter_summary:
-            chapter_id = chapter_summary['id']
-            self.chapter = await loom.database.get_chapter(chapter_id)
-            data = self._format_chapter_response(message_id, self.chapter)
-            await self._create_paragraph_ids_mapping()
-            paragraph_summaries = self._get_paragraph_summaries()
-            data['paragraphs'] = paragraph_summaries
-            self.write_json(data)
-        else:
-            self.on_failure(message_id, "Chapter does not exist")
-
-    @requires_login
-    async def load_paragraph(self, message_id, paragraph):
-        pass
-
-    @requires_login
-    async def load_paragraph_with_text(self, message_id, paragraph):
-        raise LoomWSUnimplementedError
-
-    @requires_login
-    async def create_story(self, message_id, story):
-        user_id = self.user['_id']
-        wiki_id = self.wiki_segments[story['wiki']]
-        title = story['title']
-        publication_name = story['publication_name']
-        synopsis = story.get('synopsis', None)
-        story_id = await loom.database.create_story(user_id,wiki_id, title, publication_name, synopsis)
-        # TODO: Come up with a better way to 'id' new story
-        # TODO: Add story to self.user and self.stories
-        self.stories[len(self.stories)] = story_id
-        self.story = await loom.database.get_story(story_id)
-        data = self._format_story_response(message_id, self.story)
-        self.write_json(data)
-
-    @requires_login
-    async def create_chapter(self, message_id, title):
-        pass
-
-    @requires_login
-    async def create_end_chapter(self, message_id, title):
-        pass
-
-    @requires_login
-    async def create_paragraph(self, message_id):
-        pass
-
-    @requires_login
-    async def create_end_paragraph(self, message_id):
-        pass
-
-    @requires_login
-    async def update_story(self, message_id, story, changes):
-        pass
-
-    @requires_login
-    async def update_current_story(self, message_id, changes):
-        pass
-
-    @requires_login
-    async def update_chapter(self, message_id, chapter, changes):
-        pass
-
-    @requires_login
-    async def update_current_chapter(self, message_id, changes):
-        pass
-
-    @requires_login
-    async def update_paragraph(self, message_id, paragraph, changes):
-        raise LoomWSUnimplementedError
-
-    @requires_login
-    async def replace_paragraph(self, message_id, text):
-        pass
-
-    @requires_login
-    async def delete_story(self, message_id, story):
-        pass
-
-    @requires_login
-    async def delete_current_story(self, message_id):
-        pass
-
-    @requires_login
-    async def delete_chapter(self, message_id, chapter):
-        pass
-
-    @requires_login
-    async def delete_current_chapter(self, message_id):
-        pass
-
-    @requires_login
-    async def delete_paragraph(self, message_id, paragraph):
-        pass
-
-    @requires_login
-    async def delete_current_paragraph(self, message_id):
-        pass
-
-    @requires_login
-    async def get_wiki_hierarchy(self, message_id, wiki):
-        print("getting hierarchy for wiki: {}".format(wiki))
-        hierarchy = await self._get_wiki_segment_hierarchy(wiki)
-        data = {
-            'reply_to': message_id,
-            'hierarchy': hierarchy,
-        }
-        self.write_json(data)
-
-    @requires_login
-    async def load_wiki_segment(self, message_id, wiki_segment):
-        pass
-
-    @requires_login
-    async def get_all_children(self, message_id):
-        pass
-
-    @requires_login
-    async def get_all_segments(self, message_id):
-        pass
-
-    @requires_login
-    async def get_all_pages(self, message_id):
-        pass
-
-    @requires_login
-    async def load_wiki_segment_with_children(self, message_id, wiki_segment):
-        pass
-
-    @requires_login
-    async def load_wiki_segment_with_segments(self, message_id, wiki_segment):
-        raise LoomWSUnimplementedError
-
-    @requires_login
-    async def load_wiki_segment_with_pages(self, message_id, wiki_segment):
-        raise LoomWSUnimplementedError
-
-    @requires_login
-    async def load_wiki_page(self, message_id, wiki_page):
-        pass
-
-    @requires_login
-    async def get_all_sections(self, message_id):
-        pass
-
-    @requires_login
-    async def load_wiki_page_with_sections(self, message_id, wiki_page):
-        page = await loom.database.get_wiki_page(wiki_page)
-        sections = []
-        for section_id in page['sections']:
-            section_summary = await loom.database.get_wiki_section_summary(section_id)
-            paragraphs = await loom.database.get_all_wiki_paragraph_summaries(section_id)
-            sections.append({
-                'title':      section_summary.get('title'),
-                'id':         section_summary.get('id'),
-                'paragraphs': paragraphs,
+    async def _get_stories_or_wikis_by_ids(self, object_ids, object_type):
+        objects = []
+        for object_id in object_ids:
+            if object_type == 'story':
+                obj = await self.db_client.get_story(object_id)
+            elif object_type == 'wiki':
+                obj = await self.db_client.get_wiki(object_id)
+            else:
+                raise ValueError("invalid object type: {}".format(object_type))
+            access_level = self._get_current_user_access_level_in_object(obj)
+            objects.append({
+                'story_id':     obj['_id'],
+                'title':        obj['title'],
+                'access_level': access_level,
             })
-        data = {
-            'reply_to': message_id,
-            'wiki_page': {
-                'title':      page.get('title'),
-                'id':         page.get('_id'),
-                'aliases':    page.get('aliases'),
-                'references': page.get('references'),
-                'sections':   sections,
-            }
+        return objects
+
+    ## Stories
+
+    @requires_login
+    async def create_story(self, message_id, title, wiki_id, summary):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def add_presection(self, message_id, title, to_parent):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def add_subsection(self, message_id, title, to_parent):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def add_postsection(self, message_id, title, to_parent):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def get_story_information(self, message_id, story_id):
+        story = await self.db_client.get_story(story_id)
+        message = {
+            'story_title':  story['title'],
+            'access_level': self._get_current_user_access_level_in_object(story),
+            'section_id':   story['section_id'],
+            'wiki_id':      story['wiki_id'],
+            'users':        story['users'],
+            'summary':      story['summary'],
         }
-        self.write_json(data)
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    async def load_section(self, message_id, section):
+    async def get_section_hierarchy(self, message_id, section_id):
+        message = {
+            'hierarchy': await self._get_section_hierarchy(section_id)
+        }
+        self.write_json(message, with_reply_id=message_id)
+
+    async def _get_section_hierarchy(self, section_id):
+        section = await self.db_client.get_section(section_id)
+        if section is not None:
+            hierarchy = {
+                'title':      section['title'],
+                'section_id': section_id,
+                'pre_sections':
+                    [await self._get_section_hierarchy(pre_sec_id) for pre_sec_id in section['pre_sections']],
+                'sections':
+                    [await self._get_section_hierarchy(sec_id) for sec_id in section['sections']],
+                'post_sections':
+                    [await self._get_section_hierarchy(post_sec_id) for post_sec_id in section['post_sections']],
+            }
+            return hierarchy
+        else:
+            raise ValueError("invalid section ID: {}".format(section_id))
+
+    @requires_login
+    def get_section_content(self, message_id, section_id):
+        # TODO: Implement this.
+        pass
+
+    ## Wikis
+
+    @requires_login
+    async def create_wiki(self, message_id, title, summary):
+        # TODO: Implement this.
         pass
 
     @requires_login
-    async def get_all_section_paragraphs(self, message_id):
+    async def add_segment(self, message_id, title, to_parent):
+        # TODO: Implement this.
         pass
 
     @requires_login
-    async def load_section_with_paragraphs(self, message_id, section):
+    async def add_page(self, message_id, title, to_parent):
+        # TODO: Implement this.
         pass
 
     @requires_login
-    async def load_section_paragraph(self, message_id, paragraph):
-        pass
+    async def get_wiki_information(self, message_id, wiki_id):
+        wiki = await self.db_client.get_wiki(wiki_id)
+        message = {
+            'wiki_title':   wiki['title'],
+            'access_level': self._get_current_user_access_level_in_object(wiki),
+            'segment_id':   wiki['segment_id'],
+            'users':        wiki['users'],
+            'summary':      wiki['summary',]
+        }
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    async def load_section_paragraph_with_text(self, message_id, paragraph):
+    async def get_wiki_segment_hierarchy(self, message_id, segment_id):
+        message = {
+            'hierarchy': await self._get_wiki_segment_hierarchy(segment_id)
+        }
+        self.write_json(message, with_reply_id=message_id)
+
+    async def _get_wiki_segment_hierarchy(self, segment_id):
+        segment = await self.db_client.get_segment(segment_id)
+        if segment is not None:
+            hierarchy = {
+                'title':      segment['title'],
+                'segment_id': segment_id,
+                'segments':   [await self._get_wiki_segment_hierarchy(seg_id) for seg_id in segment['segments']],
+                'pages':      [await self._get_wiki_page_for_hierarchy(page_id) for page_id in segment['pages']],
+            }
+            return hierarchy
+        else:
+            raise ValueError("invalid segment ID: {}".format(segment_id))
+
+    async def _get_wiki_page_for_hierarchy(self, page_id):
+        page = await self.db_client.get_page(page_id)
+        return {
+            'title':   page['title'],
+            'page_id': page_id,
+        }
+
+    @requires_login
+    def get_wiki_page(self, message_id, page_id):
+        # TODO: Implement this.
         pass
 
     DISPATCH = {
-        'get_user_info':                    get_user_info,
+        # User Information
+        'get_user_preferences':       get_user_preferences,
+        'get_user_stories':           get_user_stories,
+        'get_user_wikis':             get_user_wikis,
+        'get_user_stories_and_wikis': get_user_stories_and_wikis,
 
-        'load_story':                       load_story,
-        'get_chapters':                     get_chapters,
-        'load_story_with_chapters':         load_story_with_chapters,
-        'load_chapter':                     load_chapter,
-        'get_paragraphs':                   get_paragraphs,
-        'load_chapter_with_paragraphs':     load_chapter_with_paragraphs,
-        'load_paragraph':                   load_paragraph,
-        'load_paragraph_with_text':         load_paragraph_with_text,
-        'create_story':                     create_story,
-        'create_chapter':                   create_chapter,
-        'create_end_chapter':               create_end_chapter,
-        'create_paragraph':                 create_paragraph,
-        'create_end_paragraph':             create_end_paragraph,
-        'update_story':                     update_story,
-        'update_current_story':             update_current_story,
-        'update_chapter':                   update_chapter,
-        'update_current_chapter':           update_current_chapter,
-        'update_paragraph':                 update_paragraph,
-        'replace_paragraph':                replace_paragraph,
-        'delete_story':                     delete_story,
-        'delete_current_story':             delete_current_story,
-        'delete_chapter':                   delete_chapter,
-        'delete_current_chapter':           delete_current_chapter,
-        'delete_paragraph':                 delete_paragraph,
-        'delete_current_paragraph':         delete_current_paragraph,
+        # Stories
+        'get_story_information':      get_story_information,
+        'get_section_hierarchy':      get_section_hierarchy,
+        'get_section_content':        get_section_content,
 
-        'get_wiki_hierarchy':               get_wiki_hierarchy,
-        'load_wiki_segment':                load_wiki_segment,
-        'get_all_children':                 get_all_children,
-        'get_all_segments':                 get_all_segments,
-        'get_all_pages':                    get_all_pages,
-        'load_wiki_segment_with_children':  load_wiki_segment_with_children,
-        'load_wiki_segment_with_segments':  load_wiki_segment_with_segments,
-        'load_wiki_segment_with_pages':     load_wiki_segment_with_pages,
-        'load_wiki_page':                   load_wiki_page,
-        'get_all_sections':                 get_all_sections,
-        'load_wiki_page_with_sections':     load_wiki_page_with_sections,
-        'load_section':                     load_section,
-        'get_all_section_paragraphs':       get_all_section_paragraphs,
-        'load_section_with_paragraphs':     load_section_with_paragraphs,
-        'load_section_paragraph':           load_section_paragraph,
-        'load_section_paragraph_with_text': load_section_paragraph_with_text,
+        # Wikis
+        'get_wiki_information':       get_wiki_information,
+        'get_wiki_segment_hierarchy': get_wiki_segment_hierarchy,
+        'get_wiki_page':              get_wiki_page,
     }

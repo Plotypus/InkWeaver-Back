@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>story.py</title>
+  <link rel="stylesheet" href="../../../pycco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div class='section'>
+    <div class='docs'><h1>story.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.GenericHandler</span> <span class="kn">import</span> <span class="n">GenericHandler</span>
+
+<span class="kn">import</span> <span class="nn">loom.database</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">StoriesHandler</span><span class="p">(</span><span class="n">GenericHandler</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <p>TODO: Limit to current user</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">({</span>
+            <span class="s1">&#39;stories&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(),</span>
+        <span class="p">})</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">story_id</span> <span class="o">=</span> <span class="n">await</span> <span class="n">loom</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">create_story</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">decode_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">body</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">({</span>
+                <span class="s1">&#39;story_id&#39;</span><span class="p">:</span> <span class="n">story_id</span><span class="p">,</span>
+            <span class="p">})</span>
+        <span class="k">except</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      <p>TODO: This should do validation in the event of incorrect fields or something.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>            <span class="k">raise</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">StoryHandler</span><span class="p">(</span><span class="n">GenericHandler</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_id</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      <p>TODO: Stitch chapters together</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">({</span>
+            <span class="s1">&#39;story&#39;</span><span class="p">:</span> <span class="n">await</span> <span class="n">loom</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_story</span><span class="p">(</span><span class="n">loom</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">hex_string_to_bson_oid</span><span class="p">(</span><span class="n">story_id</span><span class="p">)),</span>
+        <span class="p">})</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_id</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;story_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loom</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">hex_string_to_bson_oid</span><span class="p">(</span><span class="n">story_id</span><span class="p">)</span>
+            <span class="n">chapter_id</span> <span class="o">=</span> <span class="n">await</span> <span class="n">loom</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">create_chapter</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">({</span>
+                <span class="s1">&#39;chapter&#39;</span><span class="p">:</span> <span class="n">chapter_id</span><span class="p">,</span>
+            <span class="p">})</span>
+        <span class="k">except</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      <p>TODO: This should do validation, too.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>            <span class="k">raise</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">ChapterHandler</span><span class="p">(</span><span class="n">GenericHandler</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_id</span><span class="p">,</span> <span class="n">chapter_id</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <p>TODO: Stitch paragraphs together</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">chapter</span> <span class="o">=</span> <span class="n">await</span> <span class="n">loom</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_chapter</span><span class="p">(</span><span class="n">loom</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">hex_string_to_bson_oid</span><span class="p">(</span><span class="n">chapter_id</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">({</span>
+            <span class="s1">&#39;story&#39;</span><span class="p">:</span>   <span class="n">story_id</span><span class="p">,</span>
+            <span class="s1">&#39;chapter&#39;</span><span class="p">:</span> <span class="n">chapter</span><span class="p">,</span>
+        <span class="p">})</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">ParagraphHandler</span><span class="p">(</span><span class="n">GenericHandler</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_id</span><span class="p">,</span> <span class="n">chapter_id</span><span class="p">,</span> <span class="n">paragraph_id</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">({</span>
+            <span class="s1">&#39;story&#39;</span><span class="p">:</span>     <span class="n">story_id</span><span class="p">,</span>
+            <span class="s1">&#39;chapter&#39;</span><span class="p">:</span>   <span class="n">chapter_id</span><span class="p">,</span>
+            <span class="s1">&#39;paragraph&#39;</span><span class="p">:</span> <span class="n">paragraph_id</span><span class="p">,</span>
+        <span class="p">})</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>
