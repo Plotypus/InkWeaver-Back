@@ -1,7 +1,19 @@
 from .abstract import AbstractDBInterface
 
+from loom.database.mongodb_clients import LoomMongoDBClient, LoomMongoDBMotorTornadoClient, LoomMongoDBMotorAsyncioClient
+
+from typing import ClassVar
+
 
 class MongoDBInterface(AbstractDBInterface):
+    def __init__(self, db_client_class: ClassVar, db_name, db_host, db_port):
+        if not issubclass(db_client_class, LoomMongoDBClient):
+            raise ValueError("invalid MongoDB client class: {}".format(db_client_class.__name__))
+        self._client = db_client_class(db_name, db_host, db_port)
+
+    @property
+    def client(self):
+        return self._client
 
     # User object methods.
 
@@ -96,16 +108,12 @@ class MongoDBInterface(AbstractDBInterface):
     async def get_heading(self, heading_id):
         pass
 
-    # Content object methods.
 
-    async def create_content(self):
-        pass
+class MongoDBTornadoInterface(MongoDBInterface):
+    def __init__(self, db_name, db_host, db_port):
+        super().__init__(LoomMongoDBMotorTornadoClient, db_name, db_host, db_port)
 
-    async def create_paragraph(self, text):
-        pass
 
-    async def get_content(self, content_id):
-        pass
-
-    async def get_paragraph(self, paragraph_id):
-        pass
+class MongoDBAsyncioInterface(MongoDBInterface):
+    def __init__(self, db_name, db_host, db_port):
+        super().__init__(LoomMongoDBMotorAsyncioClient, db_name, db_host, db_port)

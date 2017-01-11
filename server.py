@@ -8,7 +8,7 @@ from tornado.options import define as define_option, options, parse_command_line
 define_option('port', default=8080, help='run on the given port', type=int)
 define_option('db-host', default='localhost', help='address of the MongoDB server', type=str)
 define_option('db-port', default=27017, help='MongoDB connection port', type=int)
-define_option('db-collection', default='inkweaver', help='collection to use in the database', type=str)
+define_option('db-name', default='inkweaver', help='name of the database in MongoDB', type=str)
 
 
 def start_server(db_client, port, routes):
@@ -29,6 +29,6 @@ def start_server(db_client, port, routes):
 if __name__ == '__main__':
     parse_options()
 
-    client = database.LoomMongoDBMotorTornadoClient(options.db_collection, options.db_host, options.db_port)
+    client = database.LoomMongoDBMotorTornadoClient(options.db_name, options.db_host, options.db_port)
 
     start_server(client, options.port, routing.ROUTES)

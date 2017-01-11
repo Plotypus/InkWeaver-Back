@@ -4,11 +4,11 @@ from typing import Dict, List
 
 
 class LoomMongoDBClient:
-    def __init__(self, mongodb_client_class, collection='inkweaver', host='localhost', port=27017):
-        self._host = host
-        self._port = port
+    def __init__(self, mongodb_client_class, db_name='inkweaver', db_host='localhost', db_port=27017):
+        self._host = db_host
+        self._port = db_port
         self._client = mongodb_client_class(self.host, self.port)
-        self._collection = getattr(self._client, collection)
+        self._database = getattr(self._client, db_name)
 
     @property
     def host(self) -> str:
@@ -23,47 +23,47 @@ class LoomMongoDBClient:
         return self._client
 
     @property
-    def collection(self) -> AgnosticDatabase:
-        return self._collection
+    def database(self) -> AgnosticDatabase:
+        return self._database
 
     @property
     def users(self) -> AgnosticCollection:
-        return self.collection.users
+        return self.database.users
 
     @property
     def stories(self) -> AgnosticCollection:
-        return self.collection.stories
+        return self.database.stories
 
     @property
     def sections(self) -> AgnosticCollection:
-        return self.collection.sections
+        return self.database.sections
 
     @property
     def wikis(self) -> AgnosticCollection:
-        return self.collection.wikis
+        return self.database.wikis
 
     @property
     def segments(self) -> AgnosticCollection:
-        return self.collection.segments
+        return self.database.segments
 
     @property
     def pages(self) -> AgnosticCollection:
-        return self.collection.pages
+        return self.database.pages
 
     @property
     def headings(self) -> AgnosticCollection:
-        return self.collection.headings
+        return self.database.headings
 
     @property
     def content(self) -> AgnosticCollection:
-        return self.collection.content
+        return self.database.content
 
     @property
     def paragraphs(self) -> AgnosticCollection:
-        return self.collection.paragraphs
+        return self.database.paragraphs
 
     async def drop_database(self):
-        await self.client.drop_database(self.collection)
+        await self.client.drop_database(self.database)
 
     ###########################################################################
     #
@@ -641,12 +641,12 @@ class LoomMongoDBClient:
         return result
 
 class LoomMongoDBMotorTornadoClient(LoomMongoDBClient):
-    def __init__(self, collection='inkweaver', host='localhost', port=27017):
+    def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
         from motor.motor_tornado import MotorClient
-        super().__init__(MotorClient, collection, host, port)
+        super().__init__(MotorClient, db_name, db_host, db_port)
 
 
 class LoomMongoDBMotorAsyncioClient(LoomMongoDBClient):
-    def __init__(self, collection='inkweaver', host='localhost', port=27017):
+    def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
         from motor.motor_asyncio import AsyncIOMotorClient
-        super().__init__(AsyncIOMotorClient, collection, host, port)
+        super().__init__(AsyncIOMotorClient, db_name, db_host, db_port)
