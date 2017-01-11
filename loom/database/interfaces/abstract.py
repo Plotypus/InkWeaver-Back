@@ -1,7 +1,14 @@
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 
 
 class AbstractDBInterface(ABC):
+    @abstractmethod
+    def __init__(self):
+        pass
+
+    @abstractproperty
+    def client(self):
+        pass
 
     # User object methods.
 
