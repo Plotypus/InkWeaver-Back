@@ -50,7 +50,7 @@ class LoomWSNoLoginError(LoomWSError):
 @decorator
 def requires_login(func, *args, **kwargs):
     self = args[0]
-    if self.user is None:
+    if self.user_id is None:
         raise LoomWSNoLoginError
     return func(*args, **kwargs)
 
@@ -58,14 +58,20 @@ def requires_login(func, *args, **kwargs):
 class LoomHandler(GenericHandler):
 
     ############################################################
-    ##
-    ## Generic websocket methods
-    ##
+    #
+    # Generic websocket methods
+    #
     ############################################################
 
     def open(self):
-        # TODO: Check for secure cookies and finish login procedure.
-        self.user = None
+        session_id = self._get_secure_session_cookie()
+        username = self._get_user_for_session_id(session_id)
+        user_id = self.db_interface.get_user_id_for_username(username)
+        if user_id is None:
+            self.on_failure(reason="Something went wrong.")
+            # TODO: Clean up session
+            self.close()
+        self.user_id = user_id
         super().open()
         # By default, small messages are coalesced. This can cause delay. We don't want delay.
         self.set_nodelay(True)
@@ -95,10 +101,23 @@ class LoomHandler(GenericHandler):
     def user_id(self) -> ObjectId:
         pass
 
+    def _get_user_for_session_id(self, session_id):
+        session_manager = self.settings['session_manager']
+        username = session_manager.get_username_for_session_id(session_id)
+        if username is None:
+            raise ValueError("Session id is not valid")
+        return username
+
+    def _get_secure_session_cookie(self):
+        cookie_name = self.settings['secure_cookie_name']
+        # Make sure users cannot use cookies for more than their session
+        cookie = self.get_secure_cookie(cookie_name, max_age_days=0)  # Might need to be set to 1?
+        return cookie
+
     ############################################################
-    ##
-    ## Message handling
-    ##
+    #
+    # Message handling
+    #
     ############################################################
 
     def on_message(self, message):
@@ -174,9 +193,9 @@ class LoomHandler(GenericHandler):
             raise LoomWSUnimplementedError
 
     ############################################################
-    ##
-    ## Protocol implementation
-    ##
+    #
+    # Protocol implementation
+    #
     ############################################################
 
     ## User Information
@@ -275,7 +294,7 @@ class LoomHandler(GenericHandler):
             'wiki_title':   wiki['title'],
             'segment_id':   wiki['segment_id'],
             'users':        wiki['users'],
-            'summary':      wiki['summary',]
+            'summary':      wiki['summary'],
         }
         self.write_json(message, with_reply_id=message_id)
 
