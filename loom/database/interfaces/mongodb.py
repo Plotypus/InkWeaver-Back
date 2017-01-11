@@ -6,7 +6,6 @@ from loom.database.mongodb_clients import (
     LoomMongoDBMotorAsyncioClient
 )
 
-from passlib.hash import pbkdf2_sha512 as hasher
 from typing import ClassVar
 
 
@@ -24,7 +23,7 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def create_user(self, username, password, name, email):
         # TODO: Check the username is not currently in use.
-        password_hash = self.hash_password(password)
+        password_hash = super().hash_password(password)
         inserted_id = await self.client.create_user(
             username=username,
             password_hash=password_hash,
@@ -35,13 +34,9 @@ class MongoDBInterface(AbstractDBInterface):
         )
         return inserted_id
 
-    @staticmethod
-    def hash_password(password):
-        return hasher.hash(password)
-
     async def password_is_valid_for_username(self, username, password):
         stored_hash = await self.client.get_password_hash_for_username(username)
-        return hasher.verify(password, stored_hash)
+        return super().verify_hash(password, stored_hash)
 
     async def get_user_id_for_username(self, username):
         user_id = await self.client.get_user_id_for_username(username)
@@ -86,7 +81,7 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def set_user_password(self, user_id, password):
         # TODO: Check the password is not equal to the previous password.
-        password_hash = self.hash_password(password)
+        password_hash = super().hash_password(password)
         await self.client.set_user_password_hash(user_id, password_hash)
 
     async def set_user_name(self, user_id, name):

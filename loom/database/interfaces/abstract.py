@@ -1,4 +1,6 @@
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
+
+from passlib.hash import pbkdf2_sha512 as hasher
 
 
 class AbstractDBInterface(ABC):
@@ -7,6 +9,22 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def create_user(self, username, password, name, email):
+        pass
+
+    @staticmethod
+    def hash_password(password):
+        return hasher.hash(password)
+
+    @staticmethod
+    def verify_hash(text, hashed_text):
+        return hasher.verify(text, hashed_text)
+
+    @abstractmethod
+    async def password_is_valid_for_username(self, username, password):
+        pass
+
+    @abstractmethod
+    async def get_user_id_for_username(self, username):
         pass
 
     @abstractmethod
