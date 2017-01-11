@@ -124,21 +124,3 @@ class AbstractDBInterface(ABC):
     @abstractmethod
     async def get_heading(self, heading_id):
         pass
-
-    # Content object methods.
-
-    @abstractmethod
-    async def create_content(self):
-        pass
-
-    @abstractmethod
-    async def create_paragraph(self, text):
-        pass
-
-    @abstractmethod
-    async def get_content(self, content_id):
-        pass
-
-    @abstractmethod
-    async def get_paragraph(self, paragraph_id):
-        pass
