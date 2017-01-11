@@ -1,6 +1,6 @@
 from .GenericHandler import *
 
-from loom.database.mongodb import LoomMongoDBClient  # For type hinting.
+from loom.database.mongodb_clients import LoomMongoDBClient  # For type hinting.
 
 from bson import ObjectId
 from decorator import decorator
