@@ -24,7 +24,7 @@ def start_server(db_interface, port, routes):
     app = tornado.web.Application(routes, **settings)
     app.listen(port)
     print("Starting server at {}:{}".format('localhost', port))
-    print("Using database at {}:{}".format(app.settings['db_interface'].host, app.settings['db_interface'].port))
+    print("Using database at {}:{}".format(app.settings['db_interface'].client.host, app.settings['db_interface'].client.port))
     print("Press ^C to quit.")
     try:
         tornado.ioloop.IOLoop.current().start()
