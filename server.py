@@ -1,4 +1,5 @@
-from loom import database, routing
+from loom import routing
+from loom.database import interfaces
 
 import tornado.ioloop
 import tornado.web
@@ -11,8 +12,8 @@ define_option('db-port', default=27017, help='MongoDB connection port', type=int
 define_option('db-name', default='inkweaver', help='name of the database in MongoDB', type=str)
 
 
-def start_server(db_client, port, routes):
-    settings = {'db_client': db_client}
+def start_server(db_interface, port, routes):
+    settings = {'db_interface': db_interface}
     app = tornado.web.Application(routes, **settings)
     app.listen(port)
     print("Starting server at {}:{}".format('localhost', port))
@@ -29,6 +30,6 @@ def start_server(db_client, port, routes):
 if __name__ == '__main__':
     parse_options()
 
-    client = database.LoomMongoDBMotorTornadoClient(options.db_name, options.db_host, options.db_port)
+    interface = interfaces.MongoDBTornadoInterface(options.db_name, options.db_host, options.db_port)
 
-    start_server(client, options.port, routing.ROUTES)
+    start_server(interface, options.port, routing.ROUTES)
