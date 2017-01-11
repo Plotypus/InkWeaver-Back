@@ -1,5 +1,6 @@
 from bson.objectid import ObjectId
 from motor.core import AgnosticClient, AgnosticDatabase, AgnosticCollection
+from pymongo.results import UpdateResult
 from typing import Dict, List
 
 
@@ -125,6 +126,29 @@ class LoomMongoDBClient:
         )
         return user['password_hash']
 
+    async def set_user_password_hash(self, user_id, password_hash):
+        return await self.set_user_field(user_id, 'password_hash', password_hash)
+
+    async def set_user_name(self, user_id, name):
+        return await self.set_user_field(user_id, 'name', name)
+
+    async def set_user_email(self, user_id, email):
+        return await self.set_user_field(user_id, 'email', email)
+
+    async def set_user_bio(self, user_id, bio):
+        return await self.set_user_field(user_id, 'bio', bio)
+
+    async def set_user_avatar(self, user_id, avatar):
+        return await self.set_user_field(user_id, 'avatar', avatar)
+
+    async def set_user_field(self, user_id, field, value):
+        result: UpdateResult = await self.users.update_one({'_id': user_id}, {'$set': {field: value}})
+        if result.matched_count != 1:
+            # TODO: Handle this case.
+            pass
+        if result.modified_count != 1:
+            # TODO: Handle this case.
+            pass
 
     async def get_user_preferences(self, user_id: ObjectId) -> Dict:
         """Grabs the preferences for the provided user.
