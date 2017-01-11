@@ -13,7 +13,10 @@ define_option('db-name', default='inkweaver', help='name of the database in Mong
 
 
 def start_server(db_interface, port, routes):
-    settings = {'db_interface': db_interface}
+    settings = {
+        'db_interface':  db_interface,
+        'cookie_secret': generate_cookie_secret()
+    }
     app = tornado.web.Application(routes, **settings)
     app.listen(port)
     print("Starting server at {}:{}".format('localhost', port))
@@ -25,6 +28,12 @@ def start_server(db_interface, port, routes):
         print("\b\bQuitting...")
     finally:
         tornado.ioloop.IOLoop.current().stop()
+
+
+def generate_cookie_secret(num_bytes=64):
+    import base64
+    from os import urandom
+    return base64.b64encode(urandom(num_bytes))
 
 
 if __name__ == '__main__':
