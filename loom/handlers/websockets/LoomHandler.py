@@ -65,13 +65,12 @@ class LoomHandler(GenericHandler):
 
     def open(self):
         session_id = self._get_secure_session_cookie()
-        username = self._get_user_for_session_id(session_id)
-        user_id = self.db_interface.get_user_id_for_username(username)
+        user_id = self._get_user_id_for_session_id(session_id)
         if user_id is None:
             self.on_failure(reason="Something went wrong.")
             # TODO: Clean up session
             self.close()
-        self.user_id = user_id
+        self._user_id = user_id
         super().open()
         # By default, small messages are coalesced. This can cause delay. We don't want delay.
         self.set_nodelay(True)
@@ -99,14 +98,14 @@ class LoomHandler(GenericHandler):
 
     @property
     def user_id(self) -> ObjectId:
-        pass
+        return self._user_id
 
-    def _get_user_for_session_id(self, session_id):
+    def _get_user_id_for_session_id(self, session_id):
         session_manager = self.settings['session_manager']
-        username = session_manager.get_username_for_session_id(session_id)
-        if username is None:
+        user_id = session_manager.get_user_id_for_session_id(session_id)
+        if user_id is None:
             raise ValueError("Session id is not valid")
-        return username
+        return user_id
 
     def _get_secure_session_cookie(self):
         cookie_name = self.settings['session_cookie_name']
