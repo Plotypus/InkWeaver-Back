@@ -43,6 +43,10 @@ class MongoDBInterface(AbstractDBInterface):
         stored_hash = await self.client.get_password_hash_for_username(username)
         return hasher.verify(password, stored_hash)
 
+    async def get_user_id_for_username(self, username):
+        user_id = await self.client.get_user_id_for_username(username)
+        return user_id
+
     async def get_user_preferences(self, user_id):
         preferences = await self.client.get_user_preferences(user_id)
         return preferences
