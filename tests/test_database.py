@@ -14,8 +14,20 @@ class TestDatabase:
         event_loop.close()
 
     @pytest.mark.asyncio
-    async def test_get_user_preferences(self):
-        pass
+    async def test_user_creation(self):
+        user = {
+            'username':      'testuser',
+            'password_hash': 'hashedpass',
+            'name':          'Testy McTesterton',
+            'email':         'tmctest@te.st',
+            'bio':           'Someone who likes to test things.',
+            'avatar':        None,
+        }
+        hashless_user = {k: v for k, v in user.items() if k != 'password_hash'}
+        inserted_id = await self.client.create_user(**user)
+        assert inserted_id is not None
+        assert await self.client.get_password_hash_for_username(user['username']) == user['password_hash']
+        assert await self.client.get_user_preferences(inserted_id) == hashless_user
 
     @pytest.mark.asyncio
     async def test_get_user_story_ids(self):
