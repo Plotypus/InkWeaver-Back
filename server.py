@@ -6,10 +6,14 @@ import tornado.web
 
 from tornado.options import define as define_option, options, parse_command_line as parse_options
 
+DEFAULT_DB_NAME = 'inkweaver'
+DEFAULT_DB_HOST = 'localhost'
+DEFAULT_DB_PORT = 27017
+
 define_option('port', default=8080, help='run on the given port', type=int)
-define_option('db-host', default='localhost', help='address of the MongoDB server', type=str)
-define_option('db-port', default=27017, help='MongoDB connection port', type=int)
-define_option('db-name', default='inkweaver', help='name of the database in MongoDB', type=str)
+define_option('db-name', default=DEFAULT_DB_NAME, help='name of the database in MongoDB', type=str)
+define_option('db-host', default=DEFAULT_DB_HOST, help='address of the MongoDB server', type=str)
+define_option('db-port', default=DEFAULT_DB_PORT, help='MongoDB connection port', type=int)
 
 
 def start_server(db_interface, port, routes):
@@ -36,9 +40,13 @@ def generate_cookie_secret(num_bytes=64):
     return base64.b64encode(urandom(num_bytes))
 
 
+def get_tornado_interface(db_name=DEFAULT_DB_NAME, db_host=DEFAULT_DB_HOST, db_port=DEFAULT_DB_PORT):
+    return interfaces.MongoDBTornadoInterface(db_name, db_host, db_port)
+
+
 if __name__ == '__main__':
     parse_options()
 
-    interface = interfaces.MongoDBTornadoInterface(options.db_name, options.db_host, options.db_port)
+    interface = get_tornado_interface(options.db_name, options.db_host, options.db_port)
 
     start_server(interface, options.port, routing.ROUTES)
