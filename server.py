@@ -1,4 +1,4 @@
-from loom import routing
+from loom import routing, session_manager
 from loom.database import interfaces
 
 import tornado.ioloop
@@ -16,10 +16,12 @@ define_option('db-host', default=DEFAULT_DB_HOST, help='address of the MongoDB s
 define_option('db-port', default=DEFAULT_DB_PORT, help='MongoDB connection port', type=int)
 
 
-def start_server(db_interface, port, routes):
+def start_server(db_interface, port, routes, session_manager):
     settings = {
-        'db_interface':  db_interface,
-        'cookie_secret': generate_cookie_secret()
+        'db_interface':        db_interface,
+        'cookie_secret':       generate_cookie_secret(),
+        'session_cookie_name': 'loom_session',
+        'session_manager':     session_manager,
     }
     app = tornado.web.Application(routes, **settings)
     app.listen(port)
@@ -49,4 +51,6 @@ if __name__ == '__main__':
 
     interface = get_tornado_interface(options.db_name, options.db_host, options.db_port)
 
-    start_server(interface, options.port, routing.ROUTES)
+    session_manager = session_manager.SessionManager()
+
+    start_server(interface, options.port, routing.ROUTES, session_manager)
