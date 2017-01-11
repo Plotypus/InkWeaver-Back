@@ -126,6 +126,15 @@ class LoomMongoDBClient:
         )
         return user['password_hash']
 
+    async def get_user_id_for_username(self, username: str) -> ObjectId:
+        user = await self.users.find_one(
+            filter={'username': username},
+            projection={
+                '_id': 1,
+            }
+        )
+        return user['_id']
+
     async def set_user_password_hash(self, user_id, password_hash):
         return await self.set_user_field(user_id, 'password_hash', password_hash)
 
