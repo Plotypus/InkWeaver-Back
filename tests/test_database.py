@@ -3,6 +3,8 @@ from loom import database
 import asyncio
 import pytest
 
+from bson.objectid import ObjectId
+
 
 class TestDatabase:
     def setup(self):
@@ -14,16 +16,27 @@ class TestDatabase:
         event_loop.close()
 
     @pytest.mark.asyncio
-    async def test_user_creation(self):
-        user = {
-            'username':      'testuser',
+    @pytest.mark.parametrize('user', [
+        {
+            'username':      'tmctest',
             'password_hash': 'hashedpass',
             'name':          'Testy McTesterton',
             'email':         'tmctest@te.st',
             'bio':           'Someone who likes to test things.',
             'avatar':        None,
-        }
-        hashless_user = {k: v for k, v in user.items() if k != 'password_hash'}
+        },
+        {
+            'username':      'tetester3',
+            'password_hash': 'passthatishashed',
+            'name':          'Testington Tester III',
+            'email':         'tetester3@te.st',
+            'bio':           'Testedness is next to godliness.',
+            'avatar':        None,
+            '_id':           ObjectId('000000000000000000000000')
+        },
+    ])
+    async def test_user_creation(self, user):
+        hashless_user = {k: v for k, v in user.items() if k not in ('password_hash', '_id')}
         inserted_id = await self.client.create_user(**user)
         assert inserted_id is not None
         assert await self.client.get_password_hash_for_username(user['username']) == user['password_hash']
