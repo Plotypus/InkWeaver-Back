@@ -187,27 +187,6 @@ class LoomMongoDBClient:
         )
         return result['wikis']
 
-    async def get_user_story_and_wiki_ids(self, user_id: ObjectId) -> Dict:
-        """Grabs the ObjectIds of the user's stories.
-
-        Args:
-            user_id: BSON ObjectId of user to query for.
-
-        Returns:
-            A dict containing the BSON ObjectIds for the `stories` and
-            `wikis` that the user has access to.
-
-        """
-        result = await self.users.find_one(
-            filter={'_id': user_id},
-            projection={
-                '_id':     0,
-                'stories': 1,
-                'wikis':   1,
-            }
-        )
-        return result
-
     ###########################################################################
     #
     # Story Methods
@@ -295,12 +274,12 @@ class LoomMongoDBClient:
         """
         # TODO: Implement statistics.
         section = {
-            'title':         title,
-            'content_id':    content_id,
-            'pre_sections':  list(),
-            'sections':      list(),
-            'post_sections': list(),
-            'statistics':    None,
+            'title':                  title,
+            'content_id':             content_id,
+            'preceding_subsections':  list(),
+            'inner_subsections':      list(),
+            'succeeding_subsections': list(),
+            'statistics':             None,
         }
         if _id is not None:
             section['_id'] = _id
