@@ -9,6 +9,10 @@ class SessionManager():
     def sessions(self):
         return self._sessions
 
+    def get_username_for_session_id(self, session_id):
+        username = self.sessions.get(session_id)
+        return username
+
     def generate_session_id_for_user(self, username):
         session_id = self._generate_session_id()
         # Ensure the session ID does not already exist.
