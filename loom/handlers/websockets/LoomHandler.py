@@ -109,7 +109,7 @@ class LoomHandler(GenericHandler):
         return username
 
     def _get_secure_session_cookie(self):
-        cookie_name = self.settings['secure_cookie_name']
+        cookie_name = self.settings['session_cookie_name']
         # Make sure users cannot use cookies for more than their session
         cookie = self.get_secure_cookie(cookie_name, max_age_days=0)  # Might need to be set to 1?
         return cookie
