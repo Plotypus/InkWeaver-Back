@@ -54,14 +54,6 @@ class LoomMongoDBClient:
     def headings(self) -> AgnosticCollection:
         return self.database.headings
 
-    @property
-    def content(self) -> AgnosticCollection:
-        return self.database.content
-
-    @property
-    def paragraphs(self) -> AgnosticCollection:
-        return self.database.paragraphs
-
     async def drop_database(self):
         await self.client.drop_database(self.database)
 
@@ -247,7 +239,7 @@ class LoomMongoDBClient:
         result = await self.stories.insert_one(story)
         return result.inserted_id
 
-    async def create_section(self, title: str, content_id: ObjectId, _id=None) -> ObjectId:
+    async def create_section(self, title: str, _id=None) -> ObjectId:
         """Inserts a new section to the sections collection.
 
         Adds a new section to the sections collection. Sections are nodes in a
@@ -261,8 +253,6 @@ class LoomMongoDBClient:
 
         Args:
             title: The title of the section.
-            content_id: The unique ID of the list of paragraphs which go in this
-                section before all the sub-sections.
             _id (ObjectId): `_id` is optional, but if provided will create a
                 section with the provided ObjectId.
 
@@ -275,7 +265,7 @@ class LoomMongoDBClient:
         # TODO: Implement statistics.
         section = {
             'title':                  title,
-            'content_id':             content_id,
+            'content':                list(),  # content is a list of "paragraph objects"
             'preceding_subsections':  list(),
             'inner_subsections':      list(),
             'succeeding_subsections': list(),
@@ -436,19 +426,16 @@ class LoomMongoDBClient:
         result = await self.pages.insert_one(page)
         return result.inserted_id
 
-    async def create_heading(self, title: str, content_id: ObjectId, _id=None) -> ObjectId:
+    async def create_heading(self, title: str, _id=None) -> ObjectId:
         """Inserts a new heading to the headings collection.
 
         Adds a new heading to the headings collection. Headings are text blocks
         on a wiki page. For example, "Background" and "Motives" are considered
-        headings. A heading points to a `content` object, which should be
-        created before calling this function, in which the `content_id` is
-        specified. `_id` is optional and if provided will create the heading
+        headings. `_id` is optional and if provided will create the heading
         with the given `_id`, rather than the generated BSON ObjectID.
 
         Args:
             title: The title of the heading.
-            content_id: The unique ID for the content of this heading.
             _id (ObjectId): `_id` is optional, but if provided will create a
                 heading with the provided ObjectId.
 
@@ -459,8 +446,8 @@ class LoomMongoDBClient:
 
         """
         heading = {
-            'title': title,
-            'content_id': content_id,
+            'title':   title,
+            'content': list(),  # content is a list of "paragraph objects"
         }
         if _id is not None:
             heading['_id'] = _id
@@ -525,98 +512,6 @@ class LoomMongoDBClient:
 
         """
         result = await self.headings.find_one({'_id': heading_id})
-        return result
-
-    ###########################################################################
-    #
-    # Content Methods
-    #
-    ###########################################################################
-
-    async def create_content(self, _id=None) -> ObjectId:
-        """Inserts new content to the content collection.
-
-        Adds new content to the content collection. Content is a collection of
-        paragraphs. Content is used on wiki pages, specifically in a heading.
-        Additionally, content holds the paragraphs for a section. `_id` is
-        optional and if provided will create the content with the given `_id`,
-        rather than the generated BSON ObjectId.
-
-        Args:
-            _id (ObjectId): `_id` is optional, but if provided will create a
-                content document with the provided ObjectId.
-
-        Returns:
-            The ObjectId tha tis associated with the newly created content
-            document. If `_id` was provided, `_id` will be returned. Otherwise,
-            a randomly generated BSON ObjectId will be returned.
-
-        """
-        content = {
-            'paragraphs': list(),
-        }
-        if _id is not None:
-            content['_id'] = _id
-        result = await self.content.insert_one(content)
-        return result.inserted_id
-
-    async def create_paragraph(self, text: str, _id=None) -> ObjectId:
-        """Inserts a new paragraph to the paragraphs collection.
-
-        Adds a new paragraph to the paragraphs collection. Paragraphs hold the
-        text used in content objects. `_id` is optional and if provided will
-        create the paragraph with the given `_id`, rather than the generated
-        BSON ObjectId. Currently, statistics are unimplemented.
-
-        Args:
-            text: The contents of the paragraph.
-            _id (ObjectId): `_id` is optional, but if provided will create a
-                paragraph with the provided ObjectId.
-
-        Returns:
-            The ObjectId that is associated with the newly created paragraph. If
-            `_id` was provided, `_id` will be returned. Otherwise, a randomly
-            generated BSON ObjectId will be returned.
-
-        """
-        # TODO: Implement statistics.
-        paragraph = {
-            'text':       text,
-            'statistics': None,
-        }
-        if _id is not None:
-            paragraph['_id'] = _id
-        result = await self.paragraphs.insert_one(paragraph)
-        return result.inserted_id
-
-    async def get_content(self, content_id: ObjectId) -> Dict:
-        """Grabs the information associated with the provided content.
-
-        Finds the content in the database and returns the document.
-
-        Args:
-            content_id: BSON ObjectId of content to query for.
-
-        Returns:
-            A copy of the document of the content.
-
-        """
-        result = await self.content.find_one({'_id': content_id})
-        return result
-
-    async def get_paragraph(self, paragraph_id: ObjectId) -> Dict:
-        """Grabs the information associated with the provided paragraph.
-
-        Finds the paragraph in the database and returns the document.
-
-        Args:
-            paragraph_id: BSON ObjectId of paragraph to query for.
-
-        Returns:
-            A copy of the document of the paragraph.
-
-        """
-        result = await self.paragraphs.find_one({'_id': paragraph_id})
         return result
 
 class LoomMongoDBMotorTornadoClient(LoomMongoDBClient):
