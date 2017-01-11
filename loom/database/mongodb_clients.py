@@ -65,7 +65,7 @@ class LoomMongoDBClient:
 
     async def create_user(self,
                           username: str,
-                          password,  # TODO: Decide what this is.
+                          password_hash: str,
                           name: str,
                           email: str,
                           bio: str,
@@ -79,7 +79,7 @@ class LoomMongoDBClient:
 
         Args:
             username: The username of the user.
-            password: The salted hash of the user's password.
+            password_hash: The hash of the user's password.
             name: The full name of the user.
             email: The email address of the user.
             bio: A short description of the user.
@@ -96,15 +96,15 @@ class LoomMongoDBClient:
         """
         # TODO: Implement statistics.
         user = {
-            'username':   username,
-            'password':   password,
-            'name':       name,
-            'email':      email,
-            'bio':        bio,
-            'avatar':     avatar,
-            'stories':    list(),
-            'wikis':      list(),
-            'statistics': None,
+            'username':      username,
+            'password_hash': password_hash,
+            'name':          name,
+            'email':         email,
+            'bio':           bio,
+            'avatar':        avatar,
+            'stories':       list(),
+            'wikis':         list(),
+            'statistics':    None,
         }
         if _id is not None:
             user['_id'] = _id
