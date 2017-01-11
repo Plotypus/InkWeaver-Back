@@ -39,7 +39,7 @@ class MongoDBInterface(AbstractDBInterface):
         return hasher.hash(password)
 
     async def password_is_valid_for_username(self, username, password):
-        stored_hash = self.client.get_password_hash_for_username(username)
+        stored_hash = await self.client.get_password_hash_for_username(username)
         return hasher.verify(password, stored_hash)
 
     async def get_user_preferences(self, user_id):
