@@ -6,6 +6,13 @@ import tornado.web
 
 from tornado.options import define as define_option, options, parse_command_line as parse_options
 
+# Check requirements.
+import sys
+required_version = (3, 6)
+current_version = sys.version_info
+if current_version < required_version:
+    raise RuntimeError("Need at least Python version 3.6! Current version: {}.{}".format(current_version[0], current_version[1]))
+
 DEFAULT_DB_NAME = 'inkweaver'
 DEFAULT_DB_HOST = 'localhost'
 DEFAULT_DB_PORT = 27017
