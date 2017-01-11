@@ -23,6 +23,7 @@ class MongoDBInterface(AbstractDBInterface):
     # User object methods.
 
     async def create_user(self, username, password, name, email):
+        # TODO: Check the username is not currently in use.
         password_hash = self.hash_password(password)
         inserted_id = await self.client.create_user(
             username=username,
@@ -80,19 +81,21 @@ class MongoDBInterface(AbstractDBInterface):
         return objects
 
     async def set_user_password(self, user_id, password):
-        pass
+        # TODO: Check the password is not equal to the previous password.
+        password_hash = self.hash_password(password)
+        await self.client.set_user_password_hash(user_id, password_hash)
 
     async def set_user_name(self, user_id, name):
-        pass
+        await self.client.set_user_name(user_id, name)
 
     async def set_user_email(self, user_id, email):
-        pass
+        await self.client.set_user_email(user_id, email)
 
     async def set_user_bio(self, user_id, bio):
-        pass
+        await self.client.set_user_bio(user_id, bio)
 
     async def set_user_avatar(self, user_id, avatar):
-        pass
+        await self.client.set_user_avatar(user_id, avatar)
 
     # Story object methods.
 
