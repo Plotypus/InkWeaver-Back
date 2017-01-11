@@ -111,6 +111,21 @@ class LoomMongoDBClient:
         result = await self.users.insert_one(user)
         return result.inserted_id
 
+    async def get_password_hash_for_username(self, username: str) -> str:
+        """
+
+        :param user_id:
+        :return:
+        """
+        user = await self.users.find_one(
+            filter={'username': username},
+            projection={
+                'password_hash': 1,
+            }
+        )
+        return user['password_hash']
+
+
     async def get_user_preferences(self, user_id: ObjectId) -> Dict:
         """Grabs the preferences for the provided user.
 
