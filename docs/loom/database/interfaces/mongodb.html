@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>mongodb.py</title>
+  <link rel="stylesheet" href="../../../pycco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div class='section'>
+    <div class='docs'><h1>mongodb.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.abstract</span> <span class="kn">import</span> <span class="n">AbstractDBInterface</span>
+
+<span class="kn">from</span> <span class="nn">loom.database.mongodb_clients</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LoomMongoDBClient</span><span class="p">,</span>
+    <span class="n">LoomMongoDBMotorTornadoClient</span><span class="p">,</span>
+    <span class="n">LoomMongoDBMotorAsyncioClient</span>
+<span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">ClassVar</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">MongoDBInterface</span><span class="p">(</span><span class="n">AbstractDBInterface</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_client_class</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">db_name</span><span class="p">,</span> <span class="n">db_host</span><span class="p">,</span> <span class="n">db_port</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">db_client_class</span><span class="p">,</span> <span class="n">LoomMongoDBClient</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid MongoDB client class: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">db_client_class</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">db_client_class</span><span class="p">(</span><span class="n">db_name</span><span class="p">,</span> <span class="n">db_host</span><span class="p">,</span> <span class="n">db_port</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <p>User object methods.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">async</span> <span class="k">def</span> <span class="nf">create_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">email</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      <p>TODO: Check the username is not currently in use.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">password_hash</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">hash_password</span><span class="p">(</span><span class="n">password</span><span class="p">)</span>
+        <span class="n">inserted_id</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span>
+            <span class="n">username</span><span class="o">=</span><span class="n">username</span><span class="p">,</span>
+            <span class="n">password_hash</span><span class="o">=</span><span class="n">password_hash</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">email</span><span class="o">=</span><span class="n">email</span><span class="p">,</span>
+            <span class="n">bio</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+            <span class="n">avatar</span><span class="o">=</span><span class="bp">None</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">inserted_id</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">password_is_valid_for_username</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+        <span class="n">stored_hash</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_password_hash_for_username</span><span class="p">(</span><span class="n">username</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">verify_hash</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">stored_hash</span><span class="p">)</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_user_id_for_username</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">):</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_user_id_for_username</span><span class="p">(</span><span class="n">username</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">user_id</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_user_preferences</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="n">preferences</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_user_preferences</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">preferences</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_user_stories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="n">story_ids</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_user_story_ids</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="n">stories</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_stories_or_wikis_by_ids</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">story_ids</span><span class="p">,</span> <span class="s1">&#39;story&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">stories</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_user_wikis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="n">wiki_ids</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_user_wiki_ids</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="n">wikis</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_stories_or_wikis_by_ids</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">wiki_ids</span><span class="p">,</span> <span class="s1">&#39;wiki&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">wikis</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_current_user_access_level_in_object</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">[</span><span class="s1">&#39;users&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">user</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">user</span><span class="p">[</span><span class="s1">&#39;access_level&#39;</span><span class="p">]</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">_get_stories_or_wikis_by_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">object_ids</span><span class="p">,</span> <span class="n">object_type</span><span class="p">):</span>
+        <span class="n">objects</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">object_id</span> <span class="ow">in</span> <span class="n">object_ids</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">object_type</span> <span class="o">==</span> <span class="s1">&#39;story&#39;</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_story</span><span class="p">(</span><span class="n">object_id</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">object_type</span> <span class="o">==</span> <span class="s1">&#39;wiki&#39;</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_wiki</span><span class="p">(</span><span class="n">object_id</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid object type: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">object_type</span><span class="p">))</span>
+            <span class="n">access_level</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_current_user_access_level_in_object</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
+            <span class="n">objects</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;story_id&#39;</span><span class="p">:</span>     <span class="n">obj</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;title&#39;</span><span class="p">:</span>        <span class="n">obj</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;access_level&#39;</span><span class="p">:</span> <span class="n">access_level</span><span class="p">,</span>
+            <span class="p">})</span>
+        <span class="k">return</span> <span class="n">objects</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">set_user_password</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      <p>TODO: Check the password is not equal to the previous password.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">password_hash</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">hash_password</span><span class="p">(</span><span class="n">password</span><span class="p">)</span>
+        <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">set_user_password_hash</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">password_hash</span><span class="p">)</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">set_user_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">set_user_name</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">set_user_email</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">email</span><span class="p">):</span>
+        <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">set_user_email</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">email</span><span class="p">)</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">set_user_bio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">bio</span><span class="p">):</span>
+        <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">set_user_bio</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">bio</span><span class="p">)</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">set_user_avatar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">avatar</span><span class="p">):</span>
+        <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">set_user_avatar</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">avatar</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <p>Story object methods.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">async</span> <span class="k">def</span> <span class="nf">create_story</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">summary</span><span class="p">,</span> <span class="n">wiki_id</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">create_preceding_subsection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">in_parent_section</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">create_inner_subsection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">in_parent_section</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">create_succeeding_subsection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">in_parent_section</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">create_section</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_story</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_id</span><span class="p">):</span>
+        <span class="n">story</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_story</span><span class="p">(</span><span class="n">story_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">story</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_story_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_id</span><span class="p">):</span>
+        <span class="n">story</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_story</span><span class="p">(</span><span class="n">story_id</span><span class="p">)</span>
+        <span class="n">section_id</span> <span class="o">=</span> <span class="n">story</span><span class="p">[</span><span class="s1">&#39;section_id&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_section_hierarchy</span><span class="p">(</span><span class="n">section_id</span><span class="p">)</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_section_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section_id</span><span class="p">):</span>
+        <span class="n">section</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_section</span><span class="p">(</span><span class="n">section_id</span><span class="p">)</span>
+        <span class="n">hierarchy</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;title&#39;</span><span class="p">:</span>      <span class="n">section</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;section_id&#39;</span><span class="p">:</span> <span class="n">section_id</span><span class="p">,</span>
+            <span class="s1">&#39;preceding_subsections&#39;</span><span class="p">:</span>
+                <span class="p">[</span><span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_section_hierarchy</span><span class="p">(</span><span class="n">pre_sec_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">pre_sec_id</span> <span class="ow">in</span> <span class="n">section</span><span class="p">[</span><span class="s1">&#39;preceding_subsections&#39;</span><span class="p">]],</span>
+            <span class="s1">&#39;inner_subsections&#39;</span><span class="p">:</span>
+                <span class="p">[</span><span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_section_hierarchy</span><span class="p">(</span><span class="n">sec_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">sec_id</span> <span class="ow">in</span> <span class="n">section</span><span class="p">[</span><span class="s1">&#39;inner_subsections&#39;</span><span class="p">]],</span>
+            <span class="s1">&#39;succeeding_subsections&#39;</span><span class="p">:</span>
+                <span class="p">[</span><span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_section_hierarchy</span><span class="p">(</span><span class="n">post_sec_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">post_sec_id</span> <span class="ow">in</span> <span class="n">section</span><span class="p">[</span><span class="s1">&#39;succeeding_subsections&#39;</span><span class="p">]],</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">hierarchy</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_section_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section_id</span><span class="p">):</span>
+        <span class="k">pass</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>Wiki object methods.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">async</span> <span class="k">def</span> <span class="nf">create_wiki</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">summary</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">create_child_segment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">in_parent_segment</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">create_segment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">create_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">in_parent_segment</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">create_heading</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">page_id</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_wiki</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wiki_id</span><span class="p">):</span>
+        <span class="n">wiki</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_wiki</span><span class="p">(</span><span class="n">wiki_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">wiki</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_wiki_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wiki_id</span><span class="p">):</span>
+        <span class="n">wiki</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_wiki</span><span class="p">(</span><span class="n">wiki_id</span><span class="p">)</span>
+        <span class="n">segment_id</span> <span class="o">=</span> <span class="n">wiki</span><span class="p">[</span><span class="s1">&#39;segment_id&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_segment_hierarchy</span><span class="p">(</span><span class="n">segment_id</span><span class="p">)</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_segment_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">segment_id</span><span class="p">):</span>
+        <span class="n">segment</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_segment</span><span class="p">(</span><span class="n">segment_id</span><span class="p">)</span>
+        <span class="n">hierarchy</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;title&#39;</span><span class="p">:</span>      <span class="n">segment</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;segment_id&#39;</span><span class="p">:</span> <span class="n">segment_id</span><span class="p">,</span>
+            <span class="s1">&#39;segments&#39;</span><span class="p">:</span>   <span class="p">[</span><span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_segment_hierarchy</span><span class="p">(</span><span class="n">seg_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">seg_id</span> <span class="ow">in</span> <span class="n">segment</span><span class="p">[</span><span class="s1">&#39;segments&#39;</span><span class="p">]],</span>
+            <span class="s1">&#39;pages&#39;</span><span class="p">:</span>      <span class="p">[</span><span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_page_for_hierarchy</span><span class="p">(</span><span class="n">page_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">page_id</span> <span class="ow">in</span> <span class="n">segment</span><span class="p">[</span><span class="s1">&#39;pages&#39;</span><span class="p">]],</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">hierarchy</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_page_for_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page_id</span><span class="p">):</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_page</span><span class="p">(</span><span class="n">page_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;title&#39;</span><span class="p">:</span>   <span class="n">page</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;page_id&#39;</span><span class="p">:</span> <span class="n">page_id</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_segment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">segment_id</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page_id</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_heading</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">heading_id</span><span class="p">):</span>
+        <span class="k">pass</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">MongoDBTornadoInterface</span><span class="p">(</span><span class="n">MongoDBInterface</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_name</span><span class="p">,</span> <span class="n">db_host</span><span class="p">,</span> <span class="n">db_port</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">LoomMongoDBMotorTornadoClient</span><span class="p">,</span> <span class="n">db_name</span><span class="p">,</span> <span class="n">db_host</span><span class="p">,</span> <span class="n">db_port</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">class</span> <span class="nc">MongoDBAsyncioInterface</span><span class="p">(</span><span class="n">MongoDBInterface</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_name</span><span class="p">,</span> <span class="n">db_host</span><span class="p">,</span> <span class="n">db_port</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">LoomMongoDBMotorAsyncioClient</span><span class="p">,</span> <span class="n">db_name</span><span class="p">,</span> <span class="n">db_host</span><span class="p">,</span> <span class="n">db_port</span><span class="p">)</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>
