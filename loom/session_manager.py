@@ -21,5 +21,6 @@ class SessionManager():
         self.sessions[session_id] = username
         return session_id
 
-    def _generate_session_id(self):
+    @staticmethod
+    def _generate_session_id():
         return uuid.uuid4()
