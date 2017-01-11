@@ -1,7 +1,12 @@
 from .abstract import AbstractDBInterface
 
-from loom.database.mongodb_clients import LoomMongoDBClient, LoomMongoDBMotorTornadoClient, LoomMongoDBMotorAsyncioClient
+from loom.database.mongodb_clients import (
+    LoomMongoDBClient,
+    LoomMongoDBMotorTornadoClient,
+    LoomMongoDBMotorAsyncioClient
+)
 
+from passlib.hash import pbkdf2_sha512 as hasher
 from typing import ClassVar
 
 
@@ -18,7 +23,24 @@ class MongoDBInterface(AbstractDBInterface):
     # User object methods.
 
     async def create_user(self, username, password, name, email):
-        pass
+        password_hash = self.hash_password(password)
+        inserted_id = await self.client.create_user(
+            username=username,
+            password_hash=password_hash,
+            name=name,
+            email=email,
+            bio=None,
+            avatar=None
+        )
+        return inserted_id
+
+    @staticmethod
+    def hash_password(password):
+        return hasher.hash(password)
+
+    async def password_is_valid_for_username(self, username, password):
+        stored_hash = self.client.get_password_hash_for_username(username)
+        return hasher.verify(password, stored_hash)
 
     async def get_user_preferences(self, user_id):
         preferences = await self.client.get_user_preferences(user_id)
@@ -34,7 +56,8 @@ class MongoDBInterface(AbstractDBInterface):
         wikis = await self._get_stories_or_wikis_by_ids(user_id, wiki_ids, 'wiki')
         return wikis
 
-    def _get_current_user_access_level_in_object(self, user_id, obj):
+    @staticmethod
+    def _get_current_user_access_level_in_object(user_id, obj):
         for user in obj['users']:
             if user['_id'] == user_id:
                 return user['access_level']
