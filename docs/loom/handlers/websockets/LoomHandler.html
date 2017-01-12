@@ -22,7 +22,7 @@
     <div class='code'>
       <div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.GenericHandler</span> <span class="kn">import</span> <span class="o">*</span>
 
-<span class="kn">from</span> <span class="nn">loom.database</span> <span class="kn">import</span> <span class="n">LoomMongoDBClient</span>
+<span class="kn">from</span> <span class="nn">loom.database.interfaces</span> <span class="kn">import</span> <span class="n">AbstractDBInterface</span>  <span class="c1"># For type hinting.</span>
 
 <span class="kn">from</span> <span class="nn">bson</span> <span class="kn">import</span> <span class="n">ObjectId</span>
 <span class="kn">from</span> <span class="nn">decorator</span> <span class="kn">import</span> <span class="n">decorator</span>
@@ -171,7 +171,7 @@
       <div class="highlight"><pre><span class="nd">@decorator</span>
 <span class="k">def</span> <span class="nf">requires_login</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="bp">self</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">LoomWSNoLoginError</span>
     <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -186,9 +186,7 @@
         <a class='octothorpe' href='#section-12'>#</a>
       </div>
       <h6></h6>
-<h1></h1>
-<h1>Generic websocket methods</h1>
-<h1></h1>
+<p>Generic websocket methods</p>
 <h6></h6>
     </div>
     <div class='code'>
@@ -204,7 +202,12 @@
       
     </div>
     <div class='code'>
-      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">session_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_secure_session_cookie</span><span class="p">()</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_user_for_session_id</span><span class="p">(</span><span class="n">session_id</span><span class="p">)</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_interface</span><span class="o">.</span><span class="n">get_user_id_for_username</span><span class="p">(</span><span class="n">username</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">on_failure</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Something went wrong.&quot;</span><span class="p">)</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -213,10 +216,11 @@
       <div class='octowrap'>
         <a class='octothorpe' href='#section-14'>#</a>
       </div>
-      <p>TODO: Check for secure cookies and finish login procedure.</p>
+      <p>TODO: Clean up session</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre>        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="bp">None</span>
+      <div class="highlight"><pre>            <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">user_id</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">open</span><span class="p">()</span></pre></div>
     </div>
   </div>
@@ -279,12 +283,22 @@
     </div>
     <div class='code'>
       <div class="highlight"><pre>    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">db_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LoomMongoDBClient</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;db_client&#39;</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">db_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AbstractDBInterface</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;db_interface&#39;</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">user_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectId</span><span class="p">:</span>
-        <span class="k">pass</span></pre></div>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_get_user_for_session_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">):</span>
+        <span class="n">session_manager</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;session_manager&#39;</span><span class="p">]</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="n">session_manager</span><span class="o">.</span><span class="n">get_username_for_session_id</span><span class="p">(</span><span class="n">session_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">username</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Session id is not valid&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">username</span>
+
+    <span class="k">def</span> <span class="nf">_get_secure_session_cookie</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">cookie_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;session_cookie_name&#39;</span><span class="p">]</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -293,14 +307,11 @@
       <div class='octowrap'>
         <a class='octothorpe' href='#section-19'>#</a>
       </div>
-      <h6></h6>
-<h1></h1>
-<h1>Message handling</h1>
-<h1></h1>
-<h6></h6>
+      <p>Make sure users cannot use cookies for more than their session</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre></pre></div>
+      <div class="highlight"><pre>        <span class="n">cookie</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secure_cookie</span><span class="p">(</span><span class="n">cookie_name</span><span class="p">,</span> <span class="n">max_age_days</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Might need to be set to 1?</span>
+        <span class="k">return</span> <span class="n">cookie</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -309,10 +320,12 @@
       <div class='octowrap'>
         <a class='octothorpe' href='#section-20'>#</a>
       </div>
-      
+      <h6></h6>
+<p>Message handling</p>
+<h6></h6>
     </div>
     <div class='code'>
-      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span></pre></div>
+      <div class="highlight"><pre></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -320,6 +333,18 @@
     <div class='docs'>
       <div class='octowrap'>
         <a class='octothorpe' href='#section-21'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-22'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-22'>#</a>
       </div>
       <p>TODO: Remove this.</p>
     </div>
@@ -333,10 +358,10 @@
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-22'>
+  <div class='section' id='section-23'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-22'>#</a>
+        <a class='octothorpe' href='#section-23'>#</a>
       </div>
       <p><code>on_message</code> may not be a coroutine (as of Tornado 4.3).
 To work around this, we call spawn_callback to start a coroutine.
@@ -356,10 +381,10 @@ And:
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-23'>
+  <div class='section' id='section-24'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-23'>#</a>
+        <a class='octothorpe' href='#section-24'>#</a>
       </div>
       <p>Remove the <code>action</code> key/value. It's only needed for dispatch, so the dispatch methods don't use it.</p>
     </div>
@@ -385,10 +410,10 @@ And:
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-24'>
+  <div class='section' id='section-25'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-24'>#</a>
+        <a class='octothorpe' href='#section-25'>#</a>
       </div>
       <p>Most likely, the wrong arguments were given.
 We do some introspection to give back useful error messages.</p>
@@ -398,10 +423,10 @@ We do some introspection to give back useful error messages.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-25'>
+  <div class='section' id='section-26'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-25'>#</a>
+        <a class='octothorpe' href='#section-26'>#</a>
       </div>
       <p>The first assumption is that not all of the necessary arguments were given, so check for that.</p>
     </div>
@@ -415,10 +440,10 @@ We do some introspection to give back useful error messages.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-26'>
+  <div class='section' id='section-27'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-26'>#</a>
+        <a class='octothorpe' href='#section-27'>#</a>
       </div>
       <p>So something <em>was</em> missing!</p>
     </div>
@@ -429,10 +454,10 @@ We do some introspection to give back useful error messages.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-27'>
+  <div class='section' id='section-28'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-27'>#</a>
+        <a class='octothorpe' href='#section-28'>#</a>
       </div>
       <p>Something else has gone wrong...
 Let's check if too many arguments were given.</p>
@@ -444,10 +469,10 @@ Let's check if too many arguments were given.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-28'>
+  <div class='section' id='section-29'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-28'>#</a>
+        <a class='octothorpe' href='#section-29'>#</a>
       </div>
       <p>Yep, they gave the wrong number. Let them know.
 We don't check them all because somebody could create a large JSON with an absurd number of
@@ -459,10 +484,10 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-29'>
+  <div class='section' id='section-30'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-29'>#</a>
+        <a class='octothorpe' href='#section-30'>#</a>
       </div>
       <p>It was something else entirely.</p>
     </div>
@@ -474,10 +499,10 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-30'>
+  <div class='section' id='section-31'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-30'>#</a>
+        <a class='octothorpe' href='#section-31'>#</a>
       </div>
       <p>The method is not implemented.</p>
     </div>
@@ -486,34 +511,17 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-31'>
-    <div class='docs'>
-      <div class='octowrap'>
-        <a class='octothorpe' href='#section-31'>#</a>
-      </div>
-      <h6></h6>
-<h1></h1>
-<h1>Protocol implementation</h1>
-<h1></h1>
-<h6></h6>
-    </div>
-    <div class='code'>
-      <div class="highlight"><pre></pre></div>
-    </div>
-  </div>
-  <div class='clearall'></div>
   <div class='section' id='section-32'>
     <div class='docs'>
       <div class='octowrap'>
         <a class='octothorpe' href='#section-32'>#</a>
       </div>
-      
+      <h6></h6>
+<p>Protocol implementation</p>
+<h6></h6>
     </div>
     <div class='code'>
-      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">_get_current_user_access_level_in_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">[</span><span class="s1">&#39;users&#39;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">user</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">user</span><span class="p">[</span><span class="s1">&#39;access_level&#39;</span><span class="p">]</span></pre></div>
+      <div class="highlight"><pre></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -539,51 +547,20 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
     <div class='code'>
       <div class="highlight"><pre>    <span class="nd">@requires_login</span>
     <span class="n">async</span> <span class="k">def</span> <span class="nf">get_user_preferences</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">):</span>
-        <span class="n">preferences</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_client</span><span class="o">.</span><span class="n">get_user_preferences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="n">preferences</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_interface</span><span class="o">.</span><span class="n">get_user_preferences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">(</span><span class="n">preferences</span><span class="p">,</span> <span class="n">with_reply_id</span><span class="o">=</span><span class="n">message_id</span><span class="p">)</span>
 
     <span class="nd">@requires_login</span>
     <span class="n">async</span> <span class="k">def</span> <span class="nf">get_user_stories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">):</span>
-        <span class="n">story_ids</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_client</span><span class="o">.</span><span class="n">get_user_story_ids</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
-        <span class="n">stories</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_stories_or_wikis_by_ids</span><span class="p">(</span><span class="n">story_ids</span><span class="p">,</span> <span class="s1">&#39;story&#39;</span><span class="p">)</span>
+        <span class="n">stories</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_interface</span><span class="o">.</span><span class="n">get_user_stories</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
         <span class="n">message</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;stories&#39;</span><span class="p">:</span> <span class="n">stories</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">with_reply_id</span><span class="o">=</span><span class="n">message_id</span><span class="p">)</span>
 
     <span class="nd">@requires_login</span>
     <span class="n">async</span> <span class="k">def</span> <span class="nf">get_user_wikis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">):</span>
-        <span class="n">wiki_ids</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_client</span><span class="o">.</span><span class="n">get_user_wiki_ids</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
-        <span class="n">wikis</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_stories_or_wikis_by_ids</span><span class="p">(</span><span class="n">wiki_ids</span><span class="p">,</span> <span class="s1">&#39;wiki&#39;</span><span class="p">)</span>
+        <span class="n">wikis</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_interface</span><span class="o">.</span><span class="n">get_user_wikis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
         <span class="n">message</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;wikis&#39;</span><span class="p">:</span> <span class="n">wikis</span><span class="p">}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">with_reply_id</span><span class="o">=</span><span class="n">message_id</span><span class="p">)</span>
-
-    <span class="nd">@requires_login</span>
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_user_stories_and_wikis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">):</span>
-        <span class="n">story_ids</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_client</span><span class="o">.</span><span class="n">get_user_story_ids</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
-        <span class="n">wiki_ids</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_client</span><span class="o">.</span><span class="n">get_user_wiki_ids</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
-        <span class="n">stories</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_stories_or_wikis_by_ids</span><span class="p">(</span><span class="n">story_ids</span><span class="p">,</span> <span class="s1">&#39;story&#39;</span><span class="p">)</span>
-        <span class="n">wikis</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_stories_or_wikis_by_ids</span><span class="p">(</span><span class="n">wiki_ids</span><span class="p">,</span> <span class="s1">&#39;wiki&#39;</span><span class="p">)</span>
-        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;stories&#39;</span><span class="p">:</span> <span class="n">stories</span><span class="p">,</span>
-            <span class="s1">&#39;wikis&#39;</span><span class="p">:</span> <span class="n">wikis</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">with_reply_id</span><span class="o">=</span><span class="n">message_id</span><span class="p">)</span>
-
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">_get_stories_or_wikis_by_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">object_ids</span><span class="p">,</span> <span class="n">object_type</span><span class="p">):</span>
-        <span class="n">objects</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">object_id</span> <span class="ow">in</span> <span class="n">object_ids</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">object_type</span> <span class="o">==</span> <span class="s1">&#39;story&#39;</span><span class="p">:</span>
-                <span class="n">obj</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_client</span><span class="o">.</span><span class="n">get_story</span><span class="p">(</span><span class="n">object_id</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">object_type</span> <span class="o">==</span> <span class="s1">&#39;wiki&#39;</span><span class="p">:</span>
-                <span class="n">obj</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_client</span><span class="o">.</span><span class="n">get_wiki</span><span class="p">(</span><span class="n">object_id</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid object type: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">object_type</span><span class="p">))</span>
-            <span class="n">access_level</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_current_user_access_level_in_object</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-            <span class="n">objects</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-                <span class="s1">&#39;story_id&#39;</span><span class="p">:</span>     <span class="n">obj</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">],</span>
-                <span class="s1">&#39;title&#39;</span><span class="p">:</span>        <span class="n">obj</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">],</span>
-                <span class="s1">&#39;access_level&#39;</span><span class="p">:</span> <span class="n">access_level</span><span class="p">,</span>
-            <span class="p">})</span>
-        <span class="k">return</span> <span class="n">objects</span></pre></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">with_reply_id</span><span class="o">=</span><span class="n">message_id</span><span class="p">)</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -633,7 +610,7 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
     </div>
     <div class='code'>
       <div class="highlight"><pre>    <span class="nd">@requires_login</span>
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">add_presection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">to_parent</span><span class="p">):</span></pre></div>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">add_preceding_subsection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">to_parent</span><span class="p">):</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -658,7 +635,7 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
     </div>
     <div class='code'>
       <div class="highlight"><pre>    <span class="nd">@requires_login</span>
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">add_subsection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">to_parent</span><span class="p">):</span></pre></div>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">add_inner_subsection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">to_parent</span><span class="p">):</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -683,7 +660,7 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
     </div>
     <div class='code'>
       <div class="highlight"><pre>    <span class="nd">@requires_login</span>
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">add_postsection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">to_parent</span><span class="p">):</span></pre></div>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">add_succeeding_subsection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">to_parent</span><span class="p">):</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -709,10 +686,9 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
     <div class='code'>
       <div class="highlight"><pre>    <span class="nd">@requires_login</span>
     <span class="n">async</span> <span class="k">def</span> <span class="nf">get_story_information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">story_id</span><span class="p">):</span>
-        <span class="n">story</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_client</span><span class="o">.</span><span class="n">get_story</span><span class="p">(</span><span class="n">story_id</span><span class="p">)</span>
+        <span class="n">story</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_interface</span><span class="o">.</span><span class="n">get_story</span><span class="p">(</span><span class="n">story_id</span><span class="p">)</span>
         <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;story_title&#39;</span><span class="p">:</span>  <span class="n">story</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">],</span>
-            <span class="s1">&#39;access_level&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_current_user_access_level_in_object</span><span class="p">(</span><span class="n">story</span><span class="p">),</span>
             <span class="s1">&#39;section_id&#39;</span><span class="p">:</span>   <span class="n">story</span><span class="p">[</span><span class="s1">&#39;section_id&#39;</span><span class="p">],</span>
             <span class="s1">&#39;wiki_id&#39;</span><span class="p">:</span>      <span class="n">story</span><span class="p">[</span><span class="s1">&#39;wiki_id&#39;</span><span class="p">],</span>
             <span class="s1">&#39;users&#39;</span><span class="p">:</span>        <span class="n">story</span><span class="p">[</span><span class="s1">&#39;users&#39;</span><span class="p">],</span>
@@ -721,28 +697,18 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">with_reply_id</span><span class="o">=</span><span class="n">message_id</span><span class="p">)</span>
 
     <span class="nd">@requires_login</span>
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_section_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">section_id</span><span class="p">):</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_story_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">story_id</span><span class="p">):</span>
         <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;hierarchy&#39;</span><span class="p">:</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_section_hierarchy</span><span class="p">(</span><span class="n">section_id</span><span class="p">)</span>
+            <span class="s1">&#39;hierarchy&#39;</span><span class="p">:</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_interface</span><span class="o">.</span><span class="n">get_story_hierarchy</span><span class="p">(</span><span class="n">story_id</span><span class="p">)</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">with_reply_id</span><span class="o">=</span><span class="n">message_id</span><span class="p">)</span>
 
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">_get_section_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section_id</span><span class="p">):</span>
-        <span class="n">section</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_client</span><span class="o">.</span><span class="n">get_section</span><span class="p">(</span><span class="n">section_id</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">section</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">hierarchy</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s1">&#39;title&#39;</span><span class="p">:</span>      <span class="n">section</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">],</span>
-                <span class="s1">&#39;section_id&#39;</span><span class="p">:</span> <span class="n">section_id</span><span class="p">,</span>
-                <span class="s1">&#39;pre_sections&#39;</span><span class="p">:</span>
-                    <span class="p">[</span><span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_section_hierarchy</span><span class="p">(</span><span class="n">pre_sec_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">pre_sec_id</span> <span class="ow">in</span> <span class="n">section</span><span class="p">[</span><span class="s1">&#39;pre_sections&#39;</span><span class="p">]],</span>
-                <span class="s1">&#39;sections&#39;</span><span class="p">:</span>
-                    <span class="p">[</span><span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_section_hierarchy</span><span class="p">(</span><span class="n">sec_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">sec_id</span> <span class="ow">in</span> <span class="n">section</span><span class="p">[</span><span class="s1">&#39;sections&#39;</span><span class="p">]],</span>
-                <span class="s1">&#39;post_sections&#39;</span><span class="p">:</span>
-                    <span class="p">[</span><span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_section_hierarchy</span><span class="p">(</span><span class="n">post_sec_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">post_sec_id</span> <span class="ow">in</span> <span class="n">section</span><span class="p">[</span><span class="s1">&#39;post_sections&#39;</span><span class="p">]],</span>
-            <span class="p">}</span>
-            <span class="k">return</span> <span class="n">hierarchy</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid section ID: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">section_id</span><span class="p">))</span>
+    <span class="nd">@requires_login</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_section_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">section_id</span><span class="p">):</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;hierarchy&#39;</span><span class="p">:</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_interface</span><span class="o">.</span><span class="n">get_section_hierarchy</span><span class="p">(</span><span class="n">section_id</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">with_reply_id</span><span class="o">=</span><span class="n">message_id</span><span class="p">)</span>
 
     <span class="nd">@requires_login</span>
     <span class="k">def</span> <span class="nf">get_section_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">section_id</span><span class="p">):</span></pre></div>
@@ -858,42 +824,28 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
     <div class='code'>
       <div class="highlight"><pre>    <span class="nd">@requires_login</span>
     <span class="n">async</span> <span class="k">def</span> <span class="nf">get_wiki_information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">wiki_id</span><span class="p">):</span>
-        <span class="n">wiki</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_client</span><span class="o">.</span><span class="n">get_wiki</span><span class="p">(</span><span class="n">wiki_id</span><span class="p">)</span>
+        <span class="n">wiki</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_interface</span><span class="o">.</span><span class="n">get_wiki</span><span class="p">(</span><span class="n">wiki_id</span><span class="p">)</span>
         <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;wiki_title&#39;</span><span class="p">:</span>   <span class="n">wiki</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">],</span>
-            <span class="s1">&#39;access_level&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_current_user_access_level_in_object</span><span class="p">(</span><span class="n">wiki</span><span class="p">),</span>
             <span class="s1">&#39;segment_id&#39;</span><span class="p">:</span>   <span class="n">wiki</span><span class="p">[</span><span class="s1">&#39;segment_id&#39;</span><span class="p">],</span>
             <span class="s1">&#39;users&#39;</span><span class="p">:</span>        <span class="n">wiki</span><span class="p">[</span><span class="s1">&#39;users&#39;</span><span class="p">],</span>
-            <span class="s1">&#39;summary&#39;</span><span class="p">:</span>      <span class="n">wiki</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">,]</span>
+            <span class="s1">&#39;summary&#39;</span><span class="p">:</span>      <span class="n">wiki</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">with_reply_id</span><span class="o">=</span><span class="n">message_id</span><span class="p">)</span>
+
+    <span class="nd">@requires_login</span>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">get_wiki_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">wiki_id</span><span class="p">):</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;hierarchy&#39;</span><span class="p">:</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_interface</span><span class="o">.</span><span class="n">get_wiki_hierarchy</span><span class="p">(</span><span class="n">wiki_id</span><span class="p">)</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">with_reply_id</span><span class="o">=</span><span class="n">message_id</span><span class="p">)</span>
 
     <span class="nd">@requires_login</span>
     <span class="n">async</span> <span class="k">def</span> <span class="nf">get_wiki_segment_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">segment_id</span><span class="p">):</span>
         <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;hierarchy&#39;</span><span class="p">:</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_wiki_segment_hierarchy</span><span class="p">(</span><span class="n">segment_id</span><span class="p">)</span>
+            <span class="s1">&#39;hierarchy&#39;</span><span class="p">:</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_interface</span><span class="o">.</span><span class="n">get_segment_hierarchy</span><span class="p">(</span><span class="n">segment_id</span><span class="p">)</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_json</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">with_reply_id</span><span class="o">=</span><span class="n">message_id</span><span class="p">)</span>
-
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">_get_wiki_segment_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">segment_id</span><span class="p">):</span>
-        <span class="n">segment</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_client</span><span class="o">.</span><span class="n">get_segment</span><span class="p">(</span><span class="n">segment_id</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">segment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">hierarchy</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s1">&#39;title&#39;</span><span class="p">:</span>      <span class="n">segment</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">],</span>
-                <span class="s1">&#39;segment_id&#39;</span><span class="p">:</span> <span class="n">segment_id</span><span class="p">,</span>
-                <span class="s1">&#39;segments&#39;</span><span class="p">:</span>   <span class="p">[</span><span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_wiki_segment_hierarchy</span><span class="p">(</span><span class="n">seg_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">seg_id</span> <span class="ow">in</span> <span class="n">segment</span><span class="p">[</span><span class="s1">&#39;segments&#39;</span><span class="p">]],</span>
-                <span class="s1">&#39;pages&#39;</span><span class="p">:</span>      <span class="p">[</span><span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_wiki_page_for_hierarchy</span><span class="p">(</span><span class="n">page_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">page_id</span> <span class="ow">in</span> <span class="n">segment</span><span class="p">[</span><span class="s1">&#39;pages&#39;</span><span class="p">]],</span>
-            <span class="p">}</span>
-            <span class="k">return</span> <span class="n">hierarchy</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid segment ID: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">segment_id</span><span class="p">))</span>
-
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">_get_wiki_page_for_hierarchy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page_id</span><span class="p">):</span>
-        <span class="n">page</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_client</span><span class="o">.</span><span class="n">get_page</span><span class="p">(</span><span class="n">page_id</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s1">&#39;title&#39;</span><span class="p">:</span>   <span class="n">page</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">],</span>
-            <span class="s1">&#39;page_id&#39;</span><span class="p">:</span> <span class="n">page_id</span><span class="p">,</span>
-        <span class="p">}</span>
 
     <span class="nd">@requires_login</span>
     <span class="k">def</span> <span class="nf">get_wiki_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">,</span> <span class="n">page_id</span><span class="p">):</span></pre></div>
@@ -924,8 +876,7 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
     <div class='code'>
       <div class="highlight"><pre>        <span class="s1">&#39;get_user_preferences&#39;</span><span class="p">:</span>       <span class="n">get_user_preferences</span><span class="p">,</span>
         <span class="s1">&#39;get_user_stories&#39;</span><span class="p">:</span>           <span class="n">get_user_stories</span><span class="p">,</span>
-        <span class="s1">&#39;get_user_wikis&#39;</span><span class="p">:</span>             <span class="n">get_user_wikis</span><span class="p">,</span>
-        <span class="s1">&#39;get_user_stories_and_wikis&#39;</span><span class="p">:</span> <span class="n">get_user_stories_and_wikis</span><span class="p">,</span></pre></div>
+        <span class="s1">&#39;get_user_wikis&#39;</span><span class="p">:</span>             <span class="n">get_user_wikis</span><span class="p">,</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -937,7 +888,12 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
       <p>Stories</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre>        <span class="s1">&#39;get_story_information&#39;</span><span class="p">:</span>      <span class="n">get_story_information</span><span class="p">,</span>
+      <div class="highlight"><pre>        <span class="s1">&#39;create_story&#39;</span><span class="p">:</span>               <span class="n">create_story</span><span class="p">,</span>
+        <span class="s1">&#39;add_preceding_subsection&#39;</span><span class="p">:</span>   <span class="n">add_preceding_subsection</span><span class="p">,</span>
+        <span class="s1">&#39;add_inner_subsection&#39;</span><span class="p">:</span>       <span class="n">add_inner_subsection</span><span class="p">,</span>
+        <span class="s1">&#39;add_succeeding_subsection&#39;</span><span class="p">:</span>  <span class="n">add_succeeding_subsection</span><span class="p">,</span>
+        <span class="s1">&#39;get_story_information&#39;</span><span class="p">:</span>      <span class="n">get_story_information</span><span class="p">,</span>
+        <span class="s1">&#39;get_story_hierarchy&#39;</span><span class="p">:</span>        <span class="n">get_story_hierarchy</span><span class="p">,</span>
         <span class="s1">&#39;get_section_hierarchy&#39;</span><span class="p">:</span>      <span class="n">get_section_hierarchy</span><span class="p">,</span>
         <span class="s1">&#39;get_section_content&#39;</span><span class="p">:</span>        <span class="n">get_section_content</span><span class="p">,</span></pre></div>
     </div>
@@ -951,7 +907,11 @@ arguments and we'd spend cycles counting them all... easy DOS.</p>
       <p>Wikis</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre>        <span class="s1">&#39;get_wiki_information&#39;</span><span class="p">:</span>       <span class="n">get_wiki_information</span><span class="p">,</span>
+      <div class="highlight"><pre>        <span class="s1">&#39;create_wiki&#39;</span><span class="p">:</span>                <span class="n">create_wiki</span><span class="p">,</span>
+        <span class="s1">&#39;add_segment&#39;</span><span class="p">:</span>                <span class="n">add_segment</span><span class="p">,</span>
+        <span class="s1">&#39;add_page&#39;</span><span class="p">:</span>                   <span class="n">add_page</span><span class="p">,</span>
+        <span class="s1">&#39;get_wiki_information&#39;</span><span class="p">:</span>       <span class="n">get_wiki_information</span><span class="p">,</span>
+        <span class="s1">&#39;get_wiki_hierarchy&#39;</span><span class="p">:</span>         <span class="n">get_wiki_hierarchy</span><span class="p">,</span>
         <span class="s1">&#39;get_wiki_segment_hierarchy&#39;</span><span class="p">:</span> <span class="n">get_wiki_segment_hierarchy</span><span class="p">,</span>
         <span class="s1">&#39;get_wiki_page&#39;</span><span class="p">:</span>              <span class="n">get_wiki_page</span><span class="p">,</span>
     <span class="p">}</span>

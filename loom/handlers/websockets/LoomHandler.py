@@ -1,6 +1,6 @@
 from .GenericHandler import *
 
-from loom.database import LoomMongoDBClient
+from loom.database.interfaces import AbstractDBInterface  # For type hinting.
 
 from bson import ObjectId
 from decorator import decorator
@@ -50,7 +50,7 @@ class LoomWSNoLoginError(LoomWSError):
 @decorator
 def requires_login(func, *args, **kwargs):
     self = args[0]
-    if self.user is None:
+    if self.user_id is None:
         raise LoomWSNoLoginError
     return func(*args, **kwargs)
 
@@ -58,14 +58,19 @@ def requires_login(func, *args, **kwargs):
 class LoomHandler(GenericHandler):
 
     ############################################################
-    ##
-    ## Generic websocket methods
-    ##
+    #
+    # Generic websocket methods
+    #
     ############################################################
 
     def open(self):
-        # TODO: Check for secure cookies and finish login procedure.
-        self.user = None
+        session_id = self._get_secure_session_cookie()
+        user_id = self._get_user_id_for_session_id(session_id)
+        if user_id is None:
+            self.on_failure(reason="Something went wrong.")
+            # TODO: Clean up session
+            self.close()
+        self._user_id = user_id
         super().open()
         # By default, small messages are coalesced. This can cause delay. We don't want delay.
         self.set_nodelay(True)
@@ -88,17 +93,30 @@ class LoomHandler(GenericHandler):
         self.write_message(json_string)
 
     @property
-    def db_client(self) -> LoomMongoDBClient:
-        return self.settings['db_client']
+    def db_interface(self) -> AbstractDBInterface:
+        return self.settings['db_interface']
 
     @property
     def user_id(self) -> ObjectId:
-        pass
+        return self._user_id
+
+    def _get_user_id_for_session_id(self, session_id):
+        session_manager = self.settings['session_manager']
+        user_id = session_manager.get_user_id_for_session_id(session_id)
+        if user_id is None:
+            raise ValueError("Session id is not valid")
+        return user_id
+
+    def _get_secure_session_cookie(self):
+        cookie_name = self.settings['session_cookie_name']
+        # Make sure users cannot use cookies for more than their session
+        cookie = self.get_secure_cookie(cookie_name, max_age_days=0)  # Might need to be set to 1?
+        return cookie
 
     ############################################################
-    ##
-    ## Message handling
-    ##
+    #
+    # Message handling
+    #
     ############################################################
 
     def on_message(self, message):
@@ -174,65 +192,29 @@ class LoomHandler(GenericHandler):
             raise LoomWSUnimplementedError
 
     ############################################################
-    ##
-    ## Protocol implementation
-    ##
+    #
+    # Protocol implementation
+    #
     ############################################################
-
-    def _get_current_user_access_level_in_object(self, obj):
-        for user in obj['users']:
-            if user['_id'] == self.user_id:
-                return user['access_level']
 
     ## User Information
 
     @requires_login
     async def get_user_preferences(self, message_id):
-        preferences = await self.db_client.get_user_preferences(self.user_id)
+        preferences = await self.db_interface.get_user_preferences(self.user_id)
         self.write_json(preferences, with_reply_id=message_id)
 
     @requires_login
     async def get_user_stories(self, message_id):
-        story_ids = await self.db_client.get_user_story_ids(self.user_id)
-        stories = await self._get_stories_or_wikis_by_ids(story_ids, 'story')
+        stories = await self.db_interface.get_user_stories(self.user_id)
         message = {'stories': stories}
         self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     async def get_user_wikis(self, message_id):
-        wiki_ids = await self.db_client.get_user_wiki_ids(self.user_id)
-        wikis = await self._get_stories_or_wikis_by_ids(wiki_ids, 'wiki')
+        wikis = await self.db_interface.get_user_wikis(self.user_id)
         message = {'wikis': wikis}
         self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def get_user_stories_and_wikis(self, message_id):
-        story_ids = await self.db_client.get_user_story_ids(self.user_id)
-        wiki_ids = await self.db_client.get_user_wiki_ids(self.user_id)
-        stories = await self._get_stories_or_wikis_by_ids(story_ids, 'story')
-        wikis = await self._get_stories_or_wikis_by_ids(wiki_ids, 'wiki')
-        message = {
-            'stories': stories,
-            'wikis': wikis,
-        }
-        self.write_json(message, with_reply_id=message_id)
-
-    async def _get_stories_or_wikis_by_ids(self, object_ids, object_type):
-        objects = []
-        for object_id in object_ids:
-            if object_type == 'story':
-                obj = await self.db_client.get_story(object_id)
-            elif object_type == 'wiki':
-                obj = await self.db_client.get_wiki(object_id)
-            else:
-                raise ValueError("invalid object type: {}".format(object_type))
-            access_level = self._get_current_user_access_level_in_object(obj)
-            objects.append({
-                'story_id':     obj['_id'],
-                'title':        obj['title'],
-                'access_level': access_level,
-            })
-        return objects
 
     ## Stories
 
@@ -242,26 +224,25 @@ class LoomHandler(GenericHandler):
         pass
 
     @requires_login
-    async def add_presection(self, message_id, title, to_parent):
+    async def add_preceding_subsection(self, message_id, title, to_parent):
         # TODO: Implement this.
         pass
 
     @requires_login
-    async def add_subsection(self, message_id, title, to_parent):
+    async def add_inner_subsection(self, message_id, title, to_parent):
         # TODO: Implement this.
         pass
 
     @requires_login
-    async def add_postsection(self, message_id, title, to_parent):
+    async def add_succeeding_subsection(self, message_id, title, to_parent):
         # TODO: Implement this.
         pass
 
     @requires_login
     async def get_story_information(self, message_id, story_id):
-        story = await self.db_client.get_story(story_id)
+        story = await self.db_interface.get_story(story_id)
         message = {
             'story_title':  story['title'],
-            'access_level': self._get_current_user_access_level_in_object(story),
             'section_id':   story['section_id'],
             'wiki_id':      story['wiki_id'],
             'users':        story['users'],
@@ -270,28 +251,18 @@ class LoomHandler(GenericHandler):
         self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    async def get_section_hierarchy(self, message_id, section_id):
+    async def get_story_hierarchy(self, message_id, story_id):
         message = {
-            'hierarchy': await self._get_section_hierarchy(section_id)
+            'hierarchy': await self.db_interface.get_story_hierarchy(story_id)
         }
         self.write_json(message, with_reply_id=message_id)
 
-    async def _get_section_hierarchy(self, section_id):
-        section = await self.db_client.get_section(section_id)
-        if section is not None:
-            hierarchy = {
-                'title':      section['title'],
-                'section_id': section_id,
-                'pre_sections':
-                    [await self._get_section_hierarchy(pre_sec_id) for pre_sec_id in section['pre_sections']],
-                'sections':
-                    [await self._get_section_hierarchy(sec_id) for sec_id in section['sections']],
-                'post_sections':
-                    [await self._get_section_hierarchy(post_sec_id) for post_sec_id in section['post_sections']],
-            }
-            return hierarchy
-        else:
-            raise ValueError("invalid section ID: {}".format(section_id))
+    @requires_login
+    async def get_section_hierarchy(self, message_id, section_id):
+        message = {
+            'hierarchy': await self.db_interface.get_section_hierarchy(section_id)
+        }
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     def get_section_content(self, message_id, section_id):
@@ -317,42 +288,28 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def get_wiki_information(self, message_id, wiki_id):
-        wiki = await self.db_client.get_wiki(wiki_id)
+        wiki = await self.db_interface.get_wiki(wiki_id)
         message = {
             'wiki_title':   wiki['title'],
-            'access_level': self._get_current_user_access_level_in_object(wiki),
             'segment_id':   wiki['segment_id'],
             'users':        wiki['users'],
-            'summary':      wiki['summary',]
+            'summary':      wiki['summary'],
+        }
+        self.write_json(message, with_reply_id=message_id)
+
+    @requires_login
+    async def get_wiki_hierarchy(self, message_id, wiki_id):
+        message = {
+            'hierarchy': await self.db_interface.get_wiki_hierarchy(wiki_id)
         }
         self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     async def get_wiki_segment_hierarchy(self, message_id, segment_id):
         message = {
-            'hierarchy': await self._get_wiki_segment_hierarchy(segment_id)
+            'hierarchy': await self.db_interface.get_segment_hierarchy(segment_id)
         }
         self.write_json(message, with_reply_id=message_id)
-
-    async def _get_wiki_segment_hierarchy(self, segment_id):
-        segment = await self.db_client.get_segment(segment_id)
-        if segment is not None:
-            hierarchy = {
-                'title':      segment['title'],
-                'segment_id': segment_id,
-                'segments':   [await self._get_wiki_segment_hierarchy(seg_id) for seg_id in segment['segments']],
-                'pages':      [await self._get_wiki_page_for_hierarchy(page_id) for page_id in segment['pages']],
-            }
-            return hierarchy
-        else:
-            raise ValueError("invalid segment ID: {}".format(segment_id))
-
-    async def _get_wiki_page_for_hierarchy(self, page_id):
-        page = await self.db_client.get_page(page_id)
-        return {
-            'title':   page['title'],
-            'page_id': page_id,
-        }
 
     @requires_login
     def get_wiki_page(self, message_id, page_id):
@@ -364,15 +321,23 @@ class LoomHandler(GenericHandler):
         'get_user_preferences':       get_user_preferences,
         'get_user_stories':           get_user_stories,
         'get_user_wikis':             get_user_wikis,
-        'get_user_stories_and_wikis': get_user_stories_and_wikis,
 
         # Stories
+        'create_story':               create_story,
+        'add_preceding_subsection':   add_preceding_subsection,
+        'add_inner_subsection':       add_inner_subsection,
+        'add_succeeding_subsection':  add_succeeding_subsection,
         'get_story_information':      get_story_information,
+        'get_story_hierarchy':        get_story_hierarchy,
         'get_section_hierarchy':      get_section_hierarchy,
         'get_section_content':        get_section_content,
 
         # Wikis
+        'create_wiki':                create_wiki,
+        'add_segment':                add_segment,
+        'add_page':                   add_page,
         'get_wiki_information':       get_wiki_information,
+        'get_wiki_hierarchy':         get_wiki_hierarchy,
         'get_wiki_segment_hierarchy': get_wiki_segment_hierarchy,
         'get_wiki_page':              get_wiki_page,
     }

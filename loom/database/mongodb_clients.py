@@ -1,14 +1,15 @@
 from bson.objectid import ObjectId
 from motor.core import AgnosticClient, AgnosticDatabase, AgnosticCollection
+from pymongo.results import UpdateResult
 from typing import Dict, List
 
 
 class LoomMongoDBClient:
-    def __init__(self, mongodb_client_class, collection='inkweaver', host='localhost', port=27017):
-        self._host = host
-        self._port = port
+    def __init__(self, mongodb_client_class, db_name='inkweaver', db_host='localhost', db_port=27017):
+        self._host = db_host
+        self._port = db_port
         self._client = mongodb_client_class(self.host, self.port)
-        self._collection = getattr(self._client, collection)
+        self._database = getattr(self._client, db_name)
 
     @property
     def host(self) -> str:
@@ -23,47 +24,39 @@ class LoomMongoDBClient:
         return self._client
 
     @property
-    def collection(self) -> AgnosticDatabase:
-        return self._collection
+    def database(self) -> AgnosticDatabase:
+        return self._database
 
     @property
     def users(self) -> AgnosticCollection:
-        return self.collection.users
+        return self.database.users
 
     @property
     def stories(self) -> AgnosticCollection:
-        return self.collection.stories
+        return self.database.stories
 
     @property
     def sections(self) -> AgnosticCollection:
-        return self.collection.sections
+        return self.database.sections
 
     @property
     def wikis(self) -> AgnosticCollection:
-        return self.collection.wikis
+        return self.database.wikis
 
     @property
     def segments(self) -> AgnosticCollection:
-        return self.collection.segments
+        return self.database.segments
 
     @property
     def pages(self) -> AgnosticCollection:
-        return self.collection.pages
+        return self.database.pages
 
     @property
     def headings(self) -> AgnosticCollection:
-        return self.collection.headings
-
-    @property
-    def content(self) -> AgnosticCollection:
-        return self.collection.content
-
-    @property
-    def paragraphs(self) -> AgnosticCollection:
-        return self.collection.paragraphs
+        return self.database.headings
 
     async def drop_database(self):
-        await self.client.drop_database(self.collection)
+        await self.client.drop_database(self.database)
 
     ###########################################################################
     #
@@ -73,7 +66,7 @@ class LoomMongoDBClient:
 
     async def create_user(self,
                           username: str,
-                          password,  # TODO: Decide what this is.
+                          password_hash: str,
                           name: str,
                           email: str,
                           bio: str,
@@ -87,7 +80,7 @@ class LoomMongoDBClient:
 
         Args:
             username: The username of the user.
-            password: The salted hash of the user's password.
+            password_hash: The hash of the user's password.
             name: The full name of the user.
             email: The email address of the user.
             bio: A short description of the user.
@@ -104,20 +97,67 @@ class LoomMongoDBClient:
         """
         # TODO: Implement statistics.
         user = {
-            'username':   username,
-            'password':   password,
-            'name':       name,
-            'email':      email,
-            'bio':        bio,
-            'avatar':     avatar,
-            'stories':    list(),
-            'wikis':      list(),
-            'statistics': None,
+            'username':      username,
+            'password_hash': password_hash,
+            'name':          name,
+            'email':         email,
+            'bio':           bio,
+            'avatar':        avatar,
+            'stories':       list(),
+            'wikis':         list(),
+            'statistics':    None,
         }
         if _id is not None:
             user['_id'] = _id
         result = await self.users.insert_one(user)
         return result.inserted_id
+
+    async def get_password_hash_for_username(self, username: str) -> str:
+        """
+
+        :param user_id:
+        :return:
+        """
+        user = await self.users.find_one(
+            filter={'username': username},
+            projection={
+                'password_hash': 1,
+            }
+        )
+        return user['password_hash']
+
+    async def get_user_id_for_username(self, username: str) -> ObjectId:
+        user = await self.users.find_one(
+            filter={'username': username},
+            projection={
+                '_id': 1,
+            }
+        )
+        return user['_id']
+
+    async def set_user_password_hash(self, user_id, password_hash):
+        return await self.set_user_field(user_id, 'password_hash', password_hash)
+
+    async def set_user_name(self, user_id, name):
+        return await self.set_user_field(user_id, 'name', name)
+
+    async def set_user_email(self, user_id, email):
+        return await self.set_user_field(user_id, 'email', email)
+
+    async def set_user_bio(self, user_id, bio):
+        return await self.set_user_field(user_id, 'bio', bio)
+
+    async def set_user_avatar(self, user_id, avatar):
+        return await self.set_user_field(user_id, 'avatar', avatar)
+
+    async def set_user_field(self, user_id, field, value):
+        result: UpdateResult = await self.users.update_one({'_id': user_id}, {'$set': {field: value}})
+        if result.matched_count != 1:
+            # TODO: Handle this case.
+            pass
+        if result.modified_count != 1:
+            # TODO: Handle this case.
+            pass
 
     async def get_user_preferences(self, user_id: ObjectId) -> Dict:
         """Grabs the preferences for the provided user.
@@ -187,27 +227,6 @@ class LoomMongoDBClient:
         )
         return result['wikis']
 
-    async def get_user_story_and_wiki_ids(self, user_id: ObjectId) -> Dict:
-        """Grabs the ObjectIds of the user's stories.
-
-        Args:
-            user_id: BSON ObjectId of user to query for.
-
-        Returns:
-            A dict containing the BSON ObjectIds for the `stories` and
-            `wikis` that the user has access to.
-
-        """
-        result = await self.users.find_one(
-            filter={'_id': user_id},
-            projection={
-                '_id':     0,
-                'stories': 1,
-                'wikis':   1,
-            }
-        )
-        return result
-
     ###########################################################################
     #
     # Story Methods
@@ -268,7 +287,7 @@ class LoomMongoDBClient:
         result = await self.stories.insert_one(story)
         return result.inserted_id
 
-    async def create_section(self, title: str, content_id: ObjectId, _id=None) -> ObjectId:
+    async def create_section(self, title: str, _id=None) -> ObjectId:
         """Inserts a new section to the sections collection.
 
         Adds a new section to the sections collection. Sections are nodes in a
@@ -282,8 +301,6 @@ class LoomMongoDBClient:
 
         Args:
             title: The title of the section.
-            content_id: The unique ID of the list of paragraphs which go in this
-                section before all the sub-sections.
             _id (ObjectId): `_id` is optional, but if provided will create a
                 section with the provided ObjectId.
 
@@ -295,12 +312,12 @@ class LoomMongoDBClient:
         """
         # TODO: Implement statistics.
         section = {
-            'title':         title,
-            'content_id':    content_id,
-            'pre_sections':  list(),
-            'sections':      list(),
-            'post_sections': list(),
-            'statistics':    None,
+            'title':                  title,
+            'content':                list(),  # content is a list of "paragraph objects"
+            'preceding_subsections':  list(),
+            'inner_subsections':      list(),
+            'succeeding_subsections': list(),
+            'statistics':             None,
         }
         if _id is not None:
             section['_id'] = _id
@@ -457,19 +474,16 @@ class LoomMongoDBClient:
         result = await self.pages.insert_one(page)
         return result.inserted_id
 
-    async def create_heading(self, title: str, content_id: ObjectId, _id=None) -> ObjectId:
+    async def create_heading(self, title: str, _id=None) -> ObjectId:
         """Inserts a new heading to the headings collection.
 
         Adds a new heading to the headings collection. Headings are text blocks
         on a wiki page. For example, "Background" and "Motives" are considered
-        headings. A heading points to a `content` object, which should be
-        created before calling this function, in which the `content_id` is
-        specified. `_id` is optional and if provided will create the heading
+        headings. `_id` is optional and if provided will create the heading
         with the given `_id`, rather than the generated BSON ObjectID.
 
         Args:
             title: The title of the heading.
-            content_id: The unique ID for the content of this heading.
             _id (ObjectId): `_id` is optional, but if provided will create a
                 heading with the provided ObjectId.
 
@@ -480,8 +494,8 @@ class LoomMongoDBClient:
 
         """
         heading = {
-            'title': title,
-            'content_id': content_id,
+            'title':   title,
+            'content': list(),  # content is a list of "paragraph objects"
         }
         if _id is not None:
             heading['_id'] = _id
@@ -548,105 +562,13 @@ class LoomMongoDBClient:
         result = await self.headings.find_one({'_id': heading_id})
         return result
 
-    ###########################################################################
-    #
-    # Content Methods
-    #
-    ###########################################################################
-
-    async def create_content(self, _id=None) -> ObjectId:
-        """Inserts new content to the content collection.
-
-        Adds new content to the content collection. Content is a collection of
-        paragraphs. Content is used on wiki pages, specifically in a heading.
-        Additionally, content holds the paragraphs for a section. `_id` is
-        optional and if provided will create the content with the given `_id`,
-        rather than the generated BSON ObjectId.
-
-        Args:
-            _id (ObjectId): `_id` is optional, but if provided will create a
-                content document with the provided ObjectId.
-
-        Returns:
-            The ObjectId tha tis associated with the newly created content
-            document. If `_id` was provided, `_id` will be returned. Otherwise,
-            a randomly generated BSON ObjectId will be returned.
-
-        """
-        content = {
-            'paragraphs': list(),
-        }
-        if _id is not None:
-            content['_id'] = _id
-        result = await self.content.insert_one(content)
-        return result.inserted_id
-
-    async def create_paragraph(self, text: str, _id=None) -> ObjectId:
-        """Inserts a new paragraph to the paragraphs collection.
-
-        Adds a new paragraph to the paragraphs collection. Paragraphs hold the
-        text used in content objects. `_id` is optional and if provided will
-        create the paragraph with the given `_id`, rather than the generated
-        BSON ObjectId. Currently, statistics are unimplemented.
-
-        Args:
-            text: The contents of the paragraph.
-            _id (ObjectId): `_id` is optional, but if provided will create a
-                paragraph with the provided ObjectId.
-
-        Returns:
-            The ObjectId that is associated with the newly created paragraph. If
-            `_id` was provided, `_id` will be returned. Otherwise, a randomly
-            generated BSON ObjectId will be returned.
-
-        """
-        # TODO: Implement statistics.
-        paragraph = {
-            'text':       text,
-            'statistics': None,
-        }
-        if _id is not None:
-            paragraph['_id'] = _id
-        result = await self.paragraphs.insert_one(paragraph)
-        return result.inserted_id
-
-    async def get_content(self, content_id: ObjectId) -> Dict:
-        """Grabs the information associated with the provided content.
-
-        Finds the content in the database and returns the document.
-
-        Args:
-            content_id: BSON ObjectId of content to query for.
-
-        Returns:
-            A copy of the document of the content.
-
-        """
-        result = await self.content.find_one({'_id': content_id})
-        return result
-
-    async def get_paragraph(self, paragraph_id: ObjectId) -> Dict:
-        """Grabs the information associated with the provided paragraph.
-
-        Finds the paragraph in the database and returns the document.
-
-        Args:
-            paragraph_id: BSON ObjectId of paragraph to query for.
-
-        Returns:
-            A copy of the document of the paragraph.
-
-        """
-        result = await self.paragraphs.find_one({'_id': paragraph_id})
-        return result
-
 class LoomMongoDBMotorTornadoClient(LoomMongoDBClient):
-    def __init__(self, collection='inkweaver', host='localhost', port=27017):
+    def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
         from motor.motor_tornado import MotorClient
-        super().__init__(MotorClient, collection, host, port)
+        super().__init__(MotorClient, db_name, db_host, db_port)
 
 
 class LoomMongoDBMotorAsyncioClient(LoomMongoDBClient):
-    def __init__(self, collection='inkweaver', host='localhost', port=27017):
+    def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
         from motor.motor_asyncio import AsyncIOMotorClient
-        super().__init__(AsyncIOMotorClient, collection, host, port)
+        super().__init__(AsyncIOMotorClient, db_name, db_host, db_port)
