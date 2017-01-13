@@ -99,8 +99,16 @@ class MongoDBInterface(AbstractDBInterface):
 
     # Story object methods.
 
-    async def create_story(self, user_id, title, summary, wiki_id):
-        pass
+    async def create_story(self, user_id, title, summary, wiki_id) -> ObjectId:
+        user = await self.get_user_preferences(user_id)
+        user_description = {
+            'user_id':      user_id,
+            'name':         user['name'],
+            'access_level': 'owner',
+        }
+        section_id = await self.create_section(title)
+        inserted_id = await self.client.create_story(title, wiki_id, user_description, summary, section_id)
+        return inserted_id
 
     async def create_preceding_subsection(self, title, in_parent_section):
         pass
