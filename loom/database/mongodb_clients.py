@@ -324,6 +324,88 @@ class LoomMongoDBClient:
         result = await self.sections.insert_one(section)
         return result.inserted_id
 
+    async def append_paragraph_to_section(self, section_id: ObjectId, paragraph: str):
+        """
+
+        Args:
+            section_id:
+            paragraph:
+
+        Returns:
+
+        """
+        result: UpdateResult = await self.sections.update_one(
+            filter={'_id': section_id},
+            update={
+                '$push': {
+                    'content': {'text': paragraph, 'statistics': None}
+                }
+            }
+        )
+        if result.matched_count != 1:
+            # TODO: Handle this case.
+            pass
+        if result.modified_count != 1:
+            # TODO: Handle this case.
+            pass
+
+    async def insert_paragraph_into_section_at_index(self, section_id: ObjectId, paragraph_index: int, paragraph: str):
+        """
+        
+        Args:
+            section_id:
+            paragraph_index:
+            paragraph:
+
+        Returns:
+
+        """
+        result: UpdateResult = await self.sections.update_one(
+            filter={'_id': section_id},
+            update={
+                '$push': {
+                    'content': {
+                        '$each':     [{'text': paragraph, 'statistics': None}],
+                        '$position': paragraph_index
+                    }
+                }
+            }
+        )
+        if result.matched_count != 1:
+            # TODO: Handle this case.
+            pass
+        if result.modified_count != 1:
+            # TODO: Handle this case.
+            pass
+
+    async def set_paragraph_in_section_at_index(self, section_id: ObjectId, paragraph_index: int, paragraph: str):
+        """
+
+        Args:
+            section_id:
+            paragraph_index:
+            paragraph:
+
+        Returns:
+
+        """
+        result: UpdateResult = await self.sections.update_one(
+            filter={'_id': section_id},
+            update={
+                '$set': {
+                    # Look in the content array of the matching section. Find the object by index using `.index`.
+                    # Set the `.text` field to `paragraph`.
+                    'content.{}.text'.format(paragraph_index): paragraph
+                }
+            }
+        )
+        if result.matched_count != 1:
+            # TODO: Handle this case.
+            pass
+        if result.modified_count != 1:
+            # TODO: Handle this case.
+            pass
+
     async def get_story(self, story_id: ObjectId) -> Dict:
         """Grabs the information associated with the provided story.
 
