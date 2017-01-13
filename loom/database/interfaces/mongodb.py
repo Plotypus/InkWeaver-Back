@@ -60,7 +60,7 @@ class MongoDBInterface(AbstractDBInterface):
     @staticmethod
     def _get_current_user_access_level_in_object(user_id, obj):
         for user in obj['users']:
-            if user['_id'] == user_id:
+            if user['user_id'] == user_id:
                 return user['access_level']
 
     async def _get_stories_or_wikis_by_ids(self, user_id, object_ids, object_type):
@@ -108,6 +108,7 @@ class MongoDBInterface(AbstractDBInterface):
         }
         section_id = await self.create_section(title)
         inserted_id = await self.client.create_story(title, wiki_id, user_description, summary, section_id)
+        await self.client.add_story_to_user(user_id, inserted_id)
         return inserted_id
 
     async def insert_preceding_subsection(self, title, parent_id, index):
