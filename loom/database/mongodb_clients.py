@@ -145,6 +145,17 @@ class LoomMongoDBClient:
         )
         return user['_id']
 
+    async def add_story_to_user(self, user_id: ObjectId, story_id: ObjectId):
+        result: UpdateResult = await self.users.update_one(
+            filter={'_id': user_id},
+            update={
+                '$push': {
+                    'stories': story_id
+                }
+            }
+        )
+        return self.update_one_was_successful(result)
+
     async def set_user_password_hash(self, user_id, password_hash):
         return await self.set_user_field(user_id, 'password_hash', password_hash)
 
