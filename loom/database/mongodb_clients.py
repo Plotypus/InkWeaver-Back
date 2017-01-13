@@ -334,7 +334,7 @@ class LoomMongoDBClient:
         result = await self.sections.insert_one(section)
         return result.inserted_id
 
-    async def insert_preceding_subsection_at_index(self, subsection_id, to_section_id, index):
+    async def insert_preceding_subsection(self, subsection_id, to_section_id, at_index):
         """
 
         Args:
@@ -351,7 +351,7 @@ class LoomMongoDBClient:
                 '$push': {
                     'preceding_subsections': {
                         '$each':     [subsection_id],
-                        '$position': index,
+                        '$position': at_index,
                     }
                 }
             }
@@ -378,7 +378,7 @@ class LoomMongoDBClient:
         )
         return self.update_one_was_successful(update_result)
 
-    async def insert_inner_subsection_at_index(self, subsection_id, to_section_id, index):
+    async def insert_inner_subsection(self, subsection_id, to_section_id, at_index):
         """
 
         Args:
@@ -395,7 +395,7 @@ class LoomMongoDBClient:
                 '$push': {
                     'inner_subsections': {
                         '$each':     [subsection_id],
-                        '$position': index,
+                        '$position': at_index,
                     }
                 }
             }
@@ -422,7 +422,7 @@ class LoomMongoDBClient:
         )
         return self.update_one_was_successful(update_result)
 
-    async def insert_succeeding_subsection_at_index(self, subsection_id, to_section_id, index):
+    async def insert_succeeding_subsection(self, subsection_id, to_section_id, at_index):
         """
 
         Args:
@@ -439,7 +439,7 @@ class LoomMongoDBClient:
                 '$push': {
                     'succeeding_subsections': {
                         '$each':     [subsection_id],
-                        '$position': index,
+                        '$position': at_index,
                     }
                 }
             }
