@@ -44,3 +44,38 @@ class TestDBInterface:
     async def test_get_user_id_for_username(self, user):
         inserted_id = await self.interface.create_user(**user)
         assert await self.interface.get_user_id_for_username(user['username']) == inserted_id
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story', [
+        ({
+            'username': 'tmctest',
+            'password': 'my gr3at p4ssw0rd',
+            'name':     'Testy McTesterton',
+            'email':    'tmctest@te.st',
+        },
+         {
+             'title':   'test-story',
+             'summary': 'This is a story for testing',
+             'wiki_id': 'placeholder for wiki id',
+         })
+    ])
+    async def test_story_creation(self, user, story):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        story_ids = await self.interface.get_user_stories(user_id)
+        story_summary = {
+            'story_id': story_id,
+            'title': story['title'],
+            'access_level': 'owner',
+        }
+        assert story_summary in story_ids
+        db_story = await self.interface.get_story(story_id)
+        assert db_story['title'] == story['title']
+        assert db_story['summary'] == story['summary']
+        assert db_story['wiki_id'] == story['wiki_id']
+        user_description = {
+            'user_id': user_id,
+            'name': user['name'],
+            'access_level': 'owner',
+        }
+        assert user_description in db_story['users']
