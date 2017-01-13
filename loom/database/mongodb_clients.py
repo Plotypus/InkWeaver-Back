@@ -58,6 +58,16 @@ class LoomMongoDBClient:
     async def drop_database(self):
         await self.client.drop_database(self.database)
 
+    def update_one_was_successful(self, update: UpdateResult) -> bool:
+        # TODO: Implement this.
+        pass
+        # if result.matched_count != 1:
+        #     # TODO: Handle this case.
+        #     pass
+        # if result.modified_count != 1:
+        #     # TODO: Handle this case.
+        #     pass
+
     ###########################################################################
     #
     # User Methods
@@ -324,6 +334,138 @@ class LoomMongoDBClient:
         result = await self.sections.insert_one(section)
         return result.inserted_id
 
+    async def insert_preceding_subsection(self, subsection_id, to_section_id, at_index):
+        """
+
+        Args:
+            subsection_id:
+            to_section_id:
+            index:
+
+        Returns:
+
+        """
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': to_section_id},
+            update={
+                '$push': {
+                    'preceding_subsections': {
+                        '$each':     [subsection_id],
+                        '$position': at_index,
+                    }
+                }
+            }
+        )
+        return self.update_one_was_successful(update_result)
+
+    async def append_preceding_subsection(self, subsection_id, to_section_id):
+        """
+
+        Args:
+            subsection_id:
+            to_section_id:
+
+        Returns:
+
+        """
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': to_section_id},
+            update={
+                '$push': {
+                    'preceding_subsections': subsection_id
+                }
+            }
+        )
+        return self.update_one_was_successful(update_result)
+
+    async def insert_inner_subsection(self, subsection_id, to_section_id, at_index):
+        """
+
+        Args:
+            subsection_id:
+            to_section_id:
+            index:
+
+        Returns:
+
+        """
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': to_section_id},
+            update={
+                '$push': {
+                    'inner_subsections': {
+                        '$each':     [subsection_id],
+                        '$position': at_index,
+                    }
+                }
+            }
+        )
+        return self.update_one_was_successful(update_result)
+
+    async def append_inner_subsection(self, subsection_id, to_section_id):
+        """
+
+        Args:
+            subsection_id:
+            to_section_id:
+
+        Returns:
+
+        """
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': to_section_id},
+            update={
+                '$push': {
+                    'inner_subsections': subsection_id
+                }
+            }
+        )
+        return self.update_one_was_successful(update_result)
+
+    async def insert_succeeding_subsection(self, subsection_id, to_section_id, at_index):
+        """
+
+        Args:
+            subsection_id:
+            to_section_id:
+            index:
+
+        Returns:
+
+        """
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': to_section_id},
+            update={
+                '$push': {
+                    'succeeding_subsections': {
+                        '$each':     [subsection_id],
+                        '$position': at_index,
+                    }
+                }
+            }
+        )
+        return self.update_one_was_successful(update_result)
+
+    async def append_succeeding_subsection(self, subsection_id, to_section_id):
+        """
+
+        Args:
+            subsection_id:
+            to_section_id:
+
+        Returns:
+
+        """
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': to_section_id},
+            update={
+                '$push': {
+                    'succeeding_subsections': subsection_id
+                }
+            }
+        )
+        return self.update_one_was_successful(update_result)
+
     async def append_paragraph_to_section(self, section_id: ObjectId, paragraph: str):
         """
 
@@ -334,7 +476,7 @@ class LoomMongoDBClient:
         Returns:
 
         """
-        result: UpdateResult = await self.sections.update_one(
+        update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': section_id},
             update={
                 '$push': {
@@ -342,12 +484,7 @@ class LoomMongoDBClient:
                 }
             }
         )
-        if result.matched_count != 1:
-            # TODO: Handle this case.
-            pass
-        if result.modified_count != 1:
-            # TODO: Handle this case.
-            pass
+        return self.update_one_was_successful(update_result)
 
     async def insert_paragraph_into_section_at_index(self, section_id: ObjectId, paragraph_index: int, paragraph: str):
         """
@@ -360,7 +497,7 @@ class LoomMongoDBClient:
         Returns:
 
         """
-        result: UpdateResult = await self.sections.update_one(
+        update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': section_id},
             update={
                 '$push': {
@@ -371,12 +508,8 @@ class LoomMongoDBClient:
                 }
             }
         )
-        if result.matched_count != 1:
-            # TODO: Handle this case.
-            pass
-        if result.modified_count != 1:
-            # TODO: Handle this case.
-            pass
+        return self.update_one_was_successful(update_result)
+
 
     async def set_paragraph_in_section_at_index(self, section_id: ObjectId, paragraph_index: int, paragraph: str):
         """
@@ -389,7 +522,7 @@ class LoomMongoDBClient:
         Returns:
 
         """
-        result: UpdateResult = await self.sections.update_one(
+        update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': section_id},
             update={
                 '$set': {
@@ -399,12 +532,7 @@ class LoomMongoDBClient:
                 }
             }
         )
-        if result.matched_count != 1:
-            # TODO: Handle this case.
-            pass
-        if result.modified_count != 1:
-            # TODO: Handle this case.
-            pass
+        self.update_one_was_successful(update_result)
 
     async def get_story(self, story_id: ObjectId) -> Dict:
         """Grabs the information associated with the provided story.

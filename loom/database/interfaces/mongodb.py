@@ -110,17 +110,33 @@ class MongoDBInterface(AbstractDBInterface):
         inserted_id = await self.client.create_story(title, wiki_id, user_description, summary, section_id)
         return inserted_id
 
-    async def create_preceding_subsection(self, title, in_parent_section):
-        pass
+    async def insert_preceding_subsection(self, title, parent_id, index):
+        subsection_id = self.create_section(title)
+        return await self.client.insert_preceding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
 
-    async def create_inner_subsection(self, title, in_parent_section):
-        pass
+    async def append_preceding_subsection(self, title, parent_id):
+        subsection_id = self.create_section(title)
+        return await self.client.append_preceding_subsection(subsection_id, to_section_id=parent_id)
 
-    async def create_succeeding_subsection(self, title, in_parent_section):
-        pass
+    async def insert_inner_subsection(self, title, parent_id, index):
+        subsection_id = self.create_section(title)
+        return await self.client.insert_inner_subsection(subsection_id, to_section_id=parent_id, at_index=index)
+
+    async def append_inner_subsection(self, title, parent_id):
+        subsection_id = self.create_section(title)
+        return await self.client.append_inner_subsection(subsection_id, to_section_id=parent_id)
+
+    async def insert_succeeding_subsection(self, title, parent_id, index):
+        subsection_id = self.create_section(title)
+        return await self.client.insert_succeeding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
+
+    async def append_succeeding_subsection(self, title, parent_id):
+        subsection_id = self.create_section(title)
+        return await self.client.append_succeeding_subsection(subsection_id, to_section_id=parent_id)
 
     async def create_section(self, title) -> ObjectId:
-        pass
+        inserted_id = self.client.create_section(title)
+        return inserted_id
 
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)

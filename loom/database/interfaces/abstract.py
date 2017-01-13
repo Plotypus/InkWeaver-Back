@@ -66,15 +66,27 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def create_preceding_subsection(self, title, in_parent_section):
+    async def insert_preceding_subsection(self, title, parent_id, index):
         pass
 
     @abstractmethod
-    async def create_inner_subsection(self, title, in_parent_section):
+    async def append_preceding_subsection(self, title, parent_id):
         pass
 
     @abstractmethod
-    async def create_succeeding_subsection(self, title, in_parent_section):
+    async def insert_inner_subsection(self, title, parent_id, index):
+        pass
+
+    @abstractmethod
+    async def append_inner_subsection(self, title, parent_id):
+        pass
+
+    @abstractmethod
+    async def insert_succeeding_subsection(self, title, parent_id, index):
+        pass
+
+    @abstractmethod
+    async def append_succeeding_subsection(self, title, parent_id):
         pass
 
     @abstractmethod
