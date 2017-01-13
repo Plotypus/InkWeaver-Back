@@ -224,22 +224,47 @@ class LoomHandler(GenericHandler):
         pass
 
     @requires_login
-    async def add_preceding_subsection(self, message_id, title, to_parent):
+    async def add_preceding_subsection_at_index(self, message_id, title, to_parent, index):
         # TODO: Implement this.
         pass
 
     @requires_login
-    async def add_inner_subsection(self, message_id, title, to_parent):
+    async def append_preceding_subsection(self, message_id, title, to_parent):
         # TODO: Implement this.
         pass
 
     @requires_login
-    async def add_succeeding_subsection(self, message_id, title, to_parent):
+    async def add_inner_subsection_at_index(self, message_id, title, to_parent, index):
         # TODO: Implement this.
         pass
 
     @requires_login
-    async def edit_section(self, section_id, change):
+    async def append_inner_subsection(self, message_id, title, to_parent):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def add_succeeding_subsection_at_index(self, message_id, title, to_parent, index):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def append_succeeding_subsection(self, message_id, title, to_parent):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def add_paragraph_at_index_in_section(self, message_id, section_id, index, text):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def append_paragraph_in_section(self, message_id, section_id, text):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def edit_paragraph_in_section(self, message_id, section_id, paragraph, update):
         # TODO: Implement this.
         pass
 
@@ -323,26 +348,32 @@ class LoomHandler(GenericHandler):
 
     DISPATCH = {
         # User Information
-        'get_user_preferences':       get_user_preferences,
-        'get_user_stories':           get_user_stories,
-        'get_user_wikis':             get_user_wikis,
+        'get_user_preferences':               get_user_preferences,
+        'get_user_stories':                   get_user_stories,
+        'get_user_wikis':                     get_user_wikis,
 
         # Stories
-        'create_story':               create_story,
-        'add_preceding_subsection':   add_preceding_subsection,
-        'add_inner_subsection':       add_inner_subsection,
-        'add_succeeding_subsection':  add_succeeding_subsection,
-        'get_story_information':      get_story_information,
-        'get_story_hierarchy':        get_story_hierarchy,
-        'get_section_hierarchy':      get_section_hierarchy,
-        'get_section_content':        get_section_content,
+        'create_story':                       create_story,
+        'add_preceding_subsection_at_index':  add_preceding_subsection_at_index,
+        'append_preceding_subsection':        append_preceding_subsection,
+        'add_inner_subsection_at_index':      add_inner_subsection_at_index,
+        'append_inner_subsection':            append_inner_subsection,
+        'add_succeeding_subsection_at_index': add_succeeding_subsection_at_index,
+        'append_succeeding_subsection':       append_succeeding_subsection,
+        'add_paragraph_at_index_in_section':  add_paragraph_at_index_in_section,
+        'append_paragraph_in_section':        append_paragraph_in_section,
+        'edit_paragraph_in_section':          edit_paragraph_in_section,
+        'get_story_information':              get_story_information,
+        'get_story_hierarchy':                get_story_hierarchy,
+        'get_section_hierarchy':              get_section_hierarchy,
+        'get_section_content':                get_section_content,
 
         # Wikis
-        'create_wiki':                create_wiki,
-        'add_segment':                add_segment,
-        'add_page':                   add_page,
-        'get_wiki_information':       get_wiki_information,
-        'get_wiki_hierarchy':         get_wiki_hierarchy,
-        'get_wiki_segment_hierarchy': get_wiki_segment_hierarchy,
-        'get_wiki_page':              get_wiki_page,
+        'create_wiki':                        create_wiki,
+        'add_segment':                        add_segment,
+        'add_page':                           add_page,
+        'get_wiki_information':               get_wiki_information,
+        'get_wiki_hierarchy':                 get_wiki_hierarchy,
+        'get_wiki_segment_hierarchy':         get_wiki_segment_hierarchy,
+        'get_wiki_page':                      get_wiki_page,
     }
