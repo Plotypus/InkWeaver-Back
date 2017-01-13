@@ -135,7 +135,7 @@ class MongoDBInterface(AbstractDBInterface):
         return await self.client.append_succeeding_subsection(subsection_id, to_section_id=parent_id)
 
     async def create_section(self, title) -> ObjectId:
-        inserted_id = self.client.create_section(title)
+        inserted_id = await self.client.create_section(title)
         return inserted_id
 
     async def get_story(self, story_id):
