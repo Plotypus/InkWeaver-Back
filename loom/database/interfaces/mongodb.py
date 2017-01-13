@@ -110,17 +110,27 @@ class MongoDBInterface(AbstractDBInterface):
         inserted_id = await self.client.create_story(title, wiki_id, user_description, summary, section_id)
         return inserted_id
 
-    async def create_preceding_subsection(self, title, in_parent_section):
+    async def insert_preceding_subsection(self, title, in_parent_section, at_index):
         pass
 
-    async def create_inner_subsection(self, title, in_parent_section):
+    async def append_preceding_subsection(self, title, in_parent_section):
         pass
 
-    async def create_succeeding_subsection(self, title, in_parent_section):
+    async def insert_inner_subsection(self, title, in_parent_section, at_index):
+        pass
+
+    async def append_inner_subsection(self, title, in_parent_section):
+        pass
+
+    async def insert_succeeding_subsection(self, title, in_parent_section, at_index):
+        pass
+
+    async def append_succeeding_subsection(self, title, in_parent_section):
         pass
 
     async def create_section(self, title) -> ObjectId:
-        pass
+        inserted_id = self.client.create_section(title)
+        return inserted_id
 
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)
