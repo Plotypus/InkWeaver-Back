@@ -220,8 +220,16 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def create_story(self, message_id, title, wiki_id, summary):
-        # TODO: Implement this.
-        pass
+        story_id = await self.db_interface.create_story(self.user_id, title, summary, wiki_id)
+        story = await self.db_interface.get_story(story_id)
+        message = {
+            'story_title':  story['title'],
+            'section_id':   story['section_id'],
+            'wiki_id':      story['wiki_id'],
+            'users':        story['users'],
+            'summary':      story['summary'],
+        }
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     async def add_preceding_subsection_at_index(self, message_id, title, to_parent, index):
