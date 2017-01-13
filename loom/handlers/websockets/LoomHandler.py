@@ -239,6 +239,11 @@ class LoomHandler(GenericHandler):
         pass
 
     @requires_login
+    async def edit_section(self, section_id, change):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
     async def get_story_information(self, message_id, story_id):
         story = await self.db_interface.get_story(story_id)
         message = {

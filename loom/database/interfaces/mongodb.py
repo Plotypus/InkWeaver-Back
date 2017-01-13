@@ -6,6 +6,7 @@ from loom.database.mongodb_clients import (
     LoomMongoDBMotorAsyncioClient
 )
 
+from bson.objectid import ObjectId
 from typing import ClassVar
 
 
@@ -110,7 +111,7 @@ class MongoDBInterface(AbstractDBInterface):
     async def create_succeeding_subsection(self, title, in_parent_section):
         pass
 
-    async def create_section(self, title):
+    async def create_section(self, title) -> ObjectId:
         pass
 
     async def get_story(self, story_id):
