@@ -112,27 +112,27 @@ class MongoDBInterface(AbstractDBInterface):
         return inserted_id
 
     async def insert_preceding_subsection(self, title, parent_id, index):
-        subsection_id = self.create_section(title)
+        subsection_id = await self.create_section(title)
         return await self.client.insert_preceding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
 
     async def append_preceding_subsection(self, title, parent_id):
-        subsection_id = self.create_section(title)
+        subsection_id = await self.create_section(title)
         return await self.client.append_preceding_subsection(subsection_id, to_section_id=parent_id)
 
     async def insert_inner_subsection(self, title, parent_id, index):
-        subsection_id = self.create_section(title)
+        subsection_id = await self.create_section(title)
         return await self.client.insert_inner_subsection(subsection_id, to_section_id=parent_id, at_index=index)
 
     async def append_inner_subsection(self, title, parent_id):
-        subsection_id = self.create_section(title)
+        subsection_id = await self.create_section(title)
         return await self.client.append_inner_subsection(subsection_id, to_section_id=parent_id)
 
     async def insert_succeeding_subsection(self, title, parent_id, index):
-        subsection_id = self.create_section(title)
+        subsection_id = await self.create_section(title)
         return await self.client.insert_succeeding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
 
     async def append_succeeding_subsection(self, title, parent_id):
-        subsection_id = self.create_section(title)
+        subsection_id = await self.create_section(title)
         return await self.client.append_succeeding_subsection(subsection_id, to_section_id=parent_id)
 
     async def create_section(self, title) -> ObjectId:
