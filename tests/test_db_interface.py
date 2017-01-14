@@ -131,7 +131,7 @@ class TestDBInterface:
              'summary': 'This is a story for testing',
              'wiki_id': 'placeholder for wiki id',
          },
-        'Prologue')
+         'Prologue')
     ])
     async def test_append_preceding_section(self, user, story, section_title):
         user_id = await self.interface.create_user(**user)
@@ -144,4 +144,32 @@ class TestDBInterface:
         section_hierarchy = story_hierarchy['preceding_subsections'][0]
         assert section_hierarchy['title'] == section_title
 
-    
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story,title_one,title_two,title_three', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-story',
+             'summary': 'This is a story for testing',
+             'wiki_id': 'placeholder for wiki id',
+         },
+         'Prologue II', 'Prologue I', 'Prologue III')
+    ])
+    async def test_insert_preceding_section(self, user, story, title_one, title_two, title_three):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        story = await self.interface.get_story(story_id)
+        story_section_id = story['section_id']
+        await self.interface.append_preceding_subsection(title_one, story_section_id)
+        await self.interface.insert_preceding_subsection(title_two, story_section_id, 0)
+        await self.interface.insert_preceding_subsection(title_three, story_section_id, 2)
+        story_hierarchy = await self.interface.get_story_hierarchy(story_id)
+        assert len(story_hierarchy['preceding_subsections']) == 3
+        expected_title_order = [title_two, title_one, title_three]
+        titles = [section['title'] for section in story_hierarchy['preceding_subsections']]
+        assert titles == expected_title_order
+
