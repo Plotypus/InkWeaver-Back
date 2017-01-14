@@ -48,11 +48,11 @@ class TestDBInterface:
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user,story', [
         ({
-            'username': 'tmctest',
-            'password': 'my gr3at p4ssw0rd',
-            'name':     'Testy McTesterton',
-            'email':    'tmctest@te.st',
-        },
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
          {
              'title':   'test-story',
              'summary': 'This is a story for testing',
@@ -79,3 +79,69 @@ class TestDBInterface:
             'access_level': 'owner',
         }
         assert user_description in db_story['users']
+        assert db_story['section_id'] is not None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('title', [
+        'Introduction'
+    ])
+    async def test_create_section(self, title):
+        section_id = await self.interface.create_section(title)
+        hierarchy = await self.interface.get_section_hierarchy(section_id)
+        assert hierarchy['title'] == title
+        assert hierarchy['section_id'] == section_id
+        assert hierarchy['preceding_subsections'] == list()
+        assert hierarchy['inner_subsections'] == list()
+        assert hierarchy['succeeding_subsections'] == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-story',
+             'summary': 'This is a story for testing',
+             'wiki_id': 'placeholder for wiki id',
+         })
+    ])
+    async def test_get_story_hierarchy(self, user, story):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        story = await self.interface.get_story(story_id)
+        section_id = story['section_id']
+        story_hierarchy = await self.interface.get_story_hierarchy(story_id)
+        section_hierarchy = await self.interface.get_section_hierarchy(section_id)
+        assert story_hierarchy == section_hierarchy
+        assert story_hierarchy['title'] == story['title']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story,section_title', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-story',
+             'summary': 'This is a story for testing',
+             'wiki_id': 'placeholder for wiki id',
+         },
+        'Prologue')
+    ])
+    async def test_append_preceding_section(self, user, story, section_title):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        story = await self.interface.get_story(story_id)
+        story_section_id = story['section_id']
+        await self.interface.append_preceding_subsection(section_title, story_section_id)
+        story_hierarchy = await self.interface.get_story_hierarchy(story_id)
+        assert len(story_hierarchy['preceding_subsections']) == 1
+        section_hierarchy = story_hierarchy['preceding_subsections'][0]
+        assert section_hierarchy['title'] == section_title
+
+    
