@@ -173,3 +173,113 @@ class TestDBInterface:
         titles = [section['title'] for section in story_hierarchy['preceding_subsections']]
         assert titles == expected_title_order
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story,section_title', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-story',
+             'summary': 'This is a story for testing',
+             'wiki_id': 'placeholder for wiki id',
+         },
+         'Chapter One')
+    ])
+    async def test_append_inner_section(self, user, story, section_title):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        story = await self.interface.get_story(story_id)
+        story_section_id = story['section_id']
+        await self.interface.append_inner_subsection(section_title, story_section_id)
+        story_hierarchy = await self.interface.get_story_hierarchy(story_id)
+        assert len(story_hierarchy['inner_subsections']) == 1
+        section_hierarchy = story_hierarchy['inner_subsections'][0]
+        assert section_hierarchy['title'] == section_title
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story,title_one,title_two,title_three', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-story',
+             'summary': 'This is a story for testing',
+             'wiki_id': 'placeholder for wiki id',
+         },
+         'Chapter II', 'Chapter I', 'Chapter III')
+    ])
+    async def test_insert_inner_section(self, user, story, title_one, title_two, title_three):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        story = await self.interface.get_story(story_id)
+        story_section_id = story['section_id']
+        await self.interface.append_inner_subsection(title_one, story_section_id)
+        await self.interface.insert_inner_subsection(title_two, story_section_id, 0)
+        await self.interface.insert_inner_subsection(title_three, story_section_id, 2)
+        story_hierarchy = await self.interface.get_story_hierarchy(story_id)
+        assert len(story_hierarchy['inner_subsections']) == 3
+        expected_title_order = [title_two, title_one, title_three]
+        titles = [section['title'] for section in story_hierarchy['inner_subsections']]
+        assert titles == expected_title_order
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story,section_title', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-story',
+             'summary': 'This is a story for testing',
+             'wiki_id': 'placeholder for wiki id',
+         },
+         'EpilogueEpilogue One')
+    ])
+    async def test_append_succeeding_section(self, user, story, section_title):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        story = await self.interface.get_story(story_id)
+        story_section_id = story['section_id']
+        await self.interface.append_succeeding_subsection(section_title, story_section_id)
+        story_hierarchy = await self.interface.get_story_hierarchy(story_id)
+        assert len(story_hierarchy['succeeding_subsections']) == 1
+        section_hierarchy = story_hierarchy['succeeding_subsections'][0]
+        assert section_hierarchy['title'] == section_title
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story,title_one,title_two,title_three', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-story',
+             'summary': 'This is a story for testing',
+             'wiki_id': 'placeholder for wiki id',
+         },
+         'Epilogue II', 'Epilogue I', 'Epilogue III')
+    ])
+    async def test_insert_succeeding_section(self, user, story, title_one, title_two, title_three):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        story = await self.interface.get_story(story_id)
+        story_section_id = story['section_id']
+        await self.interface.append_succeeding_subsection(title_one, story_section_id)
+        await self.interface.insert_succeeding_subsection(title_two, story_section_id, 0)
+        await self.interface.insert_succeeding_subsection(title_three, story_section_id, 2)
+        story_hierarchy = await self.interface.get_story_hierarchy(story_id)
+        assert len(story_hierarchy['succeeding_subsections']) == 3
+        expected_title_order = [title_two, title_one, title_three]
+        titles = [section['title'] for section in story_hierarchy['succeeding_subsections']]
+        assert titles == expected_title_order
+        
