@@ -2,13 +2,33 @@
 language: python
 python:
   - 3.6
+
+# Cache apt and pip installs to speed up CI
+cache:
+  - apt
+  - pip
+
+# Install addons through containers
+addons:
+  apt:
+    sources:
+      - mongodb-upstart
+      - mongodb-3.2-precise
+    packages:
+      - mongodb-org-server
+      - mongodb-org-shell
+
 services:
   - mongodb
-cache: pip
 
 # Install dependencies
 install:
+  # Install Python requirements
   - pip install -r requirements.txt
+
+before_script:
+  # Verify MongoDB installation completed
+  - mongod --version
 
 # Run tests
 script: pytest --cov=loom
