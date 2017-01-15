@@ -4,15 +4,25 @@ python:
   - 3.6
 services:
   - mongodb
-cache: pip
+
+# Cache apt and pip installs to speed up CI
+cache:
+  - apt
+  - pip
+
+# Install addons through containers
+addons:
+  apt:
+    packages:
+      - mongodb-3.2-precise
 
 # Install dependencies
 install:
-  - sudo apt-get install -y mongodb-org
+  # Install Python requirements
   - pip install -r requirements.txt
-  - "until nc -z localhost 27017; do echo Waiting for MongoDB; sleep 1; done"
 
 before_script:
+  # Verify MongoDB installation completed
   - mongod --version
 
 # Run tests
