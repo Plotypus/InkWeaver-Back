@@ -8,7 +8,12 @@ cache: pip
 
 # Install dependencies
 install:
+  - sudo apt-get install mongodb-enterprise-server
   - pip install -r requirements.txt
+  - "until nc -z localhost 27017; do echo Waiting for MongoDB; sleep 1; done"
+
+before_script:
+  - mongod --version
 
 # Run tests
 script: pytest --cov=loom
