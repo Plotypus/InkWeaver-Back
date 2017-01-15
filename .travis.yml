@@ -13,7 +13,7 @@ cache:
 # Install addons through containers
 addons:
   apt:
-    packages:
+    sources:
       - mongodb-3.2-precise
 
 # Install dependencies
