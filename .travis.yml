@@ -2,8 +2,6 @@
 language: python
 python:
   - 3.6
-services:
-  - mongodb
 
 # Cache apt and pip installs to speed up CI
 cache:
@@ -14,7 +12,14 @@ cache:
 addons:
   apt:
     sources:
+      - mongodb-upstart
       - mongodb-3.2-precise
+    packages:
+      - mongodb-org-server
+      - mongodb-org-shell
+
+services:
+  - mongodb
 
 # Install dependencies
 install:
