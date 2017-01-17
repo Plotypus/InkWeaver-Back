@@ -4,6 +4,34 @@ from pymongo.results import UpdateResult
 from typing import Dict, List
 
 
+class ClientError(Exception):
+    pass
+
+
+class BadMatchError(ClientError):
+    pass
+
+
+class NoMatchError(BadMatchError):
+    pass
+
+
+class ExtraMatchesError(BadMatchError):
+    pass
+
+
+class BadUpdateError(ClientError):
+    pass
+
+
+class NoUpdateError(BadUpdateError):
+    pass
+
+
+class ExtraUpdatesError(BadUpdateError):
+    pass
+
+
 class MongoDBClient:
     def __init__(self, mongodb_client_class, db_name='inkweaver', db_host='localhost', db_port=27017):
         self._host = db_host
@@ -58,15 +86,16 @@ class MongoDBClient:
     async def drop_database(self):
         await self.client.drop_database(self.database)
 
-    def update_one_was_successful(self, update: UpdateResult) -> bool:
-        # TODO: Implement this.
-        pass
-        # if result.matched_count != 1:
-        #     # TODO: Handle this case.
-        #     pass
-        # if result.modified_count != 1:
-        #     # TODO: Handle this case.
-        #     pass
+    @staticmethod
+    def assert_update_one_was_successful(update_result: UpdateResult):
+        if update_result.matched_count == 0:
+            raise NoMatchError
+        if update_result.matched_count > 1:
+            raise ExtraMatchesError
+        if update_result.modified_count == 0:
+            raise NoUpdateError
+        if update_result.modified_count > 1:
+            raise ExtraUpdatesError
 
     ###########################################################################
     #
@@ -146,7 +175,7 @@ class MongoDBClient:
         return user['_id']
 
     async def add_story_to_user(self, user_id: ObjectId, story_id: ObjectId):
-        result: UpdateResult = await self.users.update_one(
+        update_result: UpdateResult = await self.users.update_one(
             filter={'_id': user_id},
             update={
                 '$push': {
@@ -154,7 +183,7 @@ class MongoDBClient:
                 }
             }
         )
-        return self.update_one_was_successful(result)
+        self.assert_update_one_was_successful(update_result)
 
     async def set_user_password_hash(self, user_id, password_hash):
         return await self.set_user_field(user_id, 'password_hash', password_hash)
@@ -172,13 +201,15 @@ class MongoDBClient:
         return await self.set_user_field(user_id, 'avatar', avatar)
 
     async def set_user_field(self, user_id, field, value):
-        result: UpdateResult = await self.users.update_one({'_id': user_id}, {'$set': {field: value}})
-        if result.matched_count != 1:
-            # TODO: Handle this case.
-            pass
-        if result.modified_count != 1:
-            # TODO: Handle this case.
-            pass
+        update_result: UpdateResult = await self.users.update_one(
+            filter={'_id': user_id},
+            update={
+                '$set': {
+                    field: value
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
 
     async def get_user_preferences(self, user_id: ObjectId) -> Dict:
         """Grabs the preferences for the provided user.
@@ -367,7 +398,7 @@ class MongoDBClient:
                 }
             }
         )
-        return self.update_one_was_successful(update_result)
+        self.assert_update_one_was_successful(update_result)
 
     async def append_preceding_subsection(self, subsection_id, to_section_id):
         """
@@ -387,7 +418,7 @@ class MongoDBClient:
                 }
             }
         )
-        return self.update_one_was_successful(update_result)
+        self.assert_update_one_was_successful(update_result)
 
     async def insert_inner_subsection(self, subsection_id, to_section_id, at_index):
         """
@@ -411,7 +442,7 @@ class MongoDBClient:
                 }
             }
         )
-        return self.update_one_was_successful(update_result)
+        self.assert_update_one_was_successful(update_result)
 
     async def append_inner_subsection(self, subsection_id, to_section_id):
         """
@@ -431,7 +462,7 @@ class MongoDBClient:
                 }
             }
         )
-        return self.update_one_was_successful(update_result)
+        self.assert_update_one_was_successful(update_result)
 
     async def insert_succeeding_subsection(self, subsection_id, to_section_id, at_index):
         """
@@ -455,7 +486,7 @@ class MongoDBClient:
                 }
             }
         )
-        return self.update_one_was_successful(update_result)
+        self.assert_update_one_was_successful(update_result)
 
     async def append_succeeding_subsection(self, subsection_id, to_section_id):
         """
@@ -475,7 +506,7 @@ class MongoDBClient:
                 }
             }
         )
-        return self.update_one_was_successful(update_result)
+        self.assert_update_one_was_successful(update_result)
 
     async def append_paragraph_to_section(self, section_id: ObjectId, paragraph: str):
         """
@@ -495,7 +526,7 @@ class MongoDBClient:
                 }
             }
         )
-        return self.update_one_was_successful(update_result)
+        self.assert_update_one_was_successful(update_result)
 
     async def insert_paragraph_into_section_at_index(self, section_id: ObjectId, paragraph_index: int, paragraph: str):
         """
@@ -519,7 +550,7 @@ class MongoDBClient:
                 }
             }
         )
-        return self.update_one_was_successful(update_result)
+        self.assert_update_one_was_successful(update_result)
 
     async def set_paragraph_in_section_at_index(self, section_id: ObjectId, paragraph_index: int, paragraph: str):
         """
@@ -542,7 +573,7 @@ class MongoDBClient:
                 }
             }
         )
-        self.update_one_was_successful(update_result)
+        self.assert_update_one_was_successful(update_result)
 
     async def get_story(self, story_id: ObjectId) -> Dict:
         """Grabs the information associated with the provided story.
