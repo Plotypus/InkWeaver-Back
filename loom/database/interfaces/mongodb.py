@@ -151,6 +151,12 @@ class MongoDBInterface(AbstractDBInterface):
         inserted_id = await self.client.create_section(title)
         return inserted_id
 
+    async def insert_paragraph_into_section_at_index(self, section_id, index, text):
+        return await self.client.insert_paragraph_into_section_at_index(section_id, index, text)
+
+    async def append_paragraph_to_section(self, section_id, text):
+        return await self.client.append_paragraph_to_section(section_id, text)
+
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)
         return story
@@ -175,7 +181,8 @@ class MongoDBInterface(AbstractDBInterface):
         return hierarchy
 
     async def get_section_content(self, section_id):
-        pass
+        section = await self.client.get_section(section_id)
+        return section['content']
 
     # Wiki object methods.
 

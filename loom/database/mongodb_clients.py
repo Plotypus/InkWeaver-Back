@@ -521,7 +521,6 @@ class LoomMongoDBClient:
         )
         return self.update_one_was_successful(update_result)
 
-
     async def set_paragraph_in_section_at_index(self, section_id: ObjectId, paragraph_index: int, paragraph: str):
         """
 
