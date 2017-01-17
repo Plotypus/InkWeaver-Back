@@ -269,13 +269,16 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def add_paragraph_at_index_in_section(self, message_id, section_id, index, text):
-        # TODO: Implement this.
-        pass
+        # TODO: Decide whether or not to add more to response
+        await self.db_interface.insert_paragraph_into_section_at_index(section_id, index, text)
+        self.write_json({}, with_reply_id=message_id)
+
 
     @requires_login
     async def append_paragraph_in_section(self, message_id, section_id, text):
-        # TODO: Implement this.
-        pass
+        # TODO: Decide whether or not to add more to response
+        await self.db_interface.append_paragraph_to_section(section_id, text)
+        self.write_json({}, with_reply_id=message_id)
 
     @requires_login
     async def edit_paragraph_in_section(self, message_id, section_id, paragraph, update):
@@ -309,9 +312,10 @@ class LoomHandler(GenericHandler):
         self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    def get_section_content(self, message_id, section_id):
-        # TODO: Implement this.
-        pass
+    async def get_section_content(self, message_id, section_id):
+        paragraphs = await self.db_interface.get_section_content(section_id)
+        content = [{'text': paragraph['text']} for paragraph in paragraphs]
+        self.write_json({'content': content}, with_reply_id=message_id)
 
     ## Wikis
 
