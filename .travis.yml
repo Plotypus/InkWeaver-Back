@@ -3,12 +3,19 @@ language: python
 python:
   - 3.6
 
-# Cache apt and pip installs to speed up CI
+# Cache pip installs to speed up CI
+# See more here:
+#   https://docs.travis-ci.com/user/caching/
 cache:
-  - apt
   - pip
 
-# Install addons through containers
+# Install addons through containers. For general information see:
+#   https://docs.travis-ci.com/user/installing-dependencies/#Adding-APT-Sources
+# Sources come from the whitelist here:
+#   https://github.com/travis-ci/apt-source-whitelist
+# and packages come from either regular apt-get sources, sources activated from the above sources, or else from the
+# following whitelist:
+#   https://github.com/travis-ci/apt-package-whitelist
 addons:
   apt:
     sources:
@@ -19,24 +26,26 @@ addons:
       - mongodb-org-shell
 
 services:
+  # Start MongoDB
   - mongodb
 
-# Install dependencies
 install:
-  # Install Python requirements
+  # Install Python module requirements
   - pip install -r requirements.txt
 
 before_script:
   # Verify MongoDB installation completed
   - mongod --version
 
-# Run tests
+# Run tests with coverage
 script: pytest --cov=loom
 
-# Push to coveralls.io upon completion
+# Push coverage results to coveralls.io upon completion
 after_script: coveralls
 
 # Send notifications
+# More information here:
+#   https://docs.travis-ci.com/user/notifications
 notifications:
   slack:
     rooms:
