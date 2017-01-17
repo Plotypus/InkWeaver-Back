@@ -4,7 +4,7 @@ from pymongo.results import UpdateResult
 from typing import Dict, List
 
 
-class LoomMongoDBClient:
+class MongoDBClient:
     def __init__(self, mongodb_client_class, db_name='inkweaver', db_host='localhost', db_port=27017):
         self._host = db_host
         self._port = db_port
@@ -782,13 +782,13 @@ class LoomMongoDBClient:
         result = await self.headings.find_one({'_id': heading_id})
         return result
 
-class LoomMongoDBMotorTornadoClient(LoomMongoDBClient):
+class MongoDBMotorTornadoClient(MongoDBClient):
     def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
         from motor.motor_tornado import MotorClient
         super().__init__(MotorClient, db_name, db_host, db_port)
 
 
-class LoomMongoDBMotorAsyncioClient(LoomMongoDBClient):
+class MongoDBMotorAsyncioClient(MongoDBClient):
     def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
         from motor.motor_asyncio import AsyncIOMotorClient
         super().__init__(AsyncIOMotorClient, db_name, db_host, db_port)

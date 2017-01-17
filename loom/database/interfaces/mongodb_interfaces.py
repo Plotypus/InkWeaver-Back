@@ -1,10 +1,6 @@
-from .abstract import AbstractDBInterface
+from .abstract_interface import AbstractDBInterface
 
-from loom.database.mongodb_clients import (
-    LoomMongoDBClient,
-    LoomMongoDBMotorTornadoClient,
-    LoomMongoDBMotorAsyncioClient
-)
+from loom.database.clients import *
 
 from bson.objectid import ObjectId
 from typing import ClassVar
@@ -12,7 +8,7 @@ from typing import ClassVar
 
 class MongoDBInterface(AbstractDBInterface):
     def __init__(self, db_client_class: ClassVar, db_name, db_host, db_port):
-        if not issubclass(db_client_class, LoomMongoDBClient):
+        if not issubclass(db_client_class, MongoDBClient):
             raise ValueError("invalid MongoDB client class: {}".format(db_client_class.__name__))
         self._client = db_client_class(db_name, db_host, db_port)
 
@@ -239,9 +235,9 @@ class MongoDBInterface(AbstractDBInterface):
 
 class MongoDBTornadoInterface(MongoDBInterface):
     def __init__(self, db_name, db_host, db_port):
-        super().__init__(LoomMongoDBMotorTornadoClient, db_name, db_host, db_port)
+        super().__init__(MongoDBMotorTornadoClient, db_name, db_host, db_port)
 
 
 class MongoDBAsyncioInterface(MongoDBInterface):
     def __init__(self, db_name, db_host, db_port):
-        super().__init__(LoomMongoDBMotorAsyncioClient, db_name, db_host, db_port)
+        super().__init__(MongoDBMotorAsyncioClient, db_name, db_host, db_port)
