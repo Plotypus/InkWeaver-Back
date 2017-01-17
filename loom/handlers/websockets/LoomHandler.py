@@ -233,33 +233,39 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def add_preceding_subsection_at_index(self, message_id, title, to_parent, index):
-        # TODO: Implement this.
-        pass
+        subsection_id = await self.db_interface.insert_preceding_subsection(title, to_parent, index)
+        message = {'section_id': subsection_id}
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     async def append_preceding_subsection(self, message_id, title, to_parent):
-        # TODO: Implement this.
-        pass
+        subsection_id = await self.db_interface.append_preceding_subsection(title, to_parent)
+        message = {'section_id': subsection_id}
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     async def add_inner_subsection_at_index(self, message_id, title, to_parent, index):
-        # TODO: Implement this.
-        pass
+        subsection_id = await self.db_interface.insert_inner_subsection(title, to_parent, index)
+        message = {'section_id': subsection_id}
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     async def append_inner_subsection(self, message_id, title, to_parent):
-        # TODO: Implement this.
-        pass
+        subsection_id = await self.db_interface.append_inner_subsection(title, to_parent)
+        message = {'section_id': subsection_id}
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     async def add_succeeding_subsection_at_index(self, message_id, title, to_parent, index):
-        # TODO: Implement this.
-        pass
+        subsection_id = await self.db_interface.insert_succeeding_subsection(title, to_parent, index)
+        message = {'section_id': subsection_id}
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     async def append_succeeding_subsection(self, message_id, title, to_parent):
-        # TODO: Implement this.
-        pass
+        subsection_id = await self.db_interface.append_succeeding_subsection(title, to_parent)
+        message = {'section_id': subsection_id}
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
     async def add_paragraph_at_index_in_section(self, message_id, section_id, index, text):
