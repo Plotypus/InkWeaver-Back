@@ -282,4 +282,62 @@ class TestDBInterface:
         expected_title_order = [title_two, title_one, title_three]
         titles = [section['title'] for section in story_hierarchy['succeeding_subsections']]
         assert titles == expected_title_order
-        
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story,section_title,first_paragraph,second_paragraph', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-story',
+             'summary': 'This is a story for testing',
+             'wiki_id': 'placeholder for wiki id',
+         },
+         'Chapter One', 'Once upon a time, there was a little test.', 'The end.')
+    ])
+    async def test_append_paragraph_to_section(self, user, story, section_title, first_paragraph, second_paragraph):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        story = await self.interface.get_story(story_id)
+        story_section_id = story['section_id']
+        section_id = await self.interface.append_inner_subsection(section_title, story_section_id)
+        await self.interface.append_paragraph_to_section(section_id, first_paragraph)
+        await self.interface.append_paragraph_to_section(section_id, second_paragraph)
+        content = await self.interface.get_section_content(section_id)
+        assert len(content) == 2
+        expected_text_order = [first_paragraph, second_paragraph]
+        text = [paragraph['text'] for paragraph in content]
+        assert text == expected_text_order
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story,section_title,first_text,second_text,third_text', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-story',
+             'summary': 'This is a story for testing',
+             'wiki_id': 'placeholder for wiki id',
+         },
+         'Chapter One', 'The beginning.', 'The middle.', 'The end.')
+    ])
+    async def test_insert_paragraph_to_section(self, user, story, section_title, first_text, second_text, third_text):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        story = await self.interface.get_story(story_id)
+        story_section_id = story['section_id']
+        section_id = await self.interface.append_inner_subsection(section_title, story_section_id)
+        await self.interface.append_paragraph_to_section(section_id, second_text)
+        await self.interface.insert_paragraph_into_section_at_index(section_id, 0, first_text)
+        await self.interface.insert_paragraph_into_section_at_index(section_id, 2, third_text)
+        content = await self.interface.get_section_content(section_id)
+        assert len(content) == 3
+        expected_text_order = [first_text, second_text, third_text]
+        text = [paragraph['text'] for paragraph in content]
+        assert text == expected_text_order
