@@ -94,6 +94,14 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def insert_paragraph_into_section_at_index(self, section_id, index, text):
+        pass
+
+    @abstractmethod
+    async def append_paragraph_to_section(self, section_id, text):
+        pass
+
+    @abstractmethod
     async def get_story(self, story_id):
         pass
 
