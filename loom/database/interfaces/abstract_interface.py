@@ -66,6 +66,18 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def create_section(self, title):
+        pass
+
+    @abstractmethod
+    async def delete_story(self, story_id):
+        pass
+
+    @abstractmethod
+    async def delete_section(self, section_id):
+        pass
+
+    @abstractmethod
     async def insert_preceding_subsection(self, title, parent_id, index):
         pass
 
@@ -87,10 +99,6 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def append_succeeding_subsection(self, title, parent_id):
-        pass
-
-    @abstractmethod
-    async def create_section(self, title):
         pass
 
     @abstractmethod
@@ -141,6 +149,22 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def create_heading(self, title, page_id):
+        pass
+
+    @abstractmethod
+    async def delete_wiki(self, wiki_id):
+        pass
+
+    @abstractmethod
+    async def delete_segment(self, segment_id):
+        pass
+
+    @abstractmethod
+    async def delete_page(self, page_id):
+        pass
+
+    @abstractmethod
+    async def delete_heading(self, heading_id):
         pass
 
     @abstractmethod

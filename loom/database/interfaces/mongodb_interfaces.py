@@ -108,45 +108,63 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.add_story_to_user(user_id, inserted_id)
         return inserted_id
 
-    async def insert_preceding_subsection(self, title, parent_id, index):
-        subsection_id = await self.create_section(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.insert_preceding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
-        return subsection_id
-
-    async def append_preceding_subsection(self, title, parent_id):
-        subsection_id = await self.create_section(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.append_preceding_subsection(subsection_id, to_section_id=parent_id)
-        return subsection_id
-
-    async def insert_inner_subsection(self, title, parent_id, index):
-        subsection_id = await self.create_section(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.insert_inner_subsection(subsection_id, to_section_id=parent_id, at_index=index)
-        return subsection_id
-
-    async def append_inner_subsection(self, title, parent_id):
-        subsection_id = await self.create_section(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.append_inner_subsection(subsection_id, to_section_id=parent_id)
-        return subsection_id
-
-    async def insert_succeeding_subsection(self, title, parent_id, index):
-        subsection_id = await self.create_section(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.insert_succeeding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
-        return subsection_id
-
-    async def append_succeeding_subsection(self, title, parent_id):
-        subsection_id = await self.create_section(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.append_succeeding_subsection(subsection_id, to_section_id=parent_id)
-        return subsection_id
-
     async def create_section(self, title) -> ObjectId:
         inserted_id = await self.client.create_section(title)
         return inserted_id
+
+    async def insert_preceding_subsection(self, title, parent_id, index):
+        subsection_id = await self.create_section(title)
+        try:
+            await self.client.insert_preceding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
+        except ClientError:
+            await self.delete_section(subsection_id)
+        else:
+            return subsection_id
+
+    async def append_preceding_subsection(self, title, parent_id):
+        subsection_id = await self.create_section(title)
+        try:
+            await self.client.append_preceding_subsection(subsection_id, to_section_id=parent_id)
+        except ClientError:
+            await self.delete_section(subsection_id)
+        else:
+            return subsection_id
+
+    async def insert_inner_subsection(self, title, parent_id, index):
+        subsection_id = await self.create_section(title)
+        try:
+            await self.client.insert_inner_subsection(subsection_id, to_section_id=parent_id, at_index=index)
+        except ClientError:
+            await self.delete_section(subsection_id)
+        else:
+            return subsection_id
+
+    async def append_inner_subsection(self, title, parent_id):
+        subsection_id = await self.create_section(title)
+        try:
+            await self.client.append_inner_subsection(subsection_id, to_section_id=parent_id)
+        except ClientError:
+            await self.delete_section(subsection_id)
+        else:
+            return subsection_id
+
+    async def insert_succeeding_subsection(self, title, parent_id, index):
+        subsection_id = await self.create_section(title)
+        try:
+            await self.client.insert_succeeding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
+        except ClientError:
+            await self.delete_section(subsection_id)
+        else:
+            return subsection_id
+
+    async def append_succeeding_subsection(self, title, parent_id):
+        subsection_id = await self.create_section(title)
+        try:
+            await self.client.append_succeeding_subsection(subsection_id, to_section_id=parent_id)
+        except ClientError:
+            await self.delete_section(subsection_id)
+        else:
+            return subsection_id
 
     async def insert_paragraph_into_section_at_index(self, section_id, index, text):
         return await self.client.insert_paragraph_into_section_at_index(section_id, index, text)
@@ -199,10 +217,13 @@ class MongoDBInterface(AbstractDBInterface):
         return inserted_id
 
     async def create_child_segment(self, title, in_parent_segment):
-        child_segment_id = await self.client.create_segment(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.append_segment_to_parent_segment(child_segment_id, in_parent_segment)
-        return child_segment_id
+        child_segment_id = await self.create_segment(title)
+        try:
+            await self.client.append_segment_to_parent_segment(child_segment_id, in_parent_segment)
+        except ClientError:
+            self.delete_segment(child_segment_id)
+        else:
+            return child_segment_id
 
     async def create_segment(self, title):
         inserted_id = await self.client.create_segment(title)
@@ -211,9 +232,12 @@ class MongoDBInterface(AbstractDBInterface):
     async def create_page(self, title, in_parent_segment):
         # TODO: Handle template heading generation
         page_id = await self.client.create_page(title)
-        # TODO: Decide what to do if unsuccessful
-        await self.client.append_page_to_parent_segment(page_id, in_parent_segment)
-        return page_id
+        try:
+            await self.client.append_page_to_parent_segment(page_id, in_parent_segment)
+        except ClientError:
+            self.delete_page(page_id)
+        else:
+            return page_id
 
     async def create_heading(self, title, page_id):
         heading_id = await self.client.create_heading(title)
