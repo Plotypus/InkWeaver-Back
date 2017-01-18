@@ -153,6 +153,9 @@ class MongoDBInterface(AbstractDBInterface):
     async def append_paragraph_to_section(self, section_id, text):
         return await self.client.append_paragraph_to_section(section_id, text)
 
+    async def set_paragraph_in_section_at_index(self, section_id, index, text):
+        return await self.client.set_paragraph_in_section_at_index(section_id, index, text)
+
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)
         return story
