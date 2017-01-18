@@ -186,19 +186,38 @@ class MongoDBInterface(AbstractDBInterface):
     # Wiki object methods.
 
     async def create_wiki(self, user_id, title, summary):
-        pass
+        user = await self.get_user_preferences(user_id)
+        user_description = {
+            'user_id':      user_id,
+            'name':         user['name'],
+            'access_level': 'owner',
+        }
+        segment_id = await self.create_segment(title)
+        inserted_id = await self.client.create_wiki(title, user_description, summary, segment_id)
+        await self.client.add_wiki_to_user(user_id, inserted_id)
+        return inserted_id
 
     async def create_child_segment(self, title, in_parent_segment):
-        pass
+        child_segment_id = await self.client.create_segment(title)
+        # TODO: Decide what to do if unsuccessful
+        success = await self.client.append_segment_to_parent_segment(child_segment_id, in_parent_segment)
+        return child_segment_id
 
     async def create_segment(self, title):
-        pass
+        inserted_id = await self.client.create_segment(title)
+        return inserted_id
 
     async def create_page(self, title, in_parent_segment):
-        pass
+        # TODO: Handle template heading generation
+        page_id = await self.client.create_page(title)
+        # TODO: Decide what to do if unsuccessful
+        await self.client.append_page_to_parent_segment(page_id, in_parent_segment)
+        return page_id
 
     async def create_heading(self, title, page_id):
-        pass
+        heading_id = await self.client.create_heading(title)
+        await self.client.append_heading_to_page(heading_id, page_id)
+        return heading_id
 
     async def get_wiki(self, wiki_id):
         wiki = await self.client.get_wiki(wiki_id)
