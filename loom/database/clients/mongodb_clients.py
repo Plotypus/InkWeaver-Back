@@ -764,6 +764,28 @@ class MongoDBClient:
         result = await self.headings.insert_one(heading)
         return result.inserted_id
 
+    async def append_segment_to_parent_segment(self, child_segment: ObjectId, parent_segment: ObjectId):
+        update_result: UpdateResult = await self.segments.update_one(
+            filter={'_id': parent_segment},
+            update={
+                '$push': {
+                    'segments': child_segment
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def append_page_to_parent_segment(self, page_id: ObjectId, segment_id: ObjectId):
+        update_result: UpdateResult = await self.segments.update_one(
+            filter={'_id': segment_id},
+            update={
+                '$push': {
+                    'pages': page_id
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def get_wiki(self, wiki_id: ObjectId) -> Dict:
         """Grabs the information associated with the provided wiki.
 
