@@ -185,6 +185,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def add_wiki_to_user(self, user_id: ObjectId, wiki_id: ObjectId):
+        update_result: UpdateResult = await self.users.update_one(
+            filter={'_id': user_id},
+            update={
+                '$push': {
+                    'wikis': wiki_id
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def set_user_password_hash(self, user_id, password_hash):
         return await self.set_user_field(user_id, 'password_hash', password_hash)
 
