@@ -282,8 +282,14 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def edit_paragraph_in_section(self, message_id, section_id, paragraph, update):
-        # TODO: Implement this.
-        pass
+        # TODO: Decide whether or not to add more to response
+        if update['update_type'] == 'replace':
+            text = update['text']
+            await self.db_interface.set_paragraph_in_section_at_index(section_id, index=paragraph, text=text)
+            self.write_json({}, with_reply_id=message_id)
+        else:
+            # TODO: Error bad `update_type`
+            ...
 
     @requires_login
     async def get_story_information(self, message_id, story_id):
