@@ -13,10 +13,12 @@ JSON = Dict
 
 class LoomWSError(Exception):
     def __init__(self, message=None):
+        if message is None:
+            message = "no information given"
         self.message = message
 
     def __str__(self):
-        return '{}: {}'.format(type(self), self.message)
+        return '{}: {}'.format(type(self).__name__, self.message)
 
 
 class LoomWSUnimplementedError(LoomWSError):
@@ -187,6 +189,14 @@ class LoomHandler(GenericHandler):
                         raise
             except LoomWSNoLoginError:
                 self.on_failure(message_id, "not logged in")
+            except LoomWSError as e:
+                self.on_failure(message_id, str(e))
+            except Exception as e:
+                # General exceptions store messages as the first argument in their `.args` property.
+                message = type(e).__name__
+                if e.args:
+                    message += ": {}".format(e.args[0])
+                self.on_failure(message_id, message)
         except KeyError:
             # The method is not implemented.
             raise LoomWSUnimplementedError
@@ -288,8 +298,7 @@ class LoomHandler(GenericHandler):
             await self.db_interface.set_paragraph_in_section_at_index(section_id, index=paragraph, text=text)
             self.write_json({}, with_reply_id=message_id)
         else:
-            # TODO: Error bad `update_type`
-            ...
+            raise LoomWSUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
     @requires_login
     async def get_story_information(self, message_id, story_id):
