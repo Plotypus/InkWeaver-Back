@@ -342,6 +342,8 @@ class TestDBInterface:
         text = [paragraph['text'] for paragraph in content]
         assert text == expected_text_order
 
+        assert user_description in db_wiki['users']
+
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user,story,section_title,first_paragraph,second_paragraph', [
         ({
@@ -371,3 +373,38 @@ class TestDBInterface:
         content = await self.interface.get_section_content(section_id)
         text = [paragraph['text'] for paragraph in content]
         assert text == replacement_texts
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,wiki', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-wiki',
+             'summary': 'This is a wiki for testing',
+         })
+    ])
+    async def test_wiki_creation(self, user, wiki):
+        user_id = await self.interface.create_user(**user)
+        wiki_id = await self.interface.create_wiki(user_id, **wiki)
+        assert wiki_id is not None
+        user_wikis = await self.interface.get_user_wikis(user_id)
+        wiki_summary = {
+            'wiki_id': wiki_id,
+            'title': wiki['title'],
+            'access_level': 'owner',
+        }
+        assert wiki_summary in user_wikis
+        db_wiki = await self.interface.get_wiki(wiki_id)
+        assert db_wiki['title'] == wiki['title']
+        assert db_wiki['summary'] == wiki['summary']
+        assert db_wiki['segment_id'] is not None
+        user_description = {
+            'user_id': user_id,
+            'name': user['name'],
+            'access_level': 'owner',
+        }
+        assert user_description in db_wiki['users']
