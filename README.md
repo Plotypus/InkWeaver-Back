@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/Plotypus/loom.svg?branch=feature-169)](https://travis-ci.org/Plotypus/loom)
-[![Coverage Status](https://coveralls.io/repos/github/Plotypus/loom/badge.svg?branch=feature-169)](https://coveralls.io/github/Plotypus/loom?branch=feature-169)
+[![Build Status](https://travis-ci.org/Plotypus/loom.svg?branch=master)](https://travis-ci.org/Plotypus/loom)
+[![Coverage Status](https://coveralls.io/repos/github/Plotypus/loom/badge.svg?branch=development)](https://coveralls.io/github/Plotypus/loom?branch=development)
 
 # Loom
 
