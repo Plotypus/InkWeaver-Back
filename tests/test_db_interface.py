@@ -341,3 +341,33 @@ class TestDBInterface:
         expected_text_order = [first_text, second_text, third_text]
         text = [paragraph['text'] for paragraph in content]
         assert text == expected_text_order
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story,section_title,first_paragraph,second_paragraph', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-story',
+             'summary': 'This is a story for testing',
+             'wiki_id': 'placeholder for wiki id',
+         },
+         'Chapter One', 'Once upon a time, there was a little test.', 'The end.')
+    ])
+    async def test_edit_paragraph_in_section(self, user, story, section_title, first_paragraph, second_paragraph):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        story = await self.interface.get_story(story_id)
+        story_section_id = story['section_id']
+        section_id = await self.interface.append_inner_subsection(section_title, story_section_id)
+        await self.interface.append_paragraph_to_section(section_id, first_paragraph)
+        await self.interface.append_paragraph_to_section(section_id, second_paragraph)
+        replacement_texts = ['Text 1', 'Text 2']
+        await self.interface.set_paragraph_in_section_at_index(section_id, 0, replacement_texts[0])
+        await self.interface.set_paragraph_in_section_at_index(section_id, 1, replacement_texts[1])
+        content = await self.interface.get_section_content(section_id)
+        text = [paragraph['text'] for paragraph in content]
+        assert text == replacement_texts
