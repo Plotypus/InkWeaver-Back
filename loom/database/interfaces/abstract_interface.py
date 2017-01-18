@@ -102,6 +102,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_paragraph_in_section_at_index(self, section_id, index, text):
+        pass
+
+    @abstractmethod
     async def get_story(self, story_id):
         pass
 
