@@ -342,8 +342,6 @@ class TestDBInterface:
         text = [paragraph['text'] for paragraph in content]
         assert text == expected_text_order
 
-        assert user_description in db_wiki['users']
-
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user,story,section_title,first_paragraph,second_paragraph', [
         ({

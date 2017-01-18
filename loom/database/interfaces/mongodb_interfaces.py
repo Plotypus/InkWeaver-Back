@@ -69,8 +69,9 @@ class MongoDBInterface(AbstractDBInterface):
             else:
                 raise ValueError("invalid object type: {}".format(object_type))
             access_level = self._get_current_user_access_level_in_object(user_id, obj)
+            id_key = '{}_id'.format(object_type)
             objects.append({
-                'story_id':     obj['_id'],
+                id_key:         obj['_id'],
                 'title':        obj['title'],
                 'access_level': access_level,
             })
