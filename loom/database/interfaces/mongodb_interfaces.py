@@ -1,17 +1,14 @@
-from .abstract import AbstractDBInterface
+from .abstract_interface import AbstractDBInterface
 
-from loom.database.mongodb_clients import (
-    LoomMongoDBClient,
-    LoomMongoDBMotorTornadoClient,
-    LoomMongoDBMotorAsyncioClient
-)
+from loom.database.clients import *
 
+from bson.objectid import ObjectId
 from typing import ClassVar
 
 
 class MongoDBInterface(AbstractDBInterface):
     def __init__(self, db_client_class: ClassVar, db_name, db_host, db_port):
-        if not issubclass(db_client_class, LoomMongoDBClient):
+        if not issubclass(db_client_class, MongoDBClient):
             raise ValueError("invalid MongoDB client class: {}".format(db_client_class.__name__))
         self._client = db_client_class(db_name, db_host, db_port)
 
@@ -59,7 +56,7 @@ class MongoDBInterface(AbstractDBInterface):
     @staticmethod
     def _get_current_user_access_level_in_object(user_id, obj):
         for user in obj['users']:
-            if user['_id'] == user_id:
+            if user['user_id'] == user_id:
                 return user['access_level']
 
     async def _get_stories_or_wikis_by_ids(self, user_id, object_ids, object_type):
@@ -98,20 +95,63 @@ class MongoDBInterface(AbstractDBInterface):
 
     # Story object methods.
 
-    async def create_story(self, user_id, title, summary, wiki_id):
-        pass
+    async def create_story(self, user_id, title, summary, wiki_id) -> ObjectId:
+        user = await self.get_user_preferences(user_id)
+        user_description = {
+            'user_id':      user_id,
+            'name':         user['name'],
+            'access_level': 'owner',
+        }
+        section_id = await self.create_section(title)
+        inserted_id = await self.client.create_story(title, wiki_id, user_description, summary, section_id)
+        await self.client.add_story_to_user(user_id, inserted_id)
+        return inserted_id
 
-    async def create_preceding_subsection(self, title, in_parent_section):
-        pass
+    async def insert_preceding_subsection(self, title, parent_id, index):
+        subsection_id = await self.create_section(title)
+        # TODO: Decide what to do if unsuccessful
+        success = await self.client.insert_preceding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
+        return subsection_id
 
-    async def create_inner_subsection(self, title, in_parent_section):
-        pass
+    async def append_preceding_subsection(self, title, parent_id):
+        subsection_id = await self.create_section(title)
+        # TODO: Decide what to do if unsuccessful
+        success = await self.client.append_preceding_subsection(subsection_id, to_section_id=parent_id)
+        return subsection_id
 
-    async def create_succeeding_subsection(self, title, in_parent_section):
-        pass
+    async def insert_inner_subsection(self, title, parent_id, index):
+        subsection_id = await self.create_section(title)
+        # TODO: Decide what to do if unsuccessful
+        success = await self.client.insert_inner_subsection(subsection_id, to_section_id=parent_id, at_index=index)
+        return subsection_id
 
-    async def create_section(self, title):
-        pass
+    async def append_inner_subsection(self, title, parent_id):
+        subsection_id = await self.create_section(title)
+        # TODO: Decide what to do if unsuccessful
+        success = await self.client.append_inner_subsection(subsection_id, to_section_id=parent_id)
+        return subsection_id
+
+    async def insert_succeeding_subsection(self, title, parent_id, index):
+        subsection_id = await self.create_section(title)
+        # TODO: Decide what to do if unsuccessful
+        success = await self.client.insert_succeeding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
+        return subsection_id
+
+    async def append_succeeding_subsection(self, title, parent_id):
+        subsection_id = await self.create_section(title)
+        # TODO: Decide what to do if unsuccessful
+        success = await self.client.append_succeeding_subsection(subsection_id, to_section_id=parent_id)
+        return subsection_id
+
+    async def create_section(self, title) -> ObjectId:
+        inserted_id = await self.client.create_section(title)
+        return inserted_id
+
+    async def insert_paragraph_into_section_at_index(self, section_id, index, text):
+        return await self.client.insert_paragraph_into_section_at_index(section_id, index, text)
+
+    async def append_paragraph_to_section(self, section_id, text):
+        return await self.client.append_paragraph_to_section(section_id, text)
 
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)
@@ -137,7 +177,8 @@ class MongoDBInterface(AbstractDBInterface):
         return hierarchy
 
     async def get_section_content(self, section_id):
-        pass
+        section = await self.client.get_section(section_id)
+        return section['content']
 
     # Wiki object methods.
 
@@ -194,9 +235,9 @@ class MongoDBInterface(AbstractDBInterface):
 
 class MongoDBTornadoInterface(MongoDBInterface):
     def __init__(self, db_name, db_host, db_port):
-        super().__init__(LoomMongoDBMotorTornadoClient, db_name, db_host, db_port)
+        super().__init__(MongoDBMotorTornadoClient, db_name, db_host, db_port)
 
 
 class MongoDBAsyncioInterface(MongoDBInterface):
     def __init__(self, db_name, db_host, db_port):
-        super().__init__(LoomMongoDBMotorAsyncioClient, db_name, db_host, db_port)
+        super().__init__(MongoDBMotorAsyncioClient, db_name, db_host, db_port)

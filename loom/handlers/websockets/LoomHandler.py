@@ -220,21 +220,68 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def create_story(self, message_id, title, wiki_id, summary):
-        # TODO: Implement this.
-        pass
+        story_id = await self.db_interface.create_story(self.user_id, title, summary, wiki_id)
+        story = await self.db_interface.get_story(story_id)
+        message = {
+            'story_title':  story['title'],
+            'section_id':   story['section_id'],
+            'wiki_id':      story['wiki_id'],
+            'users':        story['users'],
+            'summary':      story['summary'],
+        }
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    async def add_preceding_subsection(self, message_id, title, to_parent):
-        # TODO: Implement this.
-        pass
+    async def add_preceding_subsection_at_index(self, message_id, title, to_parent, index):
+        subsection_id = await self.db_interface.insert_preceding_subsection(title, to_parent, index)
+        message = {'section_id': subsection_id}
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    async def add_inner_subsection(self, message_id, title, to_parent):
-        # TODO: Implement this.
-        pass
+    async def append_preceding_subsection(self, message_id, title, to_parent):
+        subsection_id = await self.db_interface.append_preceding_subsection(title, to_parent)
+        message = {'section_id': subsection_id}
+        self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    async def add_succeeding_subsection(self, message_id, title, to_parent):
+    async def add_inner_subsection_at_index(self, message_id, title, to_parent, index):
+        subsection_id = await self.db_interface.insert_inner_subsection(title, to_parent, index)
+        message = {'section_id': subsection_id}
+        self.write_json(message, with_reply_id=message_id)
+
+    @requires_login
+    async def append_inner_subsection(self, message_id, title, to_parent):
+        subsection_id = await self.db_interface.append_inner_subsection(title, to_parent)
+        message = {'section_id': subsection_id}
+        self.write_json(message, with_reply_id=message_id)
+
+    @requires_login
+    async def add_succeeding_subsection_at_index(self, message_id, title, to_parent, index):
+        subsection_id = await self.db_interface.insert_succeeding_subsection(title, to_parent, index)
+        message = {'section_id': subsection_id}
+        self.write_json(message, with_reply_id=message_id)
+
+    @requires_login
+    async def append_succeeding_subsection(self, message_id, title, to_parent):
+        subsection_id = await self.db_interface.append_succeeding_subsection(title, to_parent)
+        message = {'section_id': subsection_id}
+        self.write_json(message, with_reply_id=message_id)
+
+    @requires_login
+    async def add_paragraph_at_index_in_section(self, message_id, section_id, index, text):
+        # TODO: Decide whether or not to add more to response
+        await self.db_interface.insert_paragraph_into_section_at_index(section_id, index, text)
+        self.write_json({}, with_reply_id=message_id)
+
+
+    @requires_login
+    async def append_paragraph_in_section(self, message_id, section_id, text):
+        # TODO: Decide whether or not to add more to response
+        await self.db_interface.append_paragraph_to_section(section_id, text)
+        self.write_json({}, with_reply_id=message_id)
+
+    @requires_login
+    async def edit_paragraph_in_section(self, message_id, section_id, paragraph, update):
         # TODO: Implement this.
         pass
 
@@ -265,9 +312,10 @@ class LoomHandler(GenericHandler):
         self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    def get_section_content(self, message_id, section_id):
-        # TODO: Implement this.
-        pass
+    async def get_section_content(self, message_id, section_id):
+        paragraphs = await self.db_interface.get_section_content(section_id)
+        content = [{'text': paragraph['text']} for paragraph in paragraphs]
+        self.write_json({'content': content}, with_reply_id=message_id)
 
     ## Wikis
 
@@ -318,26 +366,32 @@ class LoomHandler(GenericHandler):
 
     DISPATCH = {
         # User Information
-        'get_user_preferences':       get_user_preferences,
-        'get_user_stories':           get_user_stories,
-        'get_user_wikis':             get_user_wikis,
+        'get_user_preferences':               get_user_preferences,
+        'get_user_stories':                   get_user_stories,
+        'get_user_wikis':                     get_user_wikis,
 
         # Stories
-        'create_story':               create_story,
-        'add_preceding_subsection':   add_preceding_subsection,
-        'add_inner_subsection':       add_inner_subsection,
-        'add_succeeding_subsection':  add_succeeding_subsection,
-        'get_story_information':      get_story_information,
-        'get_story_hierarchy':        get_story_hierarchy,
-        'get_section_hierarchy':      get_section_hierarchy,
-        'get_section_content':        get_section_content,
+        'create_story':                       create_story,
+        'add_preceding_subsection_at_index':  add_preceding_subsection_at_index,
+        'append_preceding_subsection':        append_preceding_subsection,
+        'add_inner_subsection_at_index':      add_inner_subsection_at_index,
+        'append_inner_subsection':            append_inner_subsection,
+        'add_succeeding_subsection_at_index': add_succeeding_subsection_at_index,
+        'append_succeeding_subsection':       append_succeeding_subsection,
+        'add_paragraph_at_index_in_section':  add_paragraph_at_index_in_section,
+        'append_paragraph_in_section':        append_paragraph_in_section,
+        'edit_paragraph_in_section':          edit_paragraph_in_section,
+        'get_story_information':              get_story_information,
+        'get_story_hierarchy':                get_story_hierarchy,
+        'get_section_hierarchy':              get_section_hierarchy,
+        'get_section_content':                get_section_content,
 
         # Wikis
-        'create_wiki':                create_wiki,
-        'add_segment':                add_segment,
-        'add_page':                   add_page,
-        'get_wiki_information':       get_wiki_information,
-        'get_wiki_hierarchy':         get_wiki_hierarchy,
-        'get_wiki_segment_hierarchy': get_wiki_segment_hierarchy,
-        'get_wiki_page':              get_wiki_page,
+        'create_wiki':                        create_wiki,
+        'add_segment':                        add_segment,
+        'add_page':                           add_page,
+        'get_wiki_information':               get_wiki_information,
+        'get_wiki_hierarchy':                 get_wiki_hierarchy,
+        'get_wiki_segment_hierarchy':         get_wiki_segment_hierarchy,
+        'get_wiki_page':                      get_wiki_page,
     }

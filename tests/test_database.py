@@ -8,7 +8,7 @@ from bson.objectid import ObjectId
 
 class TestDatabase:
     def setup(self):
-        self.client = database.LoomMongoDBMotorAsyncioClient('test')
+        self.client = database.MongoDBMotorAsyncioClient('test')
 
     def teardown(self):
         event_loop = asyncio.get_event_loop()
