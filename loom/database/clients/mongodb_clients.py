@@ -79,10 +79,6 @@ class MongoDBClient:
     def pages(self) -> AgnosticCollection:
         return self.database.pages
 
-    @property
-    def headings(self) -> AgnosticCollection:
-        return self.database.headings
-
     async def drop_database(self):
         await self.client.drop_database(self.database)
 
@@ -703,7 +699,7 @@ class MongoDBClient:
         result = await self.segments.insert_one(segment)
         return result.inserted_id
 
-    async def create_page(self, title: str, _id=None) -> ObjectId:
+    async def create_page(self, title: str, template_headings=None, _id=None) -> ObjectId:
         """Inserts a new page to the pages collection.
 
         Adds a new page to the pages collection. Pages are leaf nodes in a tree
@@ -715,6 +711,8 @@ class MongoDBClient:
 
         Args:
             title: The title of the wiki page.
+            template_headings (List[Dict]): The list of template headings to
+                inherit.
             _id (ObjectId): `_id` is optional, but if provided will create a
                 page with the provided ObjectId.
 
@@ -727,41 +725,13 @@ class MongoDBClient:
         # TODO: Implement references and aliases.
         page = {
             'title':      title,
-            'headings':   list(),
+            'headings':   list() if template_headings is None else template_headings,
             'references': None,
             'aliases':    None,
         }
         if _id is not None:
             page['_id'] = _id
         result = await self.pages.insert_one(page)
-        return result.inserted_id
-
-    async def create_heading(self, title: str, _id=None) -> ObjectId:
-        """Inserts a new heading to the headings collection.
-
-        Adds a new heading to the headings collection. Headings are text blocks
-        on a wiki page. For example, "Background" and "Motives" are considered
-        headings. `_id` is optional and if provided will create the heading
-        with the given `_id`, rather than the generated BSON ObjectID.
-
-        Args:
-            title: The title of the heading.
-            _id (ObjectId): `_id` is optional, but if provided will create a
-                heading with the provided ObjectId.
-
-        Returns:
-            The ObjectId that is associated with the newly created heading. If
-            `_id` was provided, `_id` will be returned. Otherwise, a randomly
-            generated BSON ObjectId will be returned.
-
-        """
-        heading = {
-            'title':   title,
-            'content': list(),  # content is a list of "paragraph objects"
-        }
-        if _id is not None:
-            heading['_id'] = _id
-        result = await self.headings.insert_one(heading)
         return result.inserted_id
 
     async def append_segment_to_parent_segment(self, child_segment: ObjectId, parent_segment: ObjectId):
@@ -786,12 +756,15 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def append_heading_to_page(self, heading_id: ObjectId, page_id: ObjectId):
+    async def append_heading_to_page(self, title: str, page_id: ObjectId):
         update_result: UpdateResult = await self.pages.update_one(
             filter={'_id': page_id},
             update={
                 '$push': {
-                    'headings': heading_id
+                    'headings': {
+                        'title':   title,
+                        'content': list()
+                    }
                 }
             }
         )
@@ -840,21 +813,6 @@ class MongoDBClient:
 
         """
         result = await self.pages.find_one({'_id': page_id})
-        return result
-
-    async def get_heading(self, heading_id: ObjectId) -> Dict:
-        """Grabs the information associated with the provided heading.
-
-        Finds the heading int he database and returns the document.
-
-        Args:
-            heading_id: BSON ObjectId of heading to query for.
-
-        Returns:
-            A copy of the document of the heading.
-
-        """
-        result = await self.headings.find_one({'_id': heading_id})
         return result
 
 class MongoDBMotorTornadoClient(MongoDBClient):
