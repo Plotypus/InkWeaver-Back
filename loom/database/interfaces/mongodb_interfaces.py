@@ -120,7 +120,7 @@ class MongoDBInterface(AbstractDBInterface):
         # TODO: Do this.
         pass
 
-    async def insert_preceding_subsection(self, title, parent_id, index):
+    async def add_preceding_subsection(self, title, parent_id, index=None):
         subsection_id = await self.create_section(title)
         try:
             await self.client.insert_preceding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
@@ -129,16 +129,7 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return subsection_id
 
-    async def append_preceding_subsection(self, title, parent_id):
-        subsection_id = await self.create_section(title)
-        try:
-            await self.client.append_preceding_subsection(subsection_id, to_section_id=parent_id)
-        except ClientError:
-            await self.delete_section(subsection_id)
-        else:
-            return subsection_id
-
-    async def insert_inner_subsection(self, title, parent_id, index):
+    async def add_inner_subsection(self, title, parent_id, index=None):
         subsection_id = await self.create_section(title)
         try:
             await self.client.insert_inner_subsection(subsection_id, to_section_id=parent_id, at_index=index)
@@ -147,16 +138,7 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return subsection_id
 
-    async def append_inner_subsection(self, title, parent_id):
-        subsection_id = await self.create_section(title)
-        try:
-            await self.client.append_inner_subsection(subsection_id, to_section_id=parent_id)
-        except ClientError:
-            await self.delete_section(subsection_id)
-        else:
-            return subsection_id
-
-    async def insert_succeeding_subsection(self, title, parent_id, index):
+    async def add_succeeding_subsection(self, title, parent_id, index=None):
         subsection_id = await self.create_section(title)
         try:
             await self.client.insert_succeeding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
@@ -165,23 +147,11 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return subsection_id
 
-    async def append_succeeding_subsection(self, title, parent_id):
-        subsection_id = await self.create_section(title)
-        try:
-            await self.client.append_succeeding_subsection(subsection_id, to_section_id=parent_id)
-        except ClientError:
-            await self.delete_section(subsection_id)
-        else:
-            return subsection_id
+    async def add_paragraph(self, section_id, text, index=None):
+        return await self.client.insert_paragraph(text, to_section_id=section_id, at_index=index)
 
-    async def insert_paragraph_into_section_at_index(self, section_id, index, text):
-        return await self.client.insert_paragraph_into_section_at_index(section_id, index, text)
-
-    async def append_paragraph_to_section(self, section_id, text):
-        return await self.client.append_paragraph_to_section(section_id, text)
-
-    async def set_paragraph_in_section_at_index(self, section_id, index, text):
-        return await self.client.set_paragraph_in_section_at_index(section_id, index, text)
+    async def set_paragraph_text(self, section_id, index, text):
+        return await self.client.set_paragraph_text(text, in_section_id=section_id, at_index=index)
 
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)
@@ -224,15 +194,6 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.add_wiki_to_user(user_id, inserted_id)
         return inserted_id
 
-    async def create_child_segment(self, title, in_parent_segment):
-        child_segment_id = await self.create_segment(title)
-        try:
-            await self.client.append_segment_to_parent_segment(child_segment_id, in_parent_segment)
-        except ClientError:
-            self.delete_segment(child_segment_id)
-        else:
-            return child_segment_id
-
     async def create_segment(self, title):
         inserted_id = await self.client.create_segment(title)
         return inserted_id
@@ -247,6 +208,25 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return page_id
 
+    async def add_child_segment(self, title, parent_id):
+        child_segment_id = await self.create_segment(title)
+        try:
+            await self.client.append_segment_to_parent_segment(child_segment_id, parent_id)
+        except ClientError:
+            self.delete_segment(child_segment_id)
+        else:
+            return child_segment_id
+
+    async def add_heading(self, title, page_id):
+        try:
+            await self.client.append_heading_to_page(title, page_id)
+        except ClientError:
+            # TODO: Deal with this.
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
+
     async def delete_wiki(self, wiki_id):
         # TODO: Implement this.
         pass
@@ -259,19 +239,9 @@ class MongoDBInterface(AbstractDBInterface):
         # TODO: Implement this.
         pass
 
-    async def delete_heading(self, heading_title):
+    async def delete_heading(self, heading_title, page_id):
         # TODO: Implement this.
         pass
-
-    async def add_heading_to_page(self, title, page_id):
-        try:
-            await self.client.append_heading_to_page(title, page_id)
-        except ClientError:
-            # TODO: Deal with this.
-            raise
-        else:
-            # TODO: Should this return something?
-            pass
 
     async def get_wiki(self, wiki_id):
         wiki = await self.client.get_wiki(wiki_id)

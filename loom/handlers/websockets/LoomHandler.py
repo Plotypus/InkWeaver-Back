@@ -242,60 +242,35 @@ class LoomHandler(GenericHandler):
         self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    async def add_preceding_subsection_at_index(self, message_id, title, to_parent, index):
-        subsection_id = await self.db_interface.insert_preceding_subsection(title, to_parent, index)
+    async def add_preceding_subsection(self, message_id, title, parent_id, index=None):
+        subsection_id = await self.db_interface.add_preceding_subsection(title, parent_id, index)
         message = {'section_id': subsection_id}
         self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    async def append_preceding_subsection(self, message_id, title, to_parent):
-        subsection_id = await self.db_interface.append_preceding_subsection(title, to_parent)
+    async def add_inner_subsection(self, message_id, title, parent_id, index=None):
+        subsection_id = await self.db_interface.add_inner_subsection(title, parent_id, index)
         message = {'section_id': subsection_id}
         self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    async def add_inner_subsection_at_index(self, message_id, title, to_parent, index):
-        subsection_id = await self.db_interface.insert_inner_subsection(title, to_parent, index)
+    async def add_succeeding_subsection(self, message_id, title, parent_id, index=None):
+        subsection_id = await self.db_interface.add_succeeding_subsection(title, parent_id, index)
         message = {'section_id': subsection_id}
         self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    async def append_inner_subsection(self, message_id, title, to_parent):
-        subsection_id = await self.db_interface.append_inner_subsection(title, to_parent)
-        message = {'section_id': subsection_id}
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def add_succeeding_subsection_at_index(self, message_id, title, to_parent, index):
-        subsection_id = await self.db_interface.insert_succeeding_subsection(title, to_parent, index)
-        message = {'section_id': subsection_id}
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def append_succeeding_subsection(self, message_id, title, to_parent):
-        subsection_id = await self.db_interface.append_succeeding_subsection(title, to_parent)
-        message = {'section_id': subsection_id}
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def add_paragraph_at_index_in_section(self, message_id, section_id, index, text):
+    async def add_paragraph(self, message_id, section_id, text, index=None):
         # TODO: Decide whether or not to add more to response
-        await self.db_interface.insert_paragraph_into_section_at_index(section_id, index, text)
-        self.write_json({}, with_reply_id=message_id)
-
-
-    @requires_login
-    async def append_paragraph_in_section(self, message_id, section_id, text):
-        # TODO: Decide whether or not to add more to response
-        await self.db_interface.append_paragraph_to_section(section_id, text)
+        await self.db_interface.add_paragraph(section_id, text, index)
         self.write_json({}, with_reply_id=message_id)
 
     @requires_login
-    async def edit_paragraph_in_section(self, message_id, section_id, paragraph, update):
+    async def edit_paragraph(self, message_id, section_id, update, index):
         # TODO: Decide whether or not to add more to response
         if update['update_type'] == 'replace':
             text = update['text']
-            await self.db_interface.set_paragraph_in_section_at_index(section_id, index=paragraph, text=text)
+            await self.db_interface.set_paragraph_text(section_id, index=index, text=text)
             self.write_json({}, with_reply_id=message_id)
         else:
             raise LoomWSUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
@@ -340,12 +315,37 @@ class LoomHandler(GenericHandler):
         pass
 
     @requires_login
-    async def add_segment(self, message_id, title, to_parent):
+    async def add_segment(self, message_id, title, parent_id):
         # TODO: Implement this.
         pass
 
     @requires_login
-    async def add_page(self, message_id, title, to_parent):
+    async def add_template_heading(self, message_id, title, section_id):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def add_page(self, message_id, title, parent_id):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def add_heading(self, message_id, title, page_id, index=None):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def edit_segment(self, message_id, segment_id, update):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def edit_page(self, message_id, page_id, update):
+        # TODO: Implement this.
+        pass
+
+    @requires_login
+    async def edit_heading(self, message_id, page_id, heading_title, update):
         # TODO: Implement this.
         pass
 
@@ -381,32 +381,33 @@ class LoomHandler(GenericHandler):
 
     DISPATCH = {
         # User Information
-        'get_user_preferences':               get_user_preferences,
-        'get_user_stories':                   get_user_stories,
-        'get_user_wikis':                     get_user_wikis,
+        'get_user_preferences':       get_user_preferences,
+        'get_user_stories':           get_user_stories,
+        'get_user_wikis':             get_user_wikis,
 
         # Stories
-        'create_story':                       create_story,
-        'add_preceding_subsection_at_index':  add_preceding_subsection_at_index,
-        'append_preceding_subsection':        append_preceding_subsection,
-        'add_inner_subsection_at_index':      add_inner_subsection_at_index,
-        'append_inner_subsection':            append_inner_subsection,
-        'add_succeeding_subsection_at_index': add_succeeding_subsection_at_index,
-        'append_succeeding_subsection':       append_succeeding_subsection,
-        'add_paragraph_at_index_in_section':  add_paragraph_at_index_in_section,
-        'append_paragraph_in_section':        append_paragraph_in_section,
-        'edit_paragraph_in_section':          edit_paragraph_in_section,
-        'get_story_information':              get_story_information,
-        'get_story_hierarchy':                get_story_hierarchy,
-        'get_section_hierarchy':              get_section_hierarchy,
-        'get_section_content':                get_section_content,
+        'create_story':               create_story,
+        'add_preceding_subsection':   add_preceding_subsection,
+        'add_inner_subsection':       add_inner_subsection,
+        'add_succeeding_subsection':  add_succeeding_subsection,
+        'add_paragraph':              add_paragraph,
+        'edit_paragraph':             edit_paragraph,
+        'get_story_information':      get_story_information,
+        'get_story_hierarchy':        get_story_hierarchy,
+        'get_section_hierarchy':      get_section_hierarchy,
+        'get_section_content':        get_section_content,
 
         # Wikis
-        'create_wiki':                        create_wiki,
-        'add_segment':                        add_segment,
-        'add_page':                           add_page,
-        'get_wiki_information':               get_wiki_information,
-        'get_wiki_hierarchy':                 get_wiki_hierarchy,
-        'get_wiki_segment_hierarchy':         get_wiki_segment_hierarchy,
-        'get_wiki_page':                      get_wiki_page,
+        'create_wiki':                create_wiki,
+        'add_segment':                add_segment,
+        'add_template_heading':       add_template_heading,
+        'add_page':                   add_page,
+        'add_heading':                add_heading,
+        'edit_segment':               edit_segment,
+        'edit_page':                  edit_page,
+        'edit_heading':               edit_heading,
+        'get_wiki_information':       get_wiki_information,
+        'get_wiki_hierarchy':         get_wiki_hierarchy,
+        'get_wiki_segment_hierarchy': get_wiki_segment_hierarchy,
+        'get_wiki_page':              get_wiki_page,
     }

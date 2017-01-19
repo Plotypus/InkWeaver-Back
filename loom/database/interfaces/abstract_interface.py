@@ -70,6 +70,22 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def add_preceding_subsection(self, title, parent_id, index=None):
+        pass
+
+    @abstractmethod
+    async def add_inner_subsection(self, title, parent_id, index=None):
+        pass
+
+    @abstractmethod
+    async def add_succeeding_subsection(self, title, parent_id, index=None):
+        pass
+
+    @abstractmethod
+    async def add_paragraph(self, section_id, text, index=None):
+        pass
+
+    @abstractmethod
     async def delete_story(self, story_id):
         pass
 
@@ -78,39 +94,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def insert_preceding_subsection(self, title, parent_id, index):
-        pass
-
-    @abstractmethod
-    async def append_preceding_subsection(self, title, parent_id):
-        pass
-
-    @abstractmethod
-    async def insert_inner_subsection(self, title, parent_id, index):
-        pass
-
-    @abstractmethod
-    async def append_inner_subsection(self, title, parent_id):
-        pass
-
-    @abstractmethod
-    async def insert_succeeding_subsection(self, title, parent_id, index):
-        pass
-
-    @abstractmethod
-    async def append_succeeding_subsection(self, title, parent_id):
-        pass
-
-    @abstractmethod
-    async def insert_paragraph_into_section_at_index(self, section_id, index, text):
-        pass
-
-    @abstractmethod
-    async def append_paragraph_to_section(self, section_id, text):
-        pass
-
-    @abstractmethod
-    async def set_paragraph_in_section_at_index(self, section_id, index, text):
+    async def set_paragraph_text(self, section_id, index, text):
         pass
 
     @abstractmethod
@@ -136,19 +120,19 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def create_child_segment(self, title, in_parent_segment):
-        pass
-
-    @abstractmethod
     async def create_segment(self, title):
         pass
 
     @abstractmethod
-    async def create_page(self, title, in_parent_segment):
+    async def create_page(self, title, parent_id):
         pass
 
     @abstractmethod
-    async def add_heading_to_page(self, title, page_id):
+    async def add_child_segment(self, title, parent_id):
+        pass
+
+    @abstractmethod
+    async def add_heading(self, title, page_id):
         pass
 
     @abstractmethod
@@ -164,7 +148,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def delete_heading(self, heading_title):
+    async def delete_heading(self, heading_title, page_id):
         pass
 
     @abstractmethod

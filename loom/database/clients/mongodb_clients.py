@@ -383,200 +383,71 @@ class MongoDBClient:
         result = await self.sections.insert_one(section)
         return result.inserted_id
 
-    async def insert_preceding_subsection(self, subsection_id, to_section_id, at_index):
-        """
+    @staticmethod
+    def _insertion_parameters(object, position=None):
+        inner_parameters = {
+            '$each': [object],
+        }
+        if position is not None:
+            inner_parameters['$position'] = position
+        return inner_parameters
 
-        Args:
-            subsection_id:
-            to_section_id:
-            index:
-
-        Returns:
-
-        """
+    async def insert_preceding_subsection(self, subsection_id, to_section_id, at_index=None):
+        inner_parameters = self._insertion_parameters(subsection_id, at_index)
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': to_section_id},
             update={
                 '$push': {
-                    'preceding_subsections': {
-                        '$each':     [subsection_id],
-                        '$position': at_index,
-                    }
+                    'preceding_subsections': inner_parameters,
                 }
             }
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def append_preceding_subsection(self, subsection_id, to_section_id):
-        """
-
-        Args:
-            subsection_id:
-            to_section_id:
-
-        Returns:
-
-        """
+    async def insert_inner_subsection(self, subsection_id, to_section_id, at_index=None):
+        inner_parameters = self._insertion_parameters(subsection_id, at_index)
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': to_section_id},
             update={
                 '$push': {
-                    'preceding_subsections': subsection_id
+                    'inner_subsections': inner_parameters,
                 }
             }
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def insert_inner_subsection(self, subsection_id, to_section_id, at_index):
-        """
-
-        Args:
-            subsection_id:
-            to_section_id:
-            index:
-
-        Returns:
-
-        """
+    async def insert_succeeding_subsection(self, subsection_id, to_section_id, at_index=None):
+        inner_parameters = self._insertion_parameters(subsection_id, at_index)
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': to_section_id},
             update={
                 '$push': {
-                    'inner_subsections': {
-                        '$each':     [subsection_id],
-                        '$position': at_index,
-                    }
+                    'succeeding_subsections': inner_parameters,
                 }
             }
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def append_inner_subsection(self, subsection_id, to_section_id):
-        """
-
-        Args:
-            subsection_id:
-            to_section_id:
-
-        Returns:
-
-        """
+    async def insert_paragraph(self, text: str, to_section_id, at_index=None):
+        inner_parameters = self._insertion_parameters({'text': text, 'statistics': None}, at_index)
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': to_section_id},
             update={
                 '$push': {
-                    'inner_subsections': subsection_id
+                    'content': inner_parameters
                 }
             }
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def insert_succeeding_subsection(self, subsection_id, to_section_id, at_index):
-        """
-
-        Args:
-            subsection_id:
-            to_section_id:
-            index:
-
-        Returns:
-
-        """
+    async def set_paragraph_text(self, text: str, in_section_id: ObjectId, at_index: int):
         update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': to_section_id},
-            update={
-                '$push': {
-                    'succeeding_subsections': {
-                        '$each':     [subsection_id],
-                        '$position': at_index,
-                    }
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
-
-    async def append_succeeding_subsection(self, subsection_id, to_section_id):
-        """
-
-        Args:
-            subsection_id:
-            to_section_id:
-
-        Returns:
-
-        """
-        update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': to_section_id},
-            update={
-                '$push': {
-                    'succeeding_subsections': subsection_id
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
-
-    async def append_paragraph_to_section(self, section_id: ObjectId, paragraph: str):
-        """
-
-        Args:
-            section_id:
-            paragraph:
-
-        Returns:
-
-        """
-        update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': section_id},
-            update={
-                '$push': {
-                    'content': {'text': paragraph, 'statistics': None}
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
-
-    async def insert_paragraph_into_section_at_index(self, section_id: ObjectId, paragraph_index: int, paragraph: str):
-        """
-        
-        Args:
-            section_id:
-            paragraph_index:
-            paragraph:
-
-        Returns:
-
-        """
-        update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': section_id},
-            update={
-                '$push': {
-                    'content': {
-                        '$each':     [{'text': paragraph, 'statistics': None}],
-                        '$position': paragraph_index
-                    }
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
-
-    async def set_paragraph_in_section_at_index(self, section_id: ObjectId, paragraph_index: int, paragraph: str):
-        """
-
-        Args:
-            section_id:
-            paragraph_index:
-            paragraph:
-
-        Returns:
-
-        """
-        update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': section_id},
+            filter={'_id': in_section_id},
             update={
                 '$set': {
                     # Look in the content array of the matching section. Find the object by index using `.index`.
                     # Set the `.text` field to `paragraph`.
-                    'content.{}.text'.format(paragraph_index): paragraph
+                    'content.{}.text'.format(at_index): text
                 }
             }
         )
@@ -762,8 +633,8 @@ class MongoDBClient:
             update={
                 '$push': {
                     'headings': {
-                        'title':   title,
-                        'content': list()
+                        'title': title,
+                        'text':  "",
                     }
                 }
             }

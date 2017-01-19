@@ -138,7 +138,7 @@ class TestDBInterface:
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
-        await self.interface.append_preceding_subsection(section_title, story_section_id)
+        await self.interface.add_preceding_subsection(section_title, story_section_id)
         story_hierarchy = await self.interface.get_story_hierarchy(story_id)
         assert len(story_hierarchy['preceding_subsections']) == 1
         section_hierarchy = story_hierarchy['preceding_subsections'][0]
@@ -164,9 +164,9 @@ class TestDBInterface:
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
-        await self.interface.append_preceding_subsection(title_one, story_section_id)
-        await self.interface.insert_preceding_subsection(title_two, story_section_id, 0)
-        await self.interface.insert_preceding_subsection(title_three, story_section_id, 2)
+        await self.interface.add_preceding_subsection(title_one, story_section_id)
+        await self.interface.add_preceding_subsection(title_two, story_section_id, 0)
+        await self.interface.add_preceding_subsection(title_three, story_section_id, 2)
         story_hierarchy = await self.interface.get_story_hierarchy(story_id)
         assert len(story_hierarchy['preceding_subsections']) == 3
         expected_title_order = [title_two, title_one, title_three]
@@ -193,7 +193,7 @@ class TestDBInterface:
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
-        await self.interface.append_inner_subsection(section_title, story_section_id)
+        await self.interface.add_inner_subsection(section_title, story_section_id)
         story_hierarchy = await self.interface.get_story_hierarchy(story_id)
         assert len(story_hierarchy['inner_subsections']) == 1
         section_hierarchy = story_hierarchy['inner_subsections'][0]
@@ -219,9 +219,9 @@ class TestDBInterface:
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
-        await self.interface.append_inner_subsection(title_one, story_section_id)
-        await self.interface.insert_inner_subsection(title_two, story_section_id, 0)
-        await self.interface.insert_inner_subsection(title_three, story_section_id, 2)
+        await self.interface.add_inner_subsection(title_one, story_section_id)
+        await self.interface.add_inner_subsection(title_two, story_section_id, 0)
+        await self.interface.add_inner_subsection(title_three, story_section_id, 2)
         story_hierarchy = await self.interface.get_story_hierarchy(story_id)
         assert len(story_hierarchy['inner_subsections']) == 3
         expected_title_order = [title_two, title_one, title_three]
@@ -248,7 +248,7 @@ class TestDBInterface:
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
-        await self.interface.append_succeeding_subsection(section_title, story_section_id)
+        await self.interface.add_succeeding_subsection(section_title, story_section_id)
         story_hierarchy = await self.interface.get_story_hierarchy(story_id)
         assert len(story_hierarchy['succeeding_subsections']) == 1
         section_hierarchy = story_hierarchy['succeeding_subsections'][0]
@@ -274,9 +274,9 @@ class TestDBInterface:
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
-        await self.interface.append_succeeding_subsection(title_one, story_section_id)
-        await self.interface.insert_succeeding_subsection(title_two, story_section_id, 0)
-        await self.interface.insert_succeeding_subsection(title_three, story_section_id, 2)
+        await self.interface.add_succeeding_subsection(title_one, story_section_id)
+        await self.interface.add_succeeding_subsection(title_two, story_section_id, 0)
+        await self.interface.add_succeeding_subsection(title_three, story_section_id, 2)
         story_hierarchy = await self.interface.get_story_hierarchy(story_id)
         assert len(story_hierarchy['succeeding_subsections']) == 3
         expected_title_order = [title_two, title_one, title_three]
@@ -298,14 +298,14 @@ class TestDBInterface:
          },
          'Chapter One', 'Once upon a time, there was a little test.', 'The end.')
     ])
-    async def test_append_paragraph_to_section(self, user, story, section_title, first_paragraph, second_paragraph):
+    async def test_add_paragraph(self, user, story, section_title, first_paragraph, second_paragraph):
         user_id = await self.interface.create_user(**user)
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
-        section_id = await self.interface.append_inner_subsection(section_title, story_section_id)
-        await self.interface.append_paragraph_to_section(section_id, first_paragraph)
-        await self.interface.append_paragraph_to_section(section_id, second_paragraph)
+        section_id = await self.interface.add_inner_subsection(section_title, story_section_id)
+        await self.interface.add_paragraph(section_id, first_paragraph)
+        await self.interface.add_paragraph(section_id, second_paragraph)
         content = await self.interface.get_section_content(section_id)
         assert len(content) == 2
         expected_text_order = [first_paragraph, second_paragraph]
@@ -332,10 +332,10 @@ class TestDBInterface:
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
-        section_id = await self.interface.append_inner_subsection(section_title, story_section_id)
-        await self.interface.append_paragraph_to_section(section_id, second_text)
-        await self.interface.insert_paragraph_into_section_at_index(section_id, 0, first_text)
-        await self.interface.insert_paragraph_into_section_at_index(section_id, 2, third_text)
+        section_id = await self.interface.add_inner_subsection(section_title, story_section_id)
+        await self.interface.add_paragraph(section_id, second_text)
+        await self.interface.add_paragraph(section_id, first_text, 0)
+        await self.interface.add_paragraph(section_id, third_text, 2)
         content = await self.interface.get_section_content(section_id)
         assert len(content) == 3
         expected_text_order = [first_text, second_text, third_text]
@@ -362,12 +362,12 @@ class TestDBInterface:
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
-        section_id = await self.interface.append_inner_subsection(section_title, story_section_id)
-        await self.interface.append_paragraph_to_section(section_id, first_paragraph)
-        await self.interface.append_paragraph_to_section(section_id, second_paragraph)
+        section_id = await self.interface.add_inner_subsection(section_title, story_section_id)
+        await self.interface.add_paragraph(section_id, first_paragraph)
+        await self.interface.add_paragraph(section_id, second_paragraph)
         replacement_texts = ['Text 1', 'Text 2']
-        await self.interface.set_paragraph_in_section_at_index(section_id, 0, replacement_texts[0])
-        await self.interface.set_paragraph_in_section_at_index(section_id, 1, replacement_texts[1])
+        await self.interface.set_paragraph_text(section_id, 0, replacement_texts[0])
+        await self.interface.set_paragraph_text(section_id, 1, replacement_texts[1])
         content = await self.interface.get_section_content(section_id)
         text = [paragraph['text'] for paragraph in content]
         assert text == replacement_texts
