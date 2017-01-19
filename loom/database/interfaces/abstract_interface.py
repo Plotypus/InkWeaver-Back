@@ -148,7 +148,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def create_heading(self, title, page_id):
+    async def add_heading_to_page(self, title, page_id):
         pass
 
     @abstractmethod
@@ -164,7 +164,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def delete_heading(self, heading_id):
+    async def delete_heading(self, heading_title):
         pass
 
     @abstractmethod

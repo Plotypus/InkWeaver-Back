@@ -112,6 +112,14 @@ class MongoDBInterface(AbstractDBInterface):
         inserted_id = await self.client.create_section(title)
         return inserted_id
 
+    async def delete_story(self, story_id):
+        # TODO: Do this.
+        pass
+
+    async def delete_section(self, section_id):
+        # TODO: Do this.
+        pass
+
     async def insert_preceding_subsection(self, title, parent_id, index):
         subsection_id = await self.create_section(title)
         try:
@@ -239,10 +247,31 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return page_id
 
-    async def create_heading(self, title, page_id):
-        heading_id = await self.client.create_heading(title)
-        await self.client.append_heading_to_page(heading_id, page_id)
-        return heading_id
+    async def delete_wiki(self, wiki_id):
+        # TODO: Implement this.
+        pass
+
+    async def delete_segment(self, segment_id):
+        # TODO: Implement this.
+        pass
+
+    async def delete_page(self, page_id):
+        # TODO: Implement this.
+        pass
+
+    async def delete_heading(self, heading_title):
+        # TODO: Implement this.
+        pass
+
+    async def add_heading_to_page(self, title, page_id):
+        try:
+            await self.client.append_heading_to_page(title, page_id)
+        except ClientError:
+            # TODO: Deal with this.
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
 
     async def get_wiki(self, wiki_id):
         wiki = await self.client.get_wiki(wiki_id)
