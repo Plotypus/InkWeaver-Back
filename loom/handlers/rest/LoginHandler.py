@@ -12,7 +12,7 @@ class LoginHandler(GenericHandler):
             if await db_interface.password_is_valid_for_username(username, password):
                 user_id = await self._get_user_id_for_username(username)
                 session_manager = self.settings['session_manager']
-                session_id = session_manager.generate_session_id(user_id)
+                session_id = session_manager.generate_session_id_for_user(user_id)
                 self.set_secure_session_cookie(session_id)
             else:
                 self.send_error(401)
