@@ -220,7 +220,11 @@ class MongoDBInterface(AbstractDBInterface):
             return child_segment_id
 
     async def add_template_heading(self, title, segment_id):
-        # TODO: Check that the heading title is unique
+        heading = await self.client.get_template_heading(title, segment_id)
+        # Template heading already exists within the segment
+        if heading is not None:
+            # TODO: Deal with this
+            return
         try:
             await self.client.append_template_heading_to_segment(title, segment_id)
         except ClientError:
@@ -231,7 +235,11 @@ class MongoDBInterface(AbstractDBInterface):
             pass
 
     async def add_heading(self, title, page_id, index=None):
-        # TODO: Check that the heading title is unique
+        heading = await self.client.get_heading(title, page_id)
+        # Heading already exists within the page
+        if heading is not None:
+            # TODO: Deal with this
+            return
         try:
             await self.client.insert_heading(title, page_id, index)
         except ClientError:
@@ -289,9 +297,8 @@ class MongoDBInterface(AbstractDBInterface):
             pass
 
     async def set_heading_title(self, old_title, new_title, page_id):
-        # TODO: Check that the new title is unique
         heading = await self.client.get_heading(new_title, page_id)
-        # Heading already exists with
+        # Heading already exists within the page
         if heading is not None:
             # TODO: Deal with this
             return
@@ -329,6 +336,7 @@ class MongoDBInterface(AbstractDBInterface):
     async def delete_heading(self, heading_title, page_id):
         # TODO: Implement this.
         pass
+
 
 class MongoDBTornadoInterface(MongoDBInterface):
     def __init__(self, db_name, db_host, db_port):

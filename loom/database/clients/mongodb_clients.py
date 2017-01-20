@@ -748,9 +748,16 @@ class MongoDBClient:
         result = await self.pages.find_one({'_id': page_id})
         return result
 
+    async def get_template_heading(self, title: str, segment_id: ObjectId):
+        result = await self.segments.find_one({
+            '_id':                     segment_id,
+            'template_headings.title': title
+        })
+        return result
+
     async def get_heading(self, title: str, page_id: ObjectId):
         result = await self.pages.find_one({
-            '_id': page_id,
+            '_id':            page_id,
             'headings.title': title
         })
         return result
