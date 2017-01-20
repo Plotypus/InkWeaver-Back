@@ -482,7 +482,7 @@ class TestDBInterface:
         assert len(segment['template_headings']) == 1
         template_heading = segment['template_headings'][0]
         assert template_heading['title'] == heading_title
-        assert template_heading['content'] == list()
+        assert template_heading['text'] == ''
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user,wiki,template_title,page_title', [
@@ -511,9 +511,28 @@ class TestDBInterface:
         assert len(page['headings']) == 1
         heading = page['headings'][0]
         assert heading['title'] == template_title
-        assert heading['content'] == list()
+        assert heading['text'] == ''
         wiki_hierarchy = await self.interface.get_wiki_hierarchy(wiki_id)
         assert len(wiki_hierarchy['pages']) == 1
         hierarchy_page = wiki_hierarchy['pages'][0]
         assert hierarchy_page['title'] == page_title
         assert hierarchy_page['page_id'] == page_id
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('segment_title,page_title,first_heading,second_heading,third_heading', [
+        ('Character', 'John', 'Background', 'Motives', 'Family')
+    ])
+    async def test_add_heading(self, segment_title, page_title, first_heading, second_heading, third_heading):
+        segment_id = await self.interface.create_segment(segment_title)
+        page_id = await self.interface.create_page(page_title, segment_id)
+        await self.interface.add_heading(second_heading, page_id)
+        await self.interface.add_heading(first_heading, page_id, 0)
+        await self.interface.add_heading(third_heading, page_id, 2)
+        page = await self.interface.get_page(page_id)
+        assert len(page['headings']) == 3
+        expected_title_order = [first_heading, second_heading, third_heading]
+        headings = page['headings']
+        titles = [heading['title'] for heading in headings]
+        contents = [heading['text'] for heading in headings]
+        assert titles == expected_title_order
+        assert contents == ['', '', '']
