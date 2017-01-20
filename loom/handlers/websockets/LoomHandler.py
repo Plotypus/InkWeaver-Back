@@ -346,8 +346,13 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def edit_segment(self, message_id, segment_id, update):
-        # TODO: Implement this.
-        pass
+        # TODO: Decide whether or not to add more to response
+        if update['update_type'] == 'set_title':
+            title = update['title']
+            await self.db_interface.set_segment_title(title, segment_id)
+            self.write_json({}, with_reply_id=message_id)
+        else:
+            raise LoomWSUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
     @requires_login
     async def edit_page(self, message_id, page_id, update):
