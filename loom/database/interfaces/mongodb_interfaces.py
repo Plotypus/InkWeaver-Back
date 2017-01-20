@@ -199,8 +199,10 @@ class MongoDBInterface(AbstractDBInterface):
         return inserted_id
 
     async def create_page(self, title, in_parent_segment):
-        # TODO: Handle template heading generation
-        page_id = await self.client.create_page(title)
+        # Create the page and include the `template_headings` from the parent
+        parent_segment = await self.get_segment(in_parent_segment)
+        template_headings = parent_segment['template_headings']
+        page_id = await self.client.create_page(title, template_headings)
         try:
             await self.client.append_page_to_parent_segment(page_id, in_parent_segment)
         except ClientError:
