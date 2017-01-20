@@ -435,12 +435,12 @@ class TestDBInterface:
     async def test_get_wiki_hierarchy(self, user, wiki):
         user_id = await self.interface.create_user(**user)
         wiki_id = await self.interface.create_wiki(user_id, **wiki)
-        wiki = await self.interface.get_wiki(wiki_id)
-        segment_id = wiki['segment_id']
+        db_wiki = await self.interface.get_wiki(wiki_id)
+        segment_id = db_wiki['segment_id']
         wiki_hierarchy = await self.interface.get_wiki_hierarchy(wiki_id)
         segment_hierarchy = await self.interface.get_segment_hierarchy(segment_id)
         assert wiki_hierarchy == segment_hierarchy
-        assert wiki_hierarchy['title'] == wiki['title']
+        assert wiki_hierarchy['title'] == db_wiki['title']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user,wiki,segment_title', [
@@ -459,8 +459,8 @@ class TestDBInterface:
     async def test_add_child_segment(self, user, wiki, segment_title):
         user_id = await self.interface.create_user(**user)
         wiki_id = await self.interface.create_wiki(user_id, **wiki)
-        wiki = await self.interface.get_wiki(wiki_id)
-        wiki_segment_id = wiki['segment_id']
+        db_wiki = await self.interface.get_wiki(wiki_id)
+        wiki_segment_id = db_wiki['segment_id']
         segment_id = await self.interface.add_child_segment(segment_title, wiki_segment_id)
         assert segment_id is not None
         wiki_hierarchy = await self.interface.get_wiki_hierarchy(wiki_id)
@@ -483,3 +483,37 @@ class TestDBInterface:
         template_heading = segment['template_headings'][0]
         assert template_heading['title'] == heading_title
         assert template_heading['content'] == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,wiki,template_title,page_title', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-wiki',
+             'summary': 'This is a wiki for testing',
+         },
+         'History', 'Mars')
+    ])
+    async def test_create_page(self, user, wiki, template_title, page_title):
+        user_id = await self.interface.create_user(**user)
+        wiki_id = await self.interface.create_wiki(user_id, **wiki)
+        db_wiki = await self.interface.get_wiki(wiki_id)
+        segment_id = db_wiki['segment_id']
+        await self.interface.add_template_heading(template_title, segment_id)
+        page_id = await self.interface.create_page(page_title, segment_id)
+        assert page_id is not None
+        page = await self.interface.get_page(page_id)
+        assert page['title'] == page_title
+        assert len(page['headings']) == 1
+        heading = page['headings'][0]
+        assert heading['title'] == template_title
+        assert heading['content'] == list()
+        wiki_hierarchy = await self.interface.get_wiki_hierarchy(wiki_id)
+        assert len(wiki_hierarchy['pages']) == 1
+        hierarchy_page = wiki_hierarchy['pages'][0]
+        assert hierarchy_page['title'] == page_title
+        assert hierarchy_page['page_id'] == page_id
