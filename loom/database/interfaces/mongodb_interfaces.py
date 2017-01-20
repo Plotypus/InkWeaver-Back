@@ -280,7 +280,8 @@ class MongoDBInterface(AbstractDBInterface):
         }
 
     async def get_segment(self, segment_id):
-        pass
+        segment = await self.client.get_segment(segment_id)
+        return segment
 
     async def get_page(self, page_id):
         pass

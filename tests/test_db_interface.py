@@ -470,3 +470,15 @@ class TestDBInterface:
         assert segment_hierarchy['segment_id'] == segment_id
         assert segment_hierarchy['segments'] == list()
         assert segment_hierarchy['pages'] == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('segment_title,heading_title', [
+        ('Character', 'Background')
+    ])
+    async def test_add_template_heading(self, segment_title, heading_title):
+        segment_id = await self.interface.create_segment(segment_title)
+        await self.interface.add_template_heading(heading_title, segment_id)
+        segment = await self.interface.get_segment(segment_id)
+        assert len(segment['template_headings']) == 1
+        template_heading = segment['template_headings'][0]
+        assert template_heading['title'] == heading_title
