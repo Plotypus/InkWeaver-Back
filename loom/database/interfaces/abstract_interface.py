@@ -86,18 +86,6 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def delete_story(self, story_id):
-        pass
-
-    @abstractmethod
-    async def delete_section(self, section_id):
-        pass
-
-    @abstractmethod
-    async def set_paragraph_text(self, section_id, index, text):
-        pass
-
-    @abstractmethod
     async def get_story(self, story_id):
         pass
 
@@ -111,6 +99,18 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def get_section_content(self, section_id):
+        pass
+
+    @abstractmethod
+    async def set_paragraph_text(self, section_id, index, text):
+        pass
+
+    @abstractmethod
+    async def delete_story(self, story_id):
+        pass
+
+    @abstractmethod
+    async def delete_section(self, section_id):
         pass
 
     # Wiki object methods.
@@ -140,22 +140,6 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def delete_wiki(self, wiki_id):
-        pass
-
-    @abstractmethod
-    async def delete_segment(self, segment_id):
-        pass
-
-    @abstractmethod
-    async def delete_page(self, page_id):
-        pass
-
-    @abstractmethod
-    async def delete_heading(self, heading_title, page_id):
-        pass
-
-    @abstractmethod
     async def get_wiki(self, wiki_id):
         pass
 
@@ -177,4 +161,20 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def get_heading(self, heading_id):
+        pass
+
+    @abstractmethod
+    async def delete_wiki(self, wiki_id):
+        pass
+
+    @abstractmethod
+    async def delete_segment(self, segment_id):
+        pass
+
+    @abstractmethod
+    async def delete_page(self, page_id):
+        pass
+
+    @abstractmethod
+    async def delete_heading(self, heading_title, page_id):
         pass

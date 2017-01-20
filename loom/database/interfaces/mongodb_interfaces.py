@@ -112,14 +112,6 @@ class MongoDBInterface(AbstractDBInterface):
         inserted_id = await self.client.create_section(title)
         return inserted_id
 
-    async def delete_story(self, story_id):
-        # TODO: Do this.
-        pass
-
-    async def delete_section(self, section_id):
-        # TODO: Do this.
-        pass
-
     async def add_preceding_subsection(self, title, parent_id, index=None):
         subsection_id = await self.create_section(title)
         try:
@@ -150,9 +142,6 @@ class MongoDBInterface(AbstractDBInterface):
     async def add_paragraph(self, section_id, text, index=None):
         return await self.client.insert_paragraph(text, to_section_id=section_id, at_index=index)
 
-    async def set_paragraph_text(self, section_id, index, text):
-        return await self.client.set_paragraph_text(text, in_section_id=section_id, at_index=index)
-
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)
         return story
@@ -179,6 +168,17 @@ class MongoDBInterface(AbstractDBInterface):
     async def get_section_content(self, section_id):
         section = await self.client.get_section(section_id)
         return section['content']
+
+    async def set_paragraph_text(self, section_id, index, text):
+        return await self.client.set_paragraph_text(text, in_section_id=section_id, at_index=index)
+
+    async def delete_story(self, story_id):
+        # TODO: Do this.
+        pass
+
+    async def delete_section(self, section_id):
+        # TODO: Do this.
+        pass
 
     # Wiki object methods.
 
@@ -239,22 +239,6 @@ class MongoDBInterface(AbstractDBInterface):
             # TODO: Should this return something?
             pass
 
-    async def delete_wiki(self, wiki_id):
-        # TODO: Implement this.
-        pass
-
-    async def delete_segment(self, segment_id):
-        # TODO: Implement this.
-        pass
-
-    async def delete_page(self, page_id):
-        # TODO: Implement this.
-        pass
-
-    async def delete_heading(self, heading_title, page_id):
-        # TODO: Implement this.
-        pass
-
     async def get_wiki(self, wiki_id):
         wiki = await self.client.get_wiki(wiki_id)
         return wiki
@@ -292,6 +276,21 @@ class MongoDBInterface(AbstractDBInterface):
     async def get_heading(self, heading_id):
         pass
 
+    async def delete_wiki(self, wiki_id):
+        # TODO: Implement this.
+        pass
+
+    async def delete_segment(self, segment_id):
+        # TODO: Implement this.
+        pass
+
+    async def delete_page(self, page_id):
+        # TODO: Implement this.
+        pass
+
+    async def delete_heading(self, heading_title, page_id):
+        # TODO: Implement this.
+        pass
 
 class MongoDBTornadoInterface(MongoDBInterface):
     def __init__(self, db_name, db_host, db_port):
