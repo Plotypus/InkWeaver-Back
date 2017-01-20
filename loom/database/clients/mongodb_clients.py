@@ -633,7 +633,10 @@ class MongoDBClient:
             update={
                 '$push': {
                     # For now, this is the format of a `template_heading`
-                    'template_headings': {'title': title}
+                    'template_headings': {
+                        'title':   title,
+                        'content': list(),
+                    }
                 }
             }
         )

@@ -482,3 +482,4 @@ class TestDBInterface:
         assert len(segment['template_headings']) == 1
         template_heading = segment['template_headings'][0]
         assert template_heading['title'] == heading_title
+        assert template_heading['content'] == list()
