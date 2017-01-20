@@ -634,8 +634,8 @@ class MongoDBClient:
                 '$push': {
                     # For now, this is the format of a `template_heading`
                     'template_headings': {
-                        'title':   title,
-                        'content': list(),
+                        'title': title,
+                        'text':  '',
                     }
                 }
             }
@@ -645,7 +645,7 @@ class MongoDBClient:
     async def insert_heading(self, title: str, page_id: ObjectId, at_index=None):
         heading = {
             'title': title,
-            'text': '',
+            'text':  '',
         }
         inner_parameters = self._insertion_parameters(heading, at_index)
         update_result: UpdateResult = await self.pages.update_one(
