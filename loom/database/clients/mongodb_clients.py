@@ -642,15 +642,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def append_heading_to_page(self, title: str, page_id: ObjectId):
+    async def insert_heading(self, title: str, page_id: ObjectId, at_index=None):
+        heading = {
+            'title': title,
+            'text': '',
+        }
+        inner_parameters = self._insertion_parameters(heading, at_index)
         update_result: UpdateResult = await self.pages.update_one(
             filter={'_id': page_id},
             update={
                 '$push': {
-                    'headings': {
-                        'title': title,
-                        'text':  "",
-                    }
+                    'headings': inner_parameters
                 }
             }
         )
