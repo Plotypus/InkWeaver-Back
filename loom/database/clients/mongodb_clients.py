@@ -79,10 +79,6 @@ class MongoDBClient:
     def pages(self) -> AgnosticCollection:
         return self.database.pages
 
-    @property
-    def headings(self) -> AgnosticCollection:
-        return self.database.headings
-
     async def drop_database(self):
         await self.client.drop_database(self.database)
 
@@ -180,6 +176,17 @@ class MongoDBClient:
             update={
                 '$push': {
                     'stories': story_id
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def add_wiki_to_user(self, user_id: ObjectId, wiki_id: ObjectId):
+        update_result: UpdateResult = await self.users.update_one(
+            filter={'_id': user_id},
+            update={
+                '$push': {
+                    'wikis': wiki_id
                 }
             }
         )
@@ -376,200 +383,71 @@ class MongoDBClient:
         result = await self.sections.insert_one(section)
         return result.inserted_id
 
-    async def insert_preceding_subsection(self, subsection_id, to_section_id, at_index):
-        """
+    @staticmethod
+    def _insertion_parameters(object, position=None):
+        inner_parameters = {
+            '$each': [object],
+        }
+        if position is not None:
+            inner_parameters['$position'] = position
+        return inner_parameters
 
-        Args:
-            subsection_id:
-            to_section_id:
-            index:
-
-        Returns:
-
-        """
+    async def insert_preceding_subsection(self, subsection_id, to_section_id, at_index=None):
+        inner_parameters = self._insertion_parameters(subsection_id, at_index)
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': to_section_id},
             update={
                 '$push': {
-                    'preceding_subsections': {
-                        '$each':     [subsection_id],
-                        '$position': at_index,
-                    }
+                    'preceding_subsections': inner_parameters,
                 }
             }
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def append_preceding_subsection(self, subsection_id, to_section_id):
-        """
-
-        Args:
-            subsection_id:
-            to_section_id:
-
-        Returns:
-
-        """
+    async def insert_inner_subsection(self, subsection_id, to_section_id, at_index=None):
+        inner_parameters = self._insertion_parameters(subsection_id, at_index)
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': to_section_id},
             update={
                 '$push': {
-                    'preceding_subsections': subsection_id
+                    'inner_subsections': inner_parameters,
                 }
             }
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def insert_inner_subsection(self, subsection_id, to_section_id, at_index):
-        """
-
-        Args:
-            subsection_id:
-            to_section_id:
-            index:
-
-        Returns:
-
-        """
+    async def insert_succeeding_subsection(self, subsection_id, to_section_id, at_index=None):
+        inner_parameters = self._insertion_parameters(subsection_id, at_index)
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': to_section_id},
             update={
                 '$push': {
-                    'inner_subsections': {
-                        '$each':     [subsection_id],
-                        '$position': at_index,
-                    }
+                    'succeeding_subsections': inner_parameters,
                 }
             }
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def append_inner_subsection(self, subsection_id, to_section_id):
-        """
-
-        Args:
-            subsection_id:
-            to_section_id:
-
-        Returns:
-
-        """
+    async def insert_paragraph(self, text: str, to_section_id, at_index=None):
+        inner_parameters = self._insertion_parameters({'text': text, 'statistics': None}, at_index)
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': to_section_id},
             update={
                 '$push': {
-                    'inner_subsections': subsection_id
+                    'content': inner_parameters
                 }
             }
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def insert_succeeding_subsection(self, subsection_id, to_section_id, at_index):
-        """
-
-        Args:
-            subsection_id:
-            to_section_id:
-            index:
-
-        Returns:
-
-        """
+    async def set_paragraph_text(self, text: str, in_section_id: ObjectId, at_index: int):
         update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': to_section_id},
-            update={
-                '$push': {
-                    'succeeding_subsections': {
-                        '$each':     [subsection_id],
-                        '$position': at_index,
-                    }
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
-
-    async def append_succeeding_subsection(self, subsection_id, to_section_id):
-        """
-
-        Args:
-            subsection_id:
-            to_section_id:
-
-        Returns:
-
-        """
-        update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': to_section_id},
-            update={
-                '$push': {
-                    'succeeding_subsections': subsection_id
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
-
-    async def append_paragraph_to_section(self, section_id: ObjectId, paragraph: str):
-        """
-
-        Args:
-            section_id:
-            paragraph:
-
-        Returns:
-
-        """
-        update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': section_id},
-            update={
-                '$push': {
-                    'content': {'text': paragraph, 'statistics': None}
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
-
-    async def insert_paragraph_into_section_at_index(self, section_id: ObjectId, paragraph_index: int, paragraph: str):
-        """
-        
-        Args:
-            section_id:
-            paragraph_index:
-            paragraph:
-
-        Returns:
-
-        """
-        update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': section_id},
-            update={
-                '$push': {
-                    'content': {
-                        '$each':     [{'text': paragraph, 'statistics': None}],
-                        '$position': paragraph_index
-                    }
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
-
-    async def set_paragraph_in_section_at_index(self, section_id: ObjectId, paragraph_index: int, paragraph: str):
-        """
-
-        Args:
-            section_id:
-            paragraph_index:
-            paragraph:
-
-        Returns:
-
-        """
-        update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': section_id},
+            filter={'_id': in_section_id},
             update={
                 '$set': {
                     # Look in the content array of the matching section. Find the object by index using `.index`.
                     # Set the `.text` field to `paragraph`.
-                    'content.{}.text'.format(paragraph_index): paragraph
+                    'content.{}.text'.format(at_index): text
                 }
             }
         )
@@ -692,7 +570,7 @@ class MongoDBClient:
         result = await self.segments.insert_one(segment)
         return result.inserted_id
 
-    async def create_page(self, title: str, _id=None) -> ObjectId:
+    async def create_page(self, title: str, template_headings=None, _id=None) -> ObjectId:
         """Inserts a new page to the pages collection.
 
         Adds a new page to the pages collection. Pages are leaf nodes in a tree
@@ -704,6 +582,8 @@ class MongoDBClient:
 
         Args:
             title: The title of the wiki page.
+            template_headings (List[Dict]): The list of template headings to
+                inherit.
             _id (ObjectId): `_id` is optional, but if provided will create a
                 page with the provided ObjectId.
 
@@ -716,7 +596,7 @@ class MongoDBClient:
         # TODO: Implement references and aliases.
         page = {
             'title':      title,
-            'headings':   list(),
+            'headings':   list() if template_headings is None else template_headings,
             'references': None,
             'aliases':    None,
         }
@@ -725,33 +605,103 @@ class MongoDBClient:
         result = await self.pages.insert_one(page)
         return result.inserted_id
 
-    async def create_heading(self, title: str, _id=None) -> ObjectId:
-        """Inserts a new heading to the headings collection.
+    async def append_segment_to_parent_segment(self, child_segment: ObjectId, parent_segment: ObjectId):
+        update_result: UpdateResult = await self.segments.update_one(
+            filter={'_id': parent_segment},
+            update={
+                '$push': {
+                    'segments': child_segment
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
 
-        Adds a new heading to the headings collection. Headings are text blocks
-        on a wiki page. For example, "Background" and "Motives" are considered
-        headings. `_id` is optional and if provided will create the heading
-        with the given `_id`, rather than the generated BSON ObjectID.
+    async def append_page_to_parent_segment(self, page_id: ObjectId, segment_id: ObjectId):
+        update_result: UpdateResult = await self.segments.update_one(
+            filter={'_id': segment_id},
+            update={
+                '$push': {
+                    'pages': page_id
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
 
-        Args:
-            title: The title of the heading.
-            _id (ObjectId): `_id` is optional, but if provided will create a
-                heading with the provided ObjectId.
+    async def append_template_heading_to_segment(self, title: str, segment_id: ObjectId):
+        update_result: UpdateResult = await self.segments.update_one(
+            filter={'_id': segment_id},
+            update={
+                '$push': {
+                    # For now, this is the format of a `template_heading`
+                    'template_headings': {
+                        'title': title,
+                        'text':  '',
+                    }
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
 
-        Returns:
-            The ObjectId that is associated with the newly created heading. If
-            `_id` was provided, `_id` will be returned. Otherwise, a randomly
-            generated BSON ObjectId will be returned.
-
-        """
+    async def insert_heading(self, title: str, page_id: ObjectId, at_index=None):
         heading = {
-            'title':   title,
-            'content': list(),  # content is a list of "paragraph objects"
+            'title': title,
+            'text':  '',
         }
-        if _id is not None:
-            heading['_id'] = _id
-        result = await self.headings.insert_one(heading)
-        return result.inserted_id
+        inner_parameters = self._insertion_parameters(heading, at_index)
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$push': {
+                    'headings': inner_parameters
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def set_segment_title(self, title: str, segment_id: ObjectId):
+        update_result: UpdateResult = await self.segments.update_one(
+            filter={'_id': segment_id},
+            update={
+                '$set': {
+                    'title': title
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def set_heading_title(self, old_title: str, new_title: str, page_id: ObjectId):
+        update_result: UpdateResult = await self.pages.update_one(
+            # For filtering documents in an array, we use the name of the array field
+            # combined with the field in the document we want to filter with. In this case,
+            # we want to filter for the `title` in the `headings` array.
+            filter={'_id': page_id, 'headings.title': old_title},
+            update={
+                '$set': {
+                    # The `$` acts as a placeholder to update the first element that
+                    # matches the query condition. In this case, the first document
+                    # with the old title.
+                    'headings.$.title': new_title
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def set_heading_text(self, title: str, text: str, page_id: ObjectId):
+        update_result: UpdateResult = await self.pages.update_one(
+            # For filtering documents in an array, we use the name of the array field
+            # combined with the field in the document we want to filter with. In this case,
+            # we want to filter for the `title` in the `headings` array.
+            filter={'_id': page_id, 'headings.title': title},
+            update={
+                '$set': {
+                    # The `$` acts as a placeholder to update the first element that
+                    # matches the query condition. In this case, the first document
+                    # with the old title.
+                    'headings.$.text': text
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
 
     async def get_wiki(self, wiki_id: ObjectId) -> Dict:
         """Grabs the information associated with the provided wiki.
@@ -798,19 +748,18 @@ class MongoDBClient:
         result = await self.pages.find_one({'_id': page_id})
         return result
 
-    async def get_heading(self, heading_id: ObjectId) -> Dict:
-        """Grabs the information associated with the provided heading.
+    async def get_template_heading(self, title: str, segment_id: ObjectId):
+        result = await self.segments.find_one({
+            '_id':                     segment_id,
+            'template_headings.title': title
+        })
+        return result
 
-        Finds the heading int he database and returns the document.
-
-        Args:
-            heading_id: BSON ObjectId of heading to query for.
-
-        Returns:
-            A copy of the document of the heading.
-
-        """
-        result = await self.headings.find_one({'_id': heading_id})
+    async def get_heading(self, title: str, page_id: ObjectId):
+        result = await self.pages.find_one({
+            '_id':            page_id,
+            'headings.title': title
+        })
         return result
 
 class MongoDBMotorTornadoClient(MongoDBClient):

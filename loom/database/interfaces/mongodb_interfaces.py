@@ -69,8 +69,9 @@ class MongoDBInterface(AbstractDBInterface):
             else:
                 raise ValueError("invalid object type: {}".format(object_type))
             access_level = self._get_current_user_access_level_in_object(user_id, obj)
+            id_key = '{}_id'.format(object_type)
             objects.append({
-                'story_id':     obj['_id'],
+                id_key:         obj['_id'],
                 'title':        obj['title'],
                 'access_level': access_level,
             })
@@ -107,54 +108,39 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.add_story_to_user(user_id, inserted_id)
         return inserted_id
 
-    async def insert_preceding_subsection(self, title, parent_id, index):
-        subsection_id = await self.create_section(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.insert_preceding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
-        return subsection_id
-
-    async def append_preceding_subsection(self, title, parent_id):
-        subsection_id = await self.create_section(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.append_preceding_subsection(subsection_id, to_section_id=parent_id)
-        return subsection_id
-
-    async def insert_inner_subsection(self, title, parent_id, index):
-        subsection_id = await self.create_section(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.insert_inner_subsection(subsection_id, to_section_id=parent_id, at_index=index)
-        return subsection_id
-
-    async def append_inner_subsection(self, title, parent_id):
-        subsection_id = await self.create_section(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.append_inner_subsection(subsection_id, to_section_id=parent_id)
-        return subsection_id
-
-    async def insert_succeeding_subsection(self, title, parent_id, index):
-        subsection_id = await self.create_section(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.insert_succeeding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
-        return subsection_id
-
-    async def append_succeeding_subsection(self, title, parent_id):
-        subsection_id = await self.create_section(title)
-        # TODO: Decide what to do if unsuccessful
-        success = await self.client.append_succeeding_subsection(subsection_id, to_section_id=parent_id)
-        return subsection_id
-
     async def create_section(self, title) -> ObjectId:
         inserted_id = await self.client.create_section(title)
         return inserted_id
 
-    async def insert_paragraph_into_section_at_index(self, section_id, index, text):
-        return await self.client.insert_paragraph_into_section_at_index(section_id, index, text)
+    async def add_preceding_subsection(self, title, parent_id, index=None):
+        subsection_id = await self.create_section(title)
+        try:
+            await self.client.insert_preceding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
+        except ClientError:
+            await self.delete_section(subsection_id)
+        else:
+            return subsection_id
 
-    async def append_paragraph_to_section(self, section_id, text):
-        return await self.client.append_paragraph_to_section(section_id, text)
+    async def add_inner_subsection(self, title, parent_id, index=None):
+        subsection_id = await self.create_section(title)
+        try:
+            await self.client.insert_inner_subsection(subsection_id, to_section_id=parent_id, at_index=index)
+        except ClientError:
+            await self.delete_section(subsection_id)
+        else:
+            return subsection_id
 
-    async def set_paragraph_in_section_at_index(self, section_id, index, text):
-        return await self.client.set_paragraph_in_section_at_index(section_id, index, text)
+    async def add_succeeding_subsection(self, title, parent_id, index=None):
+        subsection_id = await self.create_section(title)
+        try:
+            await self.client.insert_succeeding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
+        except ClientError:
+            await self.delete_section(subsection_id)
+        else:
+            return subsection_id
+
+    async def add_paragraph(self, section_id, text, index=None):
+        return await self.client.insert_paragraph(text, to_section_id=section_id, at_index=index)
 
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)
@@ -183,22 +169,85 @@ class MongoDBInterface(AbstractDBInterface):
         section = await self.client.get_section(section_id)
         return section['content']
 
+    async def set_paragraph_text(self, section_id, index, text):
+        return await self.client.set_paragraph_text(text, in_section_id=section_id, at_index=index)
+
+    async def delete_story(self, story_id):
+        # TODO: Do this.
+        pass
+
+    async def delete_section(self, section_id):
+        # TODO: Do this.
+        pass
+
     # Wiki object methods.
 
     async def create_wiki(self, user_id, title, summary):
-        pass
-
-    async def create_child_segment(self, title, in_parent_segment):
-        pass
+        user = await self.get_user_preferences(user_id)
+        user_description = {
+            'user_id':      user_id,
+            'name':         user['name'],
+            'access_level': 'owner',
+        }
+        segment_id = await self.create_segment(title)
+        inserted_id = await self.client.create_wiki(title, user_description, summary, segment_id)
+        await self.client.add_wiki_to_user(user_id, inserted_id)
+        return inserted_id
 
     async def create_segment(self, title):
-        pass
+        inserted_id = await self.client.create_segment(title)
+        return inserted_id
 
     async def create_page(self, title, in_parent_segment):
-        pass
+        # Create the page and include the `template_headings` from the parent
+        parent_segment = await self.get_segment(in_parent_segment)
+        template_headings = parent_segment['template_headings']
+        page_id = await self.client.create_page(title, template_headings)
+        try:
+            await self.client.append_page_to_parent_segment(page_id, in_parent_segment)
+        except ClientError:
+            self.delete_page(page_id)
+        else:
+            return page_id
 
-    async def create_heading(self, title, page_id):
-        pass
+    async def add_child_segment(self, title, parent_id):
+        child_segment_id = await self.create_segment(title)
+        try:
+            await self.client.append_segment_to_parent_segment(child_segment_id, parent_id)
+        except ClientError:
+            self.delete_segment(child_segment_id)
+        else:
+            return child_segment_id
+
+    async def add_template_heading(self, title, segment_id):
+        heading = await self.client.get_template_heading(title, segment_id)
+        # Template heading already exists within the segment
+        if heading is not None:
+            # TODO: Deal with this
+            return
+        try:
+            await self.client.append_template_heading_to_segment(title, segment_id)
+        except ClientError:
+            # TODO: Deal with this.
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
+
+    async def add_heading(self, title, page_id, index=None):
+        heading = await self.client.get_heading(title, page_id)
+        # Heading already exists within the page
+        if heading is not None:
+            # TODO: Deal with this
+            return
+        try:
+            await self.client.insert_heading(title, page_id, index)
+        except ClientError:
+            # TODO: Deal with this.
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
 
     async def get_wiki(self, wiki_id):
         wiki = await self.client.get_wiki(wiki_id)
@@ -227,12 +276,65 @@ class MongoDBInterface(AbstractDBInterface):
         }
 
     async def get_segment(self, segment_id):
-        pass
+        segment = await self.client.get_segment(segment_id)
+        return segment
 
     async def get_page(self, page_id):
-        pass
+        page = await self.client.get_page(page_id)
+        return page
 
     async def get_heading(self, heading_id):
+        pass
+
+    async def set_segment_title(self, title, segment_id):
+        try:
+            await self.client.set_segment_title(title, segment_id)
+        except ClientError:
+            # TODO: Deal with this
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
+
+    async def set_heading_title(self, old_title, new_title, page_id):
+        heading = await self.client.get_heading(new_title, page_id)
+        # Heading already exists within the page
+        if heading is not None:
+            # TODO: Deal with this
+            return
+        try:
+            await self.client.set_heading_title(old_title, new_title, page_id)
+        except ClientError:
+            # TODO: Deal with this
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
+
+    async def set_heading_text(self, title, text, page_id):
+        try:
+            await self.client.set_heading_text(title, text, page_id)
+        except ClientError:
+            # TODO: Deal with this
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
+
+    async def delete_wiki(self, wiki_id):
+        # TODO: Implement this.
+        pass
+
+    async def delete_segment(self, segment_id):
+        # TODO: Implement this.
+        pass
+
+    async def delete_page(self, page_id):
+        # TODO: Implement this.
+        pass
+
+    async def delete_heading(self, heading_title, page_id):
+        # TODO: Implement this.
         pass
 
 

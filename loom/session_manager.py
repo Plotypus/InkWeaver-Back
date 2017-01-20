@@ -23,4 +23,4 @@ class SessionManager():
 
     @staticmethod
     def _generate_session_id():
-        return uuid.uuid4()
+        return str(uuid.uuid4())
