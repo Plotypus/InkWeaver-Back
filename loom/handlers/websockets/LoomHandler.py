@@ -311,7 +311,15 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def create_wiki(self, message_id, title, summary):
-        # TODO: Implement this.
+        wiki_id = await self.db_interface.create_wiki(self.user_id, title, summary)
+        wiki = await self.db_interface.get_wiki(wiki_id)
+        message = {
+            'wiki_title':   wiki['title'],
+            'segment_id':   wiki['segment_id'],
+            'users':        wiki['users'],
+            'summary':      wiki['summary'],
+        }
+        self.write_json(message, with_reply_id=message_id)
         pass
 
     @requires_login
