@@ -335,8 +335,8 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def add_page(self, message_id, title, parent_id):
-        # TODO: Implement this.
-        pass
+        page_id = await self.db_interface.create_page(title, parent_id)
+        self.write_json({'page_id': page_id}, with_reply_id=message_id)
 
     @requires_login
     async def add_heading(self, message_id, title, page_id, index=None):
