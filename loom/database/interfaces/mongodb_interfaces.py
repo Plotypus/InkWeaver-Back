@@ -217,6 +217,16 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return child_segment_id
 
+    async def add_template_heading(self, title, segment_id):
+        try:
+            await self.client.append_template_heading_to_segment(title, segment_id)
+        except ClientError:
+            # TODO: Deal with this.
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
+
     async def add_heading(self, title, page_id):
         try:
             await self.client.append_heading_to_page(title, page_id)

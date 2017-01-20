@@ -627,6 +627,18 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def append_template_heading_to_segment(self, title: str, segment_id: ObjectId):
+        update_result: UpdateResult = await self.segments.update_one(
+            filter={'_id': segment_id},
+            update={
+                '$push': {
+                    # For now, this is the format of a `template_heading`
+                    'template_headings': {'title': title}
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def append_heading_to_page(self, title: str, page_id: ObjectId):
         update_result: UpdateResult = await self.pages.update_one(
             filter={'_id': page_id},

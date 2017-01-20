@@ -132,6 +132,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def add_template_heading(self, title, segment_id):
+        pass
+
+    @abstractmethod
     async def add_heading(self, title, page_id):
         pass
 
