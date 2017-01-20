@@ -399,9 +399,15 @@ class LoomHandler(GenericHandler):
         self.write_json(message, with_reply_id=message_id)
 
     @requires_login
-    def get_wiki_page(self, message_id, page_id):
-        # TODO: Implement this.
-        pass
+    async def get_wiki_page(self, message_id, page_id):
+        page = await self.db_interface.get_page(page_id)
+        message = {
+            'title':        page['title'],
+            'aliases':      list(),  # TODO: Change when aliases are implemented.
+            'references':   list(),  # TODO: Change when references are implemented.
+            'headings':     page['headings'],
+        }
+        self.write_json(message, with_reply_id=message_id)
 
     DISPATCH = {
         # User Information
