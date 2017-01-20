@@ -658,6 +658,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_segment_title(self, title: str, segment_id: ObjectId):
+        update_result: UpdateResult = await self.segments.update_one(
+            filter={'_id': segment_id},
+            update={
+                '$set': {
+                    'title': title
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def get_wiki(self, wiki_id: ObjectId) -> Dict:
         """Grabs the information associated with the provided wiki.
 

@@ -536,3 +536,15 @@ class TestDBInterface:
         contents = [heading['text'] for heading in headings]
         assert titles == expected_title_order
         assert contents == ['', '', '']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('old_title,new_title', [
+        ('Character', 'Characters')
+    ])
+    async def test_set_segment_title(self, old_title, new_title):
+        segment_id = await self.interface.create_segment(old_title)
+        segment = await self.interface.get_segment(segment_id)
+        assert segment['title'] == old_title
+        await self.interface.set_segment_title(new_title, segment_id)
+        segment = await self.interface.get_segment(segment_id)
+        assert segment['title'] == new_title

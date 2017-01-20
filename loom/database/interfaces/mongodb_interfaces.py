@@ -276,6 +276,16 @@ class MongoDBInterface(AbstractDBInterface):
     async def get_heading(self, heading_id):
         pass
 
+    async def set_segment_title(self, title, segment_id):
+        try:
+            await self.client.set_segment_title(title, segment_id)
+        except ClientError:
+            # TODO: Deal with this
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
+
     async def delete_wiki(self, wiki_id):
         # TODO: Implement this.
         pass

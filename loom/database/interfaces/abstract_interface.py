@@ -164,6 +164,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_segment_title(self, title, segment_id):
+        pass
+
+    @abstractmethod
     async def delete_wiki(self, wiki_id):
         pass
 
