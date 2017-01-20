@@ -229,9 +229,9 @@ class MongoDBInterface(AbstractDBInterface):
             # TODO: Should this return something?
             pass
 
-    async def add_heading(self, title, page_id):
+    async def add_heading(self, title, page_id, index=None):
         try:
-            await self.client.append_heading_to_page(title, page_id)
+            await self.client.insert_heading(title, page_id, index)
         except ClientError:
             # TODO: Deal with this.
             raise
