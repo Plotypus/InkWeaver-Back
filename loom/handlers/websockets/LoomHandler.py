@@ -324,8 +324,8 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def add_segment(self, message_id, title, parent_id):
-        # TODO: Implement this.
-        pass
+        segment_id = await self.db_interface.add_child_segment(title, parent_id)
+        self.write_json({'segment_id': segment_id}, with_reply_id=message_id)
 
     @requires_login
     async def add_template_heading(self, message_id, title, section_id):
