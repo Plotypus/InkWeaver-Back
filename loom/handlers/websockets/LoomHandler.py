@@ -361,8 +361,17 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def edit_heading(self, message_id, page_id, heading_title, update):
-        # TODO: Implement this.
-        pass
+        # TODO: Decide whether or not to add more to response
+        if update['update_type'] == 'set_title':
+            title = update['title']
+            await self.db_interface.set_heading_title(old_title=heading_title, new_title=title, page_id=page_id)
+            self.write_json({}, with_reply_id=message_id)
+        elif update['update_type'] == 'set_text':
+            text = update['text']
+            await self.db_interface.set_heading_text(heading_title, text, page_id)
+            self.write_json({}, with_reply_id=message_id)
+        else:
+            raise LoomWSUnimplementedError("invalid `update_type`: {}".format(update('update_type')))
 
     @requires_login
     async def get_wiki_information(self, message_id, wiki_id):
