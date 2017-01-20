@@ -340,8 +340,9 @@ class LoomHandler(GenericHandler):
 
     @requires_login
     async def add_heading(self, message_id, title, page_id, index=None):
-        # TODO: Implement this.
-        pass
+        await self.db_interface.add_heading(title, page_id, index)
+        # TODO: Decide whether or not to add more to response
+        self.write_json({}, with_reply_id=message_id)
 
     @requires_login
     async def edit_segment(self, message_id, segment_id, update):
