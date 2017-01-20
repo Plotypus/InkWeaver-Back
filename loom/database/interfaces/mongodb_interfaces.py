@@ -220,6 +220,7 @@ class MongoDBInterface(AbstractDBInterface):
             return child_segment_id
 
     async def add_template_heading(self, title, segment_id):
+        # TODO: Check that the heading title is unique
         try:
             await self.client.append_template_heading_to_segment(title, segment_id)
         except ClientError:
@@ -230,6 +231,7 @@ class MongoDBInterface(AbstractDBInterface):
             pass
 
     async def add_heading(self, title, page_id, index=None):
+        # TODO: Check that the heading title is unique
         try:
             await self.client.insert_heading(title, page_id, index)
         except ClientError:
@@ -279,6 +281,32 @@ class MongoDBInterface(AbstractDBInterface):
     async def set_segment_title(self, title, segment_id):
         try:
             await self.client.set_segment_title(title, segment_id)
+        except ClientError:
+            # TODO: Deal with this
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
+
+    async def set_heading_title(self, old_title, new_title, page_id):
+        # TODO: Check that the new title is unique
+        heading = await self.client.get_heading(new_title, page_id)
+        # Heading already exists with
+        if heading is not None:
+            # TODO: Deal with this
+            return
+        try:
+            await self.client.set_heading_title(old_title, new_title, page_id)
+        except ClientError:
+            # TODO: Deal with this
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
+
+    async def set_heading_text(self, title, text, page_id):
+        try:
+            await self.client.set_heading_text(title, text, page_id)
         except ClientError:
             # TODO: Deal with this
             raise

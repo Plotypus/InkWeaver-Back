@@ -548,3 +548,47 @@ class TestDBInterface:
         await self.interface.set_segment_title(new_title, segment_id)
         segment = await self.interface.get_segment(segment_id)
         assert segment['title'] == new_title
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('segment_title,page_title,heading_titles', [
+        ('Character', 'John', [
+            'Background', 'Motives'
+        ])
+    ])
+    async def test_set_heading_title(self, segment_title, page_title, heading_titles):
+        segment_id = await self.interface.create_segment(segment_title)
+        page_id = await self.interface.create_page(page_title, segment_id)
+        for title in heading_titles:
+            await self.interface.add_heading(title, page_id)
+        new_titles = ['Family', 'Relationships']
+        await self.interface.set_heading_title(heading_titles[0], new_titles[0], page_id)
+        page = await self.interface.get_page(page_id)
+        headings = page['headings']
+        assert headings[0]['title'] == new_titles[0]
+        assert headings[1]['title'] == heading_titles[1]
+        await self.interface.set_heading_title(heading_titles[1], new_titles[1], page_id)
+        page = await self.interface.get_page(page_id)
+        headings = page['headings']
+        assert headings[0]['title'] == new_titles[0]
+        assert headings[1]['title'] == new_titles[1]
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('segment_title,page_title,headings', [
+        ('Character', 'John', [
+            {'title': 'Background', 'text': 'John is old.'},
+            {'title': 'Motives', 'text': 'John likes food.'}
+        ])
+    ])
+    async def test_set_heading_text(self, segment_title, page_title, headings):
+        segment_id = await self.interface.create_segment(segment_title)
+        page_id = await self.interface.create_page(page_title, segment_id)
+        for heading in headings:
+            title = heading['title']
+            text = heading['text']
+            await self.interface.add_heading(title, page_id)
+            await self.interface.set_heading_text(title, text, page_id)
+        page = await self.interface.get_page(page_id)
+        db_headings = page['headings']
+        assert db_headings == headings
+
+

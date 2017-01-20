@@ -669,6 +669,40 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_heading_title(self, old_title: str, new_title: str, page_id: ObjectId):
+        update_result: UpdateResult = await self.pages.update_one(
+            # For filtering documents in an array, we use the name of the array field
+            # combined with the field in the document we want to filter with. In this case,
+            # we want to filter for the `title` in the `headings` array.
+            filter={'_id': page_id, 'headings.title': old_title},
+            update={
+                '$set': {
+                    # The `$` acts as a placeholder to update the first element that
+                    # matches the query condition. In this case, the first document
+                    # with the old title.
+                    'headings.$.title': new_title
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def set_heading_text(self, title: str, text: str, page_id: ObjectId):
+        update_result: UpdateResult = await self.pages.update_one(
+            # For filtering documents in an array, we use the name of the array field
+            # combined with the field in the document we want to filter with. In this case,
+            # we want to filter for the `title` in the `headings` array.
+            filter={'_id': page_id, 'headings.title': title},
+            update={
+                '$set': {
+                    # The `$` acts as a placeholder to update the first element that
+                    # matches the query condition. In this case, the first document
+                    # with the old title.
+                    'headings.$.text': text
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def get_wiki(self, wiki_id: ObjectId) -> Dict:
         """Grabs the information associated with the provided wiki.
 
@@ -712,6 +746,13 @@ class MongoDBClient:
 
         """
         result = await self.pages.find_one({'_id': page_id})
+        return result
+
+    async def get_heading(self, title: str, page_id: ObjectId):
+        result = await self.pages.find_one({
+            '_id': page_id,
+            'headings.title': title
+        })
         return result
 
 class MongoDBMotorTornadoClient(MongoDBClient):

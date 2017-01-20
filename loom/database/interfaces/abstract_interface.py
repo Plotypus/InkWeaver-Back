@@ -168,6 +168,14 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_heading_title(self, old_title, new_title, page_id):
+        pass
+
+    @abstractmethod
+    async def set_heading_text(self, title, text, page_id):
+        pass
+
+    @abstractmethod
     async def delete_wiki(self, wiki_id):
         pass
 
