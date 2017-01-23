@@ -66,6 +66,8 @@ class LoomHandler(GenericHandler):
     ############################################################
 
     def open(self):
+        # TODO: Remove this.
+        super().open()
         session_id = self._get_secure_session_cookie()
         user_id = self._get_user_id_for_session_id(session_id)
         if user_id is None:
