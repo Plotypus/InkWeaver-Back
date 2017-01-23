@@ -38,7 +38,7 @@ before_script:
   - mongod --version
 
 # Run tests with coverage
-script: pytest --cov=loom
+script: pytest --cov-config .coveragerc --cov=loom
 
 # Push coverage results to coveralls.io upon completion
 after_script: coveralls

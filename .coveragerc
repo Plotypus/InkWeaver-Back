@@ -1,0 +1,6 @@
+[run]
+omit =
+    */__init__.py
+    loom/database/interfaces/abstract_interface.py
+    loom/routing.py
+
