@@ -11,6 +11,8 @@ class DemoHandler(LoomHandler):
         db_host = self.settings['demo_db_host']
         db_port = self.settings['demo_db_port']
         self._db_interface = MongoDBTornadoInterface(db_name, db_host, db_port)
+        # TODO: Remove this.
+        self.write_console_message('using DB: {}'.format(db_name))
 
     @property
     def db_interface(self):

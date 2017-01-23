@@ -28,12 +28,15 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
     def __repr__(self):
         return '<{} {}>'.format(type(self).__name__, self.uuid)
 
+    def write_console_message(self, message):
+        print("{} {}".format(repr(self), message))
+
     def open(self):
         """
         Accept an incoming WS connection.
         :return:
         """
-        print("{} opened".format(repr(self)))
+        self.write_console_message('opened')
 
     def on_message(self, message):
         """
@@ -41,14 +44,14 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
         :param message:
         :return:
         """
-        print("{} received: {}".format(repr(self), repr(message)))
+        self.write_console_message('received: {}'.format(message))
 
     def on_close(self):
         """
         Handle WS termination.
         :return:
         """
-        print("{} closed".format(repr(self)))
+        self.write_console_message('closed')
 
     def check_origin(self, origin):
         """
