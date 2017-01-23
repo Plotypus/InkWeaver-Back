@@ -16,6 +16,14 @@ class MongoDBInterface(AbstractDBInterface):
     def client(self):
         return self._client
 
+    @property
+    def host(self):
+        return self.client.host
+
+    @property
+    def port(self):
+        return self.client.port
+
     # User object methods.
 
     async def create_user(self, username, password, name, email):
