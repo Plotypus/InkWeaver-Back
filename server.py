@@ -21,11 +21,17 @@ define_option('port', default=8080, help='run on the given port', type=int)
 define_option('db-name', default=DEFAULT_DB_NAME, help='name of the database in MongoDB', type=str)
 define_option('db-host', default=DEFAULT_DB_HOST, help='address of the MongoDB server', type=str)
 define_option('db-port', default=DEFAULT_DB_PORT, help='MongoDB connection port', type=int)
+define_option('demo-db-host', default=None, help='the host for creating demonstration databases; defaults to --db-host',
+              type=str)
+define_option('demo-db-port', default=None, help='the port for creating demonstration databases; defaults to --db-port',
+              type=int)
 
 
-def start_server(db_interface, port, routes, session_manager):
+def start_server(db_interface, demo_db_host, demo_db_port, port, routes, session_manager):
     settings = {
         'db_interface':        db_interface,
+        'demo_db_host':        demo_db_host,
+        'demo_db_port':        demo_db_port,
         'cookie_secret':       generate_cookie_secret(),
         'session_cookie_name': 'loom_session',
         'session_manager':     session_manager,
@@ -60,4 +66,7 @@ if __name__ == '__main__':
 
     session_manager = session_manager.SessionManager()
 
-    start_server(interface, options.port, routing.ROUTES, session_manager)
+    demo_db_host = options.demo_db_host if options.demo_db_host else options.db_host
+    demo_db_port = options.demo_db_port if options.demo_db_port else options.db_port
+
+    start_server(interface, demo_db_host, demo_db_port, options.port, routing.ROUTES, session_manager)
