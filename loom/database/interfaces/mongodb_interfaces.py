@@ -24,6 +24,11 @@ class MongoDBInterface(AbstractDBInterface):
     def port(self):
         return self.client.port
 
+    # Database methods.
+
+    async def drop_database(self):
+        await self.client.drop_database()
+
     # User object methods.
 
     async def create_user(self, username, password, name, email):

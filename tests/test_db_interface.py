@@ -10,7 +10,7 @@ class TestDBInterface:
 
     def teardown(self):
         event_loop = asyncio.get_event_loop()
-        event_loop.run_until_complete(self.interface.client.drop_database())
+        event_loop.run_until_complete(self.interface.drop_database())
         event_loop.close()
 
     @pytest.mark.asyncio

@@ -5,6 +5,11 @@ from passlib.hash import pbkdf2_sha512 as hasher
 
 class AbstractDBInterface(ABC):
 
+    # Database methods.
+    @abstractmethod
+    async def drop_database(self):
+        pass
+
     # User object methods.
 
     @abstractmethod
