@@ -100,31 +100,31 @@
             "message_id": 16,
             "action": "add_text_to_section",
             "text": "STAVE ONE TEXT",
-            "parent_id": "${11.section_id}"
+            "section_id": "${11.section_id}"
         },
         {
             "message_id": 17,
             "action": "add_text_to_section",
             "text": "STAVE TWO TEXT",
-            "parent_id": "${12.section_id}"
+            "section_id": "${12.section_id}"
         },
         {
             "message_id": 18,
             "action": "add_text_to_section",
             "text": "STAVE THREE TEXT",
-            "parent_id": "${13.section_id}"
+            "section_id": "${13.section_id}"
         },
         {
             "message_id": 19,
             "action": "add_text_to_section",
             "text": "STAVE FOUR TEXT",
-            "parent_id": "${14.section_id}"
+            "section_id": "${14.section_id}"
         },
         {
             "message_id": 20,
             "action": "add_text_to_section",
             "text": "STAVE FIVE TEXT",
-            "parent_id": "${15.section_id}"
+            "section_id": "${15.section_id}"
         }
     ]
 }
