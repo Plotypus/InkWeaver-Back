@@ -2,7 +2,7 @@ from .errors import *
 from .GenericHandler import *
 
 from loom.database.interfaces import AbstractDBInterface  # For type hinting.
-from loom.handlers.dispatcher import LAWProtocolDispatcher
+from loom.dispatchers import LAWProtocolDispatcher
 
 from bson import ObjectId
 from tornado.ioloop import IOLoop

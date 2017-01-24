@@ -1,4 +1,4 @@
-from .websockets.errors import *
+from loom.handlers.websockets.errors import *
 
 import loom.serialize
 
