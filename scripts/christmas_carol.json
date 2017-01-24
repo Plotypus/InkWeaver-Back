@@ -125,6 +125,6 @@
             "action": "add_text_to_section",
             "text": "STAVE FIVE TEXT",
             "parent_id": "${15.section_id}"
-        },
+        }
     ]
 }
