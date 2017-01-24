@@ -153,6 +153,7 @@ class LAWProtocolDispatcher:
         story_id = await self.db_interface.create_story(self.user_id, title, summary, wiki_id)
         story = await self.db_interface.get_story(story_id)
         message = {
+            'story_id':     story_id,
             'story_title':  story['title'],
             'section_id':   story['section_id'],
             'wiki_id':      story['wiki_id'],
@@ -224,6 +225,7 @@ class LAWProtocolDispatcher:
         wiki_id = await self.db_interface.create_wiki(self.user_id, title, summary)
         wiki = await self.db_interface.get_wiki(wiki_id)
         message = {
+            'wiki_id':      wiki_id,
             'wiki_title':   wiki['title'],
             'segment_id':   wiki['segment_id'],
             'users':        wiki['users'],
