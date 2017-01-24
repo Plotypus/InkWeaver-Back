@@ -88,19 +88,17 @@ class LAWProtocolDispatcher:
             # `self` is not passed in because `getattr` binds the `self` parameter inside the function call.
             return await func(**message)
         except TypeError:
-            print("message: {}".format(message))
             # Most likely, the wrong arguments were given.
             # We do some introspection to give back useful error messages.
             sig = signature(func)
             # The first assumption is that not all of the necessary arguments were given, so check for that.
             missing_fields = []
-            print("params: {}".format(signature(func).parameters.values()))
+            # print("params: {}".format(signature(func).parameters.values()))
             for param in filter(lambda p: p.kind == p.POSITIONAL_OR_KEYWORD and p.default == p.empty, sig.parameters.values()):
                 if param.name not in message:
                     missing_fields.append(param.name)
             if missing_fields:
                 # So something *was* missing!
-                message = "request of type '{}' missing fields: {}".format(action, missing_fields)
                 raise LoomWSBadArgumentsError(message)
             else:
                 # Something else has gone wrong...
@@ -108,8 +106,6 @@ class LAWProtocolDispatcher:
                 num_required_arguments = len(sig.parameters)  # Don't subtract 1 for `self` because it's not required.
                 num_given_arguments = len(message)
                 if num_required_arguments != num_given_arguments:
-                    print("num_required: {}".format(num_required_arguments))
-                    print("num_given: {}".format(num_given_arguments))
                     # Yep, they gave the wrong number. Let them know.
                     # We don't check them all because somebody could create a large JSON with an absurd number of
                     # arguments and we'd spend cycles counting them all... easy DOS.
