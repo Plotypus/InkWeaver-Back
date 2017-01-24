@@ -24,6 +24,13 @@ class DemoHandler(LoomHandler):
         self.data_processor = DataProcessor(self.db_interface)
         IOLoop.current().spawn_callback(self.load_file_and_set_user, demo_db_data)
 
+    def on_close(self):
+        IOLoop.current().spawn_callback(self.teardown)
+        super().on_close()
+
+    async def teardown(self):
+        await self.db_interface.drop_database()
+
     async def load_file_and_set_user(self, filename):
         user_id = await self.data_processor.load_file(filename)
         self.dispatcher.set_user_id(user_id)

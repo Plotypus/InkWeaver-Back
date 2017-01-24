@@ -58,9 +58,6 @@ class DataProcessor:
             revised: JSON = {k: self.replace_id(v) for k, v in dispatch_item.items()}
             action = revised.pop('action')
             message_id = revised.get('message_id')
-            print("action: {}".format(action))
-            for key, value in revised.items():
-                print("    {}: {}".format(key, value))
             response = await self.dispatcher.dispatch(revised, action, message_id)
             if message_id is not None:
                 self.responses[message_id] = response
