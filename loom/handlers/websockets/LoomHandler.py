@@ -29,7 +29,6 @@ class LoomHandler(GenericHandler):
             # TODO: Clean up session
             self.close()
         self._user_id = user_id
-        super().open()
         # By default, small messages are coalesced. This can cause delay. We don't want delay.
         self.set_nodelay(True)
         # Instantiate the dispatcher.
@@ -58,7 +57,11 @@ class LoomHandler(GenericHandler):
 
     @property
     def db_interface(self) -> AbstractDBInterface:
-        return self.settings['db_interface']
+        try:
+            return self._db_interface
+        except AttributeError:
+            self._db_interface = self.settings['db_interface']
+            return self._db_interface
 
     @property
     def user_id(self) -> ObjectId:
