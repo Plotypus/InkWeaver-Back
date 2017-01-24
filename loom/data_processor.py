@@ -10,13 +10,6 @@ from typing import Dict
 JSON = Dict
 
 
-# from loom.database.interfaces import MongoDBAsyncioInterface
-# i = MongoDBAsyncioInterface('test-db', 'localhost', 27017)
-# from loom.data_processor import DataProcessor
-# dp = DataProcessor(i)
-# dp.load_file('/Users/pdarragh/Development/Plotypus/loom/scripts/christmas_carol.json')
-
-
 class DataProcessor:
     def __init__(self, interface):
         self._interface = interface
