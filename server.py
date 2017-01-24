@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from loom import routing, session_manager
 from loom.database import interfaces
 
