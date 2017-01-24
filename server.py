@@ -30,13 +30,12 @@ define_option('demo-db-prefix', default='demo-db', help='the prefix for all data
 define_option('demo-db-data', default=None, help='the data file to load demo data from', type=str)
 
 
-def start_server(db_interface, demo_db_host, demo_db_port, demo_db_prefix, demo_db_data, port, routes, session_manager):
+def start_server(db_interface, demo_db_host, demo_db_port, demo_db_prefix, port, routes, session_manager):
     settings = {
         'db_interface':        db_interface,
         'demo_db_host':        demo_db_host,
         'demo_db_port':        demo_db_port,
         'demo_db_prefix':      demo_db_prefix,
-        'demo_db_data':        demo_db_data,
         'cookie_secret':       generate_cookie_secret(),
         'session_cookie_name': 'loom_session',
         'session_manager':     session_manager,
@@ -79,5 +78,5 @@ if __name__ == '__main__':
     if demo_db_data is not None:
         routing.install_demo_endpoint(demo_db_data)
 
-    start_server(interface, demo_db_host, demo_db_port, options.demo_db_prefix, options.demo_db_data, options.port,
-                 routing.get_routes(), session_manager)
+    start_server(interface, demo_db_host, demo_db_port, options.demo_db_prefix, options.port, routing.get_routes(),
+                 session_manager)

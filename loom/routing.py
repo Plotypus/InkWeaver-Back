@@ -11,5 +11,5 @@ def get_routes():
 
 
 def install_demo_endpoint(demo_db_data, endpoint=r'/ws/demo'):
-    demo_endpoint = (endpoint, handlers.websockets.DemoHandler, demo_db_data)
+    demo_endpoint = (endpoint, handlers.websockets.DemoHandler, dict(demo_db_data=demo_db_data))
     ROUTES.append(demo_endpoint)
