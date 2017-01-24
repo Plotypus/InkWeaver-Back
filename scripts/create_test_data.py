@@ -9,7 +9,7 @@ import asyncio
 
 def main(jsonfile, db_name):
     interface = MongoDBAsyncioInterface(db_name, 'localhost', 27017)
-    answer = input("This will drop your database... continue? [y/N] ")
+    answer = input("This will drop the `{}` database... continue? [y/N] ".format(db_name))
     if not answer.lower().startswith('y'):
         print("Quitting...")
         return
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('data_file', help='Path to the data file.')
-    parser.add_argument('db_name', help='Name of the database you want to use.')
+    parser.add_argument('--db_name', default='inkweaver', help='Name of the database you want to use.')
     args = parser.parse_args()
 
     main(args.data_file, args.db_name)
