@@ -2,11 +2,20 @@ from loom.database.interfaces import AbstractDBInterface
 from loom.dispatchers import DemoDataDispatcher
 from loom.serialize import encode_string_to_bson
 
+import asyncio
 import re
 
 from typing import Dict
 
 JSON = Dict
+
+
+# from loom.database.interfaces import MongoDBAsyncioInterface
+# i = MongoDBAsyncioInterface('test-db', 'localhost', 27017)
+# from loom.data_processor import DataProcessor
+# dp = DataProcessor(i)
+# dp.load_file('/Users/pdarragh/Development/Plotypus/loom/scripts/christmas_carol.json')
+
 
 class DataProcessor:
     def __init__(self, interface):
@@ -26,11 +35,13 @@ class DataProcessor:
         with open(filename) as json_file:
             json_string = json_file.read()
         json = encode_string_to_bson(json_string)
-        self.create_user(json['user'])
-        self.process_list(json['dispatch_list'])
+        event_loop = asyncio.get_event_loop()
+        event_loop.run_until_complete(self.create_user(json['user']))
+        event_loop.run_until_complete(self.process_list(json['dispatch_list']))
+        event_loop.close()
 
-    def create_user(self, user_json):
-        user_id = self.interface.create_user(**user_json)
+    async def create_user(self, user_json):
+        user_id = await self.interface.create_user(**user_json)
         self.dispatcher.set_user_id(user_id)
 
     id_regex = re.compile(r'\$\{([^}]+)\}')
@@ -42,18 +53,22 @@ class DataProcessor:
         if match is None:
             return value
         else:
-            id, keys = match.group(1).split('.', 1)
+            m_id, keys = match.group(1).split('.', 1)
+            m_id = int(m_id)
             keys = keys.split('.')
-            response = self.responses[id]
+            response = self.responses[m_id]
             for key in keys:
                 response = response[key]
             return response
 
-    def process_list(self, dispatch_list):
+    async def process_list(self, dispatch_list):
         for dispatch_item in dispatch_list:
             revised: JSON = {k: self.replace_id(v) for k, v in dispatch_item.items()}
             action = revised.pop('action')
             message_id = revised.get('message_id')
-            response = self.dispatcher.dispatch(revised, action, message_id)
+            print("action: {}".format(action))
+            for key, value in revised.items():
+                print("    {}: {}".format(key, value))
+            response = await self.dispatcher.dispatch(revised, action, message_id)
             if message_id is not None:
                 self.responses[message_id] = response
