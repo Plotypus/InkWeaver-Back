@@ -74,6 +74,10 @@ if __name__ == '__main__':
 
     demo_db_host = options.demo_db_host if options.demo_db_host else options.db_host
     demo_db_port = options.demo_db_port if options.demo_db_port else options.db_port
+    demo_db_data = options.demo_db_data
+
+    if demo_db_data is not None:
+        routing.install_demo_endpoint(demo_db_data)
 
     start_server(interface, demo_db_host, demo_db_port, options.demo_db_prefix, options.demo_db_data, options.port,
-                 routing.ROUTES, session_manager)
+                 routing.get_routes(), session_manager)
