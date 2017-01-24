@@ -1,16 +1,15 @@
 {
-    "dummy_data_script_name": "Dickens's Christmas Carol",
+    "name": "Dickens's Christmas Carol",
     "last_updated": "2017-01-23",
+    "user": 
+    {
+        "username": "cdickens",
+        "password": "password1234",
+        "name": "Charles Dickens",
+        "email": "cdickens@email.com"
+    },
     "dispatch_list":
     [
-        {
-            "message_id": 1,
-            "action": "create_user",
-            "username": "cdickens",
-            "password": "password1234",
-            "name": "Charles Dickens",
-            "email": "cdickens@email.com"
-        },
         {
             "message_id": 2,
             "action": "create_wiki",
