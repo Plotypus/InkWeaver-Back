@@ -35,6 +35,7 @@ class DemoHandler(LoomHandler):
     async def load_file_and_set_user(self, filename):
         user_id = await self.data_processor.load_file(filename)
         self.dispatcher.set_user_id(user_id)
+        self.write_console_message("generated database from file: {}".format(self.demo_db_data))
 
     @property
     def db_interface(self):
