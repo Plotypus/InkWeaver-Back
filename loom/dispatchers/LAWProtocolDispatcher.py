@@ -9,11 +9,45 @@ from typing import Dict
 
 JSON = Dict
 
+APPROVED_METHODS = [
+    # User Information
+    'get_user_preferences',
+    'get_user_stories',
+    'get_user_wikis',
+
+    # Stories
+    'create_story',
+    'add_preceding_subsection',
+    'add_inner_subsection',
+    'add_succeeding_subsection',
+    'add_paragraph',
+    'edit_paragraph',
+    'get_story_information',
+    'get_story_hierarchy',
+    'get_section_hierarchy',
+    'get_section_content',
+
+    # Wikis
+    'create_wiki',
+    'add_segment',
+    'add_template_heading',
+    'add_page',
+    'add_heading',
+    'edit_segment',
+    'edit_page',
+    'edit_heading',
+    'get_wiki_information',
+    'get_wiki_hierarchy',
+    'get_wiki_segment_hierarchy',
+    'get_wiki_page',
+]
+
 
 class LAWProtocolDispatcher:
-    def __init__(self, interface: AbstractDBInterface, user_id):
+    def __init__(self, interface: AbstractDBInterface, user_id=None):
         self._db_interface = interface
         self._user_id = user_id
+        self.approved = APPROVED_METHODS.copy()
 
     @classmethod
     def encode_json(cls, data):
@@ -26,6 +60,9 @@ class LAWProtocolDispatcher:
     @property
     def user_id(self):
         return self._user_id
+
+    def set_user_id(self, new_user_id):
+        self._user_id = new_user_id
     
     def format_json(self, base_message, **kwargs):
         for key, value in kwargs.items():
@@ -44,51 +81,48 @@ class LAWProtocolDispatcher:
         return json
 
     async def dispatch(self, message: JSON, action: str, message_id=None):
-        try:
-            func = self.DISPATCH_MAP[action]
-        except KeyError:
-            # The method is not implemented.
+        if action not in self.approved:
             raise LoomWSUnimplementedError
-        else:
-            try:
-                return await func(self, **message)
-            except TypeError:
-                # Most likely, the wrong arguments were given.
-                # We do some introspection to give back useful error messages.
-                sig = signature(func)
-                # The first assumption is that not all of the necessary arguments were given, so check for that.
-                missing_fields = []
-                print("params: {}".format(signature(func).parameters.values()))
-                for param in filter(lambda p: p.name != 'self' and p.kind == p.POSITIONAL_OR_KEYWORD and p.default == p.empty, sig.parameters.values()):
-                    if param.name not in message:
-                        missing_fields.append(param.name)
-                if missing_fields:
-                    # So something *was* missing!
-                    message = "request of type '{}' missing fields: {}".format(action, missing_fields)
-                    raise LoomWSBadArgumentsError(message)
+        func = getattr(self, action)
+        try:
+            return await func(self, **message)
+        except TypeError:
+            # Most likely, the wrong arguments were given.
+            # We do some introspection to give back useful error messages.
+            sig = signature(func)
+            # The first assumption is that not all of the necessary arguments were given, so check for that.
+            missing_fields = []
+            print("params: {}".format(signature(func).parameters.values()))
+            for param in filter(lambda p: p.name != 'self' and p.kind == p.POSITIONAL_OR_KEYWORD and p.default == p.empty, sig.parameters.values()):
+                if param.name not in message:
+                    missing_fields.append(param.name)
+            if missing_fields:
+                # So something *was* missing!
+                message = "request of type '{}' missing fields: {}".format(action, missing_fields)
+                raise LoomWSBadArgumentsError(message)
+            else:
+                # Something else has gone wrong...
+                # Let's check if too many arguments were given.
+                num_required_arguments = len(sig.parameters) - 1  # We subtract 1 for `self`.
+                num_given_arguments = len(message)
+                if num_required_arguments != num_given_arguments:
+                    # Yep, they gave the wrong number. Let them know.
+                    # We don't check them all because somebody could create a large JSON with an absurd number of
+                    # arguments and we'd spend cycles counting them all... easy DOS.
+                    raise LoomWSBadArgumentsError("too many fields given for request of type '{}'".format(action))
                 else:
-                    # Something else has gone wrong...
-                    # Let's check if too many arguments were given.
-                    num_required_arguments = len(sig.parameters) - 1  # We subtract 1 for `self`.
-                    num_given_arguments = len(message)
-                    if num_required_arguments != num_given_arguments:
-                        # Yep, they gave the wrong number. Let them know.
-                        # We don't check them all because somebody could create a large JSON with an absurd number of
-                        # arguments and we'd spend cycles counting them all... easy DOS.
-                        raise LoomWSBadArgumentsError("too many fields given for request of type '{}'".format(action))
-                    else:
-                        # It was something else entirely.
-                        raise
-            except LoomWSNoLoginError:
-                return self.format_failure_json(message_id, "not logged in")
-            except LoomWSError as e:
-                return self.format_failure_json(message_id, str(e))
-            except Exception as e:
-                # General exceptions store messages as the first argument in their `.args` property.
-                message = type(e).__name__
-                if e.args:
-                    message += ": {}".format(e.args[0])
-                return self.format_failure_json(message_id, message)
+                    # It was something else entirely.
+                    raise
+        except LoomWSNoLoginError:
+            return self.format_failure_json(message_id, "not logged in")
+        except LoomWSError as e:
+            return self.format_failure_json(message_id, str(e))
+        except Exception as e:
+            # General exceptions store messages as the first argument in their `.args` property.
+            message = type(e).__name__
+            if e.args:
+                message += ": {}".format(e.args[0])
+            return self.format_failure_json(message_id, message)
 
 
     ############################################################
@@ -273,36 +307,3 @@ class LAWProtocolDispatcher:
             'headings':     page['headings'],
         }
         return self.format_json(message, with_reply_id=message_id)
-
-    DISPATCH_MAP = {
-        # User Information
-        'get_user_preferences':       get_user_preferences,
-        'get_user_stories':           get_user_stories,
-        'get_user_wikis':             get_user_wikis,
-
-        # Stories
-        'create_story':               create_story,
-        'add_preceding_subsection':   add_preceding_subsection,
-        'add_inner_subsection':       add_inner_subsection,
-        'add_succeeding_subsection':  add_succeeding_subsection,
-        'add_paragraph':              add_paragraph,
-        'edit_paragraph':             edit_paragraph,
-        'get_story_information':      get_story_information,
-        'get_story_hierarchy':        get_story_hierarchy,
-        'get_section_hierarchy':      get_section_hierarchy,
-        'get_section_content':        get_section_content,
-
-        # Wikis
-        'create_wiki':                create_wiki,
-        'add_segment':                add_segment,
-        'add_template_heading':       add_template_heading,
-        'add_page':                   add_page,
-        'add_heading':                add_heading,
-        'edit_segment':               edit_segment,
-        'edit_page':                  edit_page,
-        'edit_heading':               edit_heading,
-        'get_wiki_information':       get_wiki_information,
-        'get_wiki_hierarchy':         get_wiki_hierarchy,
-        'get_wiki_segment_hierarchy': get_wiki_segment_hierarchy,
-        'get_wiki_page':              get_wiki_page,
-    }
