@@ -2,7 +2,6 @@ from loom.database.interfaces import AbstractDBInterface
 from loom.dispatchers import DemoDataDispatcher
 from loom.serialize import encode_string_to_bson
 
-import asyncio
 import re
 
 from typing import Dict
@@ -24,18 +23,18 @@ class DataProcessor:
     def dispatcher(self):
         return self._dispatcher
 
-    def load_file(self, filename):
+    async def load_file(self, filename):
         with open(filename) as json_file:
             json_string = json_file.read()
         json = encode_string_to_bson(json_string)
-        event_loop = asyncio.get_event_loop()
-        event_loop.run_until_complete(self.create_user(json['user']))
-        event_loop.run_until_complete(self.process_list(json['dispatch_list']))
-        event_loop.close()
+        user_id = await self.create_user(json['user'])
+        await self.process_list(json['dispatch_list'])
+        return user_id
 
     async def create_user(self, user_json):
         user_id = await self.interface.create_user(**user_json)
         self.dispatcher.set_user_id(user_id)
+        return user_id
 
     id_regex = re.compile(r'\$\{([^}]+)\}')
 
