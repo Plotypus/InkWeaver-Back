@@ -1,5 +1,3 @@
-from loom.handlers.websockets.errors import *
-
 import loom.serialize
 
 from loom.database.interfaces import AbstractDBInterface
@@ -42,6 +40,29 @@ APPROVED_METHODS = [
     'get_wiki_page',
 ]
 
+class LAWError(Exception):
+    def __init__(self, message=None):
+        if message is None:
+            message = "no information given"
+        self.message = message
+
+    def __str__(self):
+        return '{}: {}'.format(type(self).__name__, self.message)
+
+
+class LAWUnimplementedError(LAWError):
+    """
+    Raised when a connection attempts an unimplemented task.
+    """
+    pass
+
+
+class LAWBadArgumentsError(LAWError):
+    """
+    Raised when necessary arguments were omitted or formatted incorrectly.
+    """
+    pass
+
 
 class LAWProtocolDispatcher:
     def __init__(self, interface: AbstractDBInterface, user_id=None):
@@ -82,7 +103,7 @@ class LAWProtocolDispatcher:
 
     async def dispatch(self, message: JSON, action: str, message_id=None):
         if action not in self.approved:
-            raise LoomWSUnimplementedError
+            raise LAWUnimplementedError
         func = getattr(self, action)
         try:
             # `self` is not passed in because `getattr` binds the `self` parameter inside the function call.
@@ -99,7 +120,7 @@ class LAWProtocolDispatcher:
                     missing_fields.append(param.name)
             if missing_fields:
                 # So something *was* missing!
-                raise LoomWSBadArgumentsError(message)
+                raise LAWBadArgumentsError(message)
             else:
                 # Something else has gone wrong...
                 # Let's check if too many arguments were given.
@@ -109,13 +130,11 @@ class LAWProtocolDispatcher:
                     # Yep, they gave the wrong number. Let them know.
                     # We don't check them all because somebody could create a large JSON with an absurd number of
                     # arguments and we'd spend cycles counting them all... easy DOS.
-                    raise LoomWSBadArgumentsError("too many fields given for request of type '{}'".format(action))
+                    raise LAWBadArgumentsError("too many fields given for request of type '{}'".format(action))
                 else:
                     # It was something else entirely.
                     raise
-        except LoomWSNoLoginError:
-            return self.format_failure_json(message_id, "not logged in")
-        except LoomWSError as e:
+        except LAWError as e:
             return self.format_failure_json(message_id, str(e))
         except Exception as e:
             # General exceptions store messages as the first argument in their `.args` property.
@@ -189,7 +208,7 @@ class LAWProtocolDispatcher:
             await self.db_interface.set_paragraph_text(section_id, index=index, text=text)
             return self.format_json({}, with_reply_id=message_id)
         else:
-            raise LoomWSUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
+            raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
     async def get_story_information(self, message_id, story_id):
         story = await self.db_interface.get_story(story_id)
@@ -259,7 +278,7 @@ class LAWProtocolDispatcher:
             await self.db_interface.set_segment_title(title, segment_id)
             return self.format_json({}, with_reply_id=message_id)
         else:
-            raise LoomWSUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
+            raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
     async def edit_page(self, message_id, page_id, update):
         # TODO: Implement this.
@@ -276,7 +295,7 @@ class LAWProtocolDispatcher:
             await self.db_interface.set_heading_text(heading_title, text, page_id)
             return self.format_json({}, with_reply_id=message_id)
         else:
-            raise LoomWSUnimplementedError("invalid `update_type`: {}".format(update('update_type')))
+            raise LAWUnimplementedError("invalid `update_type`: {}".format(update('update_type')))
 
     async def get_wiki_information(self, message_id, wiki_id):
         wiki = await self.db_interface.get_wiki(wiki_id)

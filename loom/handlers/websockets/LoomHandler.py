@@ -1,8 +1,7 @@
-from .errors import *
 from .GenericHandler import *
 
 from loom.database.interfaces import AbstractDBInterface  # For type hinting.
-from loom.dispatchers import LAWProtocolDispatcher
+from loom.dispatchers import *
 
 from bson import ObjectId
 from tornado.ioloop import IOLoop
@@ -115,8 +114,8 @@ class LoomHandler(GenericHandler):
             try:
                 json_result = await self.dispatcher.dispatch(message, action, message_id)
                 self.write_json(json_result)
-            except LoomWSUnimplementedError:
+            except LAWUnimplementedError:
                 err_message = "invalid `action`: {}".format(action)
                 self.on_failure(reply_to=message_id, reason=err_message)
-            except LoomWSBadArgumentsError as e:
+            except LAWBadArgumentsError as e:
                 self.on_failure(reply_to=message_id, reason=e.message)
