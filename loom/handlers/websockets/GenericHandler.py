@@ -11,11 +11,11 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
     """
     @classmethod
     def encode_json(cls, data):
-        return serialize.to_bson(data)
+        return serialize.decode_bson_to_string(data)
 
     @classmethod
     def decode_json(cls, data):
-        return serialize.from_bson(data)
+        return serialize.encode_string_to_bson(data)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

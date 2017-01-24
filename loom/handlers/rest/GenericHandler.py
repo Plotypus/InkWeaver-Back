@@ -7,10 +7,10 @@ class GenericHandler(tornado.web.RequestHandler):
     The default Plotypus HTTP request handler.
     """
     def encode_json(self, data):
-        return serialize.to_bson(data)
+        return serialize.decode_bson_to_string(data)
 
     def decode_json(self, data):
-        return serialize.from_bson(data)
+        return serialize.encode_string_to_bson(data)
 
     def write_json(self, dictionary):
         self.write(self.encode_json(dictionary))
