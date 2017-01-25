@@ -575,8 +575,8 @@ class TestDBInterface:
     @pytest.mark.asyncio
     @pytest.mark.parametrize('segment_title,page_title,headings', [
         ('Character', 'John', [
-            {'title': 'Background', 'text': 'John is old.'},
-            {'title': 'Motives', 'text': 'John likes food.'}
+            {'title': 'Background', 'text': 'John is old.', 'links': list()},
+            {'title': 'Motives', 'text': 'John likes food.', 'links': list()}
         ])
     ])
     async def test_set_heading_text(self, segment_title, page_title, headings):
