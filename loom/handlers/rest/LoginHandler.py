@@ -3,6 +3,10 @@ from .GenericHandler import GenericHandler
 from loom.database.interfaces import AbstractDBInterface
 
 class LoginHandler(GenericHandler):
+    def set_default_headers(self):
+        self.set_header('Access-Control-Allow-Origin', 'http://localhost:3000')
+        self.set_header('Access-Control-Allow-Credentials', 'true')
+
     async def post(self):
         data = self.decode_json(self.request.body)
         username = data.get('username')
