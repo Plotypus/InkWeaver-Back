@@ -79,6 +79,10 @@ class MongoDBClient:
     def pages(self) -> AgnosticCollection:
         return self.database.pages
 
+    @property
+    def links(self) -> AgnosticCollection:
+        return self.database.links
+
     async def drop_database(self):
         await self.client.drop_database(self.database)
 
@@ -429,12 +433,24 @@ class MongoDBClient:
         self.assert_update_one_was_successful(update_result)
 
     async def insert_paragraph(self, text: str, to_section_id, at_index=None):
-        inner_parameters = self._insertion_parameters({'text': text, 'statistics': None}, at_index)
+        inner_parameters = self._insertion_parameters({'text': text, 'statistics': None, 'links': list()}, at_index)
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': to_section_id},
             update={
                 '$push': {
                     'content': inner_parameters
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def insert_link_to_paragraph(self, link_id: ObjectId, to_section_id: ObjectId, at_index: int):
+        inner_parameters = self._insertion_parameters(link_id, at_index)
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': to_section_id},
+            update={
+                '$push': {
+                    'content.{}.links'.format(at_index): inner_parameters
                 }
             }
         )
@@ -597,7 +613,7 @@ class MongoDBClient:
         page = {
             'title':      title,
             'headings':   list() if template_headings is None else template_headings,
-            'references': None,
+            'references': list(),
             'aliases':    None,
         }
         if _id is not None:
@@ -636,6 +652,7 @@ class MongoDBClient:
                     'template_headings': {
                         'title': title,
                         'text':  '',
+                        'links': list(),
                     }
                 }
             }
@@ -646,6 +663,7 @@ class MongoDBClient:
         heading = {
             'title': title,
             'text':  '',
+            'links': list(),
         }
         inner_parameters = self._insertion_parameters(heading, at_index)
         update_result: UpdateResult = await self.pages.update_one(
@@ -653,6 +671,18 @@ class MongoDBClient:
             update={
                 '$push': {
                     'headings': inner_parameters
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def insert_link_to_heading(self, link_id: ObjectId, heading_title: str, page_id: ObjectId):
+        inner_parameters = self._insertion_parameters(link_id)
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id, 'headings.title': heading_title},
+            update={
+                '$push': {
+                    'headings.$.links': inner_parameters
                 }
             }
         )
@@ -760,6 +790,49 @@ class MongoDBClient:
             '_id':            page_id,
             'headings.title': title
         })
+        return result
+
+    ###########################################################################
+    #
+    # Link Methods
+    #
+    ###########################################################################
+
+    async def create_link(self, text: str, reference_text: str, page_id: ObjectId, _id=None) -> ObjectId:
+        link = {
+            'text': text,
+            'reference_text': reference_text,
+            'page_id': page_id,
+        }
+        if _id is not None:
+            link['_id'] = _id
+        result = await self.links.insert_one(link)
+        return result.inserted_id
+
+    async def set_link_text(self, text: str, link_id: ObjectId):
+        update_result: UpdateResult = await self.links.update_one(
+            filter={'_id': link_id},
+            update={
+                '$set': {
+                    'text': text
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def set_link_reference_text(self, reference_text: str, link_id: ObjectId):
+        update_result: UpdateResult = await self.links.update_one(
+            filter={'_id': link_id},
+            update={
+                '$set': {
+                    'reference_text': reference_text
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def get_link(self, link_id: ObjectId):
+        result = await self.links.find_one({'_id': link_id})
         return result
 
 class MongoDBMotorTornadoClient(MongoDBClient):
