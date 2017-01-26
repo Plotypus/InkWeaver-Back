@@ -83,6 +83,10 @@ class MongoDBClient:
     def links(self) -> AgnosticCollection:
         return self.database.links
 
+    @property
+    def aliases(self) -> AgnosticCollection:
+        return self.database.aliases
+
     async def drop_database(self):
         await self.client.drop_database(self.database)
 
@@ -834,6 +838,38 @@ class MongoDBClient:
     async def get_link(self, link_id: ObjectId):
         result = await self.links.find_one({'_id': link_id})
         return result
+
+    ###########################################################################
+    #
+    # Alias Methods
+    #
+    ###########################################################################
+
+    async def create_alias(self, name: str, page_id: ObjectId, _id=None) -> ObjectId:
+        alias = {
+            'name': name,
+            'page_id': page_id,
+        }
+        if _id is not None:
+            alias['_id'] = _id
+        result = await self.aliases.insert_one(alias)
+        return result.inserted_id
+
+    async def set_alias_name(self, name: str, alias_id: ObjectId):
+        update_result: UpdateResult = await self.aliases.update_one(
+            filter={'_id': alias_id},
+            update={
+                '$set': {
+                    'name': name
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def get_alias(self, alias_id: ObjectId):
+        result = await self.aliases.find_one({'_id': alias_id})
+        return result
+
 
 class MongoDBMotorTornadoClient(MongoDBClient):
     def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
