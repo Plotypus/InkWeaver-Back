@@ -152,8 +152,19 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return subsection_id
 
-    async def add_paragraph(self, section_id, text, index=None):
-        return await self.client.insert_paragraph(text, to_section_id=section_id, at_index=index)
+    async def add_paragraph(self, section_id, text, succeeding_paragraph_id=None):
+        paragraph_ids = await self.client.get_paragraph_ids(section_id)
+        try:
+            if not succeeding_paragraph_id:
+                index = None
+            else:
+                index = paragraph_ids.index(succeeding_paragraph_id)
+        except ValueError:
+            # TODO: Handle case when client provides bad paragraph_id
+            raise
+        else:
+            paragraph_id = ObjectId()
+            return await self.client.insert_paragraph(paragraph_id, text, to_section_id=section_id, at_index=index)
 
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)
@@ -179,10 +190,12 @@ class MongoDBInterface(AbstractDBInterface):
         return hierarchy
 
     async def get_section_content(self, section_id):
+        # TODO: Fix formatting of data
         section = await self.client.get_section(section_id)
         return section['content']
 
     async def set_paragraph_text(self, section_id, index, text):
+        # TODO: Fix, search by ID
         return await self.client.set_paragraph_text(text, in_section_id=section_id, at_index=index)
 
     async def delete_story(self, story_id):
@@ -282,6 +295,7 @@ class MongoDBInterface(AbstractDBInterface):
         return hierarchy
 
     async def get_page_for_hierarchy(self, page_id):
+        # TODO: Include references and aliases
         page = await self.client.get_page(page_id)
         return {
             'title':   page['title'],

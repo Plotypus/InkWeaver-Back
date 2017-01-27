@@ -360,6 +360,14 @@ class MongoDBClient:
         result = await self.sections.find_one({'_id': section_id})
         return result
 
+    async def get_paragraph_ids(self, section_id: ObjectId):
+        pipeline = [{'$unwind': '$content'}, {'$match': {'_id': section_id}},
+                    {'$project': {'content._id': 1, '_id': 0}}]
+        results = []
+        async for doc in self.sections.aggregate(pipeline):
+            results.append(doc['content']['_id'])
+        return results
+
     ###########################################################################
     #
     # Wiki Methods

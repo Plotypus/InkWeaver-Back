@@ -87,7 +87,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def add_paragraph(self, section_id, text, index=None):
+    async def add_paragraph(self, section_id, text, succeeding_paragarph_id=None):
         pass
 
     @abstractmethod
