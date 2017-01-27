@@ -320,9 +320,9 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def insert_paragraph(self, key: str, text: str, to_section_id, at_index=None):
+    async def insert_paragraph(self, paragraph_id: ObjectId, text: str, to_section_id, at_index=None):
         inner_parameters = self._insertion_parameters({
-            'key':        key,
+            '_id':        paragraph_id,
             'text':       text,
             'statistics': None,
         }, at_index)
@@ -336,12 +336,12 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def set_paragraph_text(self, key: str, text: str, in_section_id: ObjectId):
+    async def set_paragraph_text(self, paragraph_id: ObjectId, text: str, in_section_id: ObjectId):
         update_result: UpdateResult = await self.sections.update_one(
             # For filtering documents in an array, we use the name of the array field
             # combined with the field in the document we want to filter with. In this case,
-            # we want to filter for the `key` in the `content` array.
-            filter={'_id': in_section_id, 'content.key': key},
+            # we want to filter for the `_id` in the `content` array.
+            filter={'_id': in_section_id, 'content._id': paragraph_id},
             update={
                 '$set': {
                     # The `$` acts as a placeholder to update the first element that
