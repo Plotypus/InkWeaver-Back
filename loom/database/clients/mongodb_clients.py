@@ -269,6 +269,7 @@ class MongoDBClient:
             'inner_subsections':      list(),
             'succeeding_subsections': list(),
             'statistics':             None,
+            'links':                  list(),  # links is a list of lists of links (runs parallel to paragraphs)
         }
         if _id is not None:
             section['_id'] = _id
@@ -546,10 +547,11 @@ class MongoDBClient:
     #
     ###########################################################################
 
-    async def create_link(self, context: Dict, alias_id: ObjectId, _id=None) -> ObjectId:
+    async def create_link(self, context: Dict, alias_id: ObjectId, page_id: ObjectId, _id=None) -> ObjectId:
         link = {
             'context':  context,
             'alias_id': alias_id,
+            'page_id':  page_id,
         }
         if _id is not None:
             link['_id'] = _id
@@ -568,8 +570,9 @@ class MongoDBClient:
 
     async def create_alias(self, name: str, page_id: ObjectId, _id=None) -> ObjectId:
         alias = {
-            'name': name,
+            'name':    name,
             'page_id': page_id,
+            'links':   list(),
         }
         if _id is not None:
             alias['_id'] = _id
