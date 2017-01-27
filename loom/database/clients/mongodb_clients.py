@@ -320,8 +320,12 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def insert_paragraph(self, text: str, to_section_id, at_index=None):
-        inner_parameters = self._insertion_parameters({'text': text, 'statistics': None, 'links': list()}, at_index)
+    async def insert_paragraph(self, key: str, text: str, to_section_id, at_index=None):
+        inner_parameters = self._insertion_parameters({
+            'key':        key,
+            'text':       text,
+            'statistics': None,
+        }, at_index)
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': to_section_id},
             update={
@@ -332,26 +336,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def insert_link_to_paragraph(self, link_id: ObjectId, to_section_id: ObjectId, at_index: int):
-        inner_parameters = self._insertion_parameters(link_id, at_index)
+    async def set_paragraph_text(self, key: str, text: str, in_section_id: ObjectId):
         update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': to_section_id},
-            update={
-                '$push': {
-                    'content.{}.links'.format(at_index): inner_parameters
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
-
-    async def set_paragraph_text(self, text: str, in_section_id: ObjectId, at_index: int):
-        update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': in_section_id},
+            # For filtering documents in an array, we use the name of the array field
+            # combined with the field in the document we want to filter with. In this case,
+            # we want to filter for the `key` in the `content` array.
+            filter={'_id': in_section_id, 'content.key': key},
             update={
                 '$set': {
-                    # Look in the content array of the matching section. Find the object by index using `.index`.
-                    # Set the `.text` field to `paragraph`.
-                    'content.{}.text'.format(at_index): text
+                    # The `$` acts as a placeholder to update the first element that
+                    # matches the query condition.
+                    'content.$.text': text
                 }
             }
         )
@@ -405,8 +400,8 @@ class MongoDBClient:
         page = {
             'title':      title,
             'headings':   list() if template_headings is None else template_headings,
-            'references': list(),
-            'aliases':    None,
+            'references': list(),  # list[Reference] (see Loom's wiki for more detail)
+            'aliases':    list(),
         }
         if _id is not None:
             page['_id'] = _id
@@ -444,7 +439,6 @@ class MongoDBClient:
                     'template_headings': {
                         'title': title,
                         'text':  '',
-                        'links': list(),
                     }
                 }
             }
@@ -455,7 +449,6 @@ class MongoDBClient:
         heading = {
             'title': title,
             'text':  '',
-            'links': list(),
         }
         inner_parameters = self._insertion_parameters(heading, at_index)
         update_result: UpdateResult = await self.pages.update_one(
@@ -463,18 +456,6 @@ class MongoDBClient:
             update={
                 '$push': {
                     'headings': inner_parameters
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
-
-    async def insert_link_to_heading(self, link_id: ObjectId, heading_title: str, page_id: ObjectId):
-        inner_parameters = self._insertion_parameters(link_id)
-        update_result: UpdateResult = await self.pages.update_one(
-            filter={'_id': page_id, 'headings.title': heading_title},
-            update={
-                '$push': {
-                    'headings.$.links': inner_parameters
                 }
             }
         )
@@ -557,38 +538,15 @@ class MongoDBClient:
     #
     ###########################################################################
 
-    async def create_link(self, text: str, reference_text: str, page_id: ObjectId, _id=None) -> ObjectId:
+    async def create_link(self, context: Dict, alias_id: ObjectId, _id=None) -> ObjectId:
         link = {
-            'text': text,
-            'reference_text': reference_text,
-            'page_id': page_id,
+            'context':  context,
+            'alias_id': alias_id,
         }
         if _id is not None:
             link['_id'] = _id
         result = await self.links.insert_one(link)
         return result.inserted_id
-
-    async def set_link_text(self, text: str, link_id: ObjectId):
-        update_result: UpdateResult = await self.links.update_one(
-            filter={'_id': link_id},
-            update={
-                '$set': {
-                    'text': text
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
-
-    async def set_link_reference_text(self, reference_text: str, link_id: ObjectId):
-        update_result: UpdateResult = await self.links.update_one(
-            filter={'_id': link_id},
-            update={
-                '$set': {
-                    'reference_text': reference_text
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
 
     async def get_link(self, link_id: ObjectId):
         result = await self.links.find_one({'_id': link_id})
