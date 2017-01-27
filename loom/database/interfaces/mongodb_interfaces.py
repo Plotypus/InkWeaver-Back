@@ -190,13 +190,11 @@ class MongoDBInterface(AbstractDBInterface):
         return hierarchy
 
     async def get_section_content(self, section_id):
-        # TODO: Fix formatting of data
         section = await self.client.get_section(section_id)
         return section['content']
 
-    async def set_paragraph_text(self, section_id, index, text):
-        # TODO: Fix, search by ID
-        return await self.client.set_paragraph_text(text, in_section_id=section_id, at_index=index)
+    async def set_paragraph_text(self, section_id, text, paragraph_id):
+        return await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
 
     async def delete_story(self, story_id):
         # TODO: Do this.
