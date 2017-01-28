@@ -153,6 +153,7 @@ class MongoDBInterface(AbstractDBInterface):
             return subsection_id
 
     async def add_paragraph(self, section_id, text, succeeding_paragraph_id=None):
+        # TODO: Read paragraph, get embedded links and generate list of links and update the links in the section
         paragraph_ids = await self.client.get_paragraph_ids(section_id)
         try:
             if not succeeding_paragraph_id:
@@ -194,6 +195,7 @@ class MongoDBInterface(AbstractDBInterface):
         return section['content']
 
     async def set_paragraph_text(self, section_id, text, paragraph_id):
+        # TODO: Read paragraph, get embedded links and generate list of links and update the links in the section
         return await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
 
     async def delete_story(self, story_id):
@@ -278,11 +280,13 @@ class MongoDBInterface(AbstractDBInterface):
         return wiki
 
     async def get_wiki_hierarchy(self, wiki_id):
+        # TODO: Build wiki link table
         wiki = await self.get_wiki(wiki_id)
         segment_id = wiki['segment_id']
         return await self.get_segment_hierarchy(segment_id)
 
     async def get_segment_hierarchy(self, segment_id):
+        # TODO: Build wiki link table
         segment = await self.client.get_segment(segment_id)
         hierarchy = {
             'title':      segment['title'],
@@ -293,7 +297,7 @@ class MongoDBInterface(AbstractDBInterface):
         return hierarchy
 
     async def get_page_for_hierarchy(self, page_id):
-        # TODO: Include references and aliases
+        # TODO: Build wiki link table
         page = await self.client.get_page(page_id)
         return {
             'title':   page['title'],
@@ -305,6 +309,7 @@ class MongoDBInterface(AbstractDBInterface):
         return segment
 
     async def get_page(self, page_id):
+        # TODO: Format aliases and references
         page = await self.client.get_page(page_id)
         return page
 
@@ -362,6 +367,15 @@ class MongoDBInterface(AbstractDBInterface):
         # TODO: Implement this.
         pass
 
+    # Link Object Methods
+
+    async def create_link(self, story_id, section_id, paragraph_key, name, page_id):
+        # TODO: Implement this.
+        pass
+
+    async def delete_link(self, link_id):
+        # TODO: Implement this.
+        pass
 
 class MongoDBTornadoInterface(MongoDBInterface):
     def __init__(self, db_name, db_host, db_port):

@@ -195,3 +195,11 @@ class AbstractDBInterface(ABC):
     @abstractmethod
     async def delete_heading(self, heading_title, page_id):
         pass
+
+    @abstractmethod
+    async def create_link(self, story_id, section_id, paragraph_key, name, page_id):
+        pass
+
+    @abstractmethod
+    async def delete_link(self, link_id):
+        pass
