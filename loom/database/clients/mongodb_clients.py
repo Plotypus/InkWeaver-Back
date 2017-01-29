@@ -405,7 +405,6 @@ class MongoDBClient:
         return result.inserted_id
 
     async def create_page(self, title: str, template_headings=None, _id=None) -> ObjectId:
-        # TODO: Implement references and aliases.
         page = {
             'title':      title,
             'headings':   list() if template_headings is None else template_headings,
@@ -547,7 +546,18 @@ class MongoDBClient:
     #
     ###########################################################################
 
-    async def create_link(self, context: Dict, alias_id: ObjectId, page_id: ObjectId, _id=None) -> ObjectId:
+    def _build_context(self, story_id, section_id, paragraph_key, text):
+        context = {
+            'story_id':      story_id,
+            'section_id':    section_id,
+            'paragraph_key': paragraph_key,
+            'text':          text,
+        }
+        return context
+
+    async def create_link(self, alias_id: ObjectId, page_id: ObjectId, story_id=None, section_id=None,
+                          paragraph_key=None, text=None, _id=None) -> ObjectId:
+        context = self._build_context(story_id, section_id, paragraph_key, text)
         link = {
             'context':  context,
             'alias_id': alias_id,
@@ -561,6 +571,25 @@ class MongoDBClient:
     async def get_link(self, link_id: ObjectId):
         result = await self.links.find_one({'_id': link_id})
         return result
+
+    async def insert_reference_to_page(self, page_id: ObjectId, link_id: ObjectId, story_id: ObjectId,
+                                       section_id: ObjectId, paragraph_key: ObjectId, text=None, index=None):
+        context = self._build_context(story_id, section_id, paragraph_key, text)
+        reference = {
+            'link_id': link_id,
+            'context': context,
+        }
+        parameters = self._insertion_parameters(reference, index)
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$push': {
+                    'references': parameters,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
 
     ###########################################################################
     #
@@ -590,9 +619,58 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def insert_link_to_alias(self, link_id: ObjectId, alias_id: ObjectId):
+        update_result: UpdateResult = await self.aliases.update_one(
+            filter={'_id': alias_id},
+            update={
+                '$push': {
+                    'links': link_id,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def get_alias(self, alias_id: ObjectId):
         result = await self.aliases.find_one({'_id': alias_id})
         return result
+
+    async def insert_alias_to_page(self, page_id: ObjectId, name: str, alias_id: ObjectId):
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$push': {
+                    'aliases': {
+                        'name':     name,
+                        'alias_id': alias_id,
+                    }
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def get_aliases_from_page(self, page_id: ObjectId):
+        result = await self.pages.find_one(
+            filter={'_id': page_id},
+            projection={'_id': 0, 'aliases': 1}
+        )
+        return None if result is None else result['aliases']
+
+    async def find_alias_in_page(self, page_id: ObjectId, name: str):
+        pipeline = [
+            {'$unwind':  '$aliases'},
+            {'$match':   {'_id': page_id}},
+            {'$match':   {'aliases.name': name}},
+            {'$project': {'aliases.alias_id': 1, '_id': 0}}
+        ]
+        results = []
+        async for match in self.pages.aggregate(pipeline):
+            results.append(match['aliases']['alias_id'])
+        if len(results) > 1:
+            raise ExtraMatchesError
+        if not results:
+            return None
+        else:
+            return results[0]
 
 
 class MongoDBMotorTornadoClient(MongoDBClient):
