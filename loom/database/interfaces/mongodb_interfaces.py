@@ -328,8 +328,9 @@ class MongoDBInterface(AbstractDBInterface):
         return segment
 
     async def get_page(self, page_id):
-        # TODO: Format aliases and references
         page = await self.client.get_page(page_id)
+        for reference in page['references']:
+            reference.update(reference.pop('context'))
         return page
 
     async def get_heading(self, heading_id):
