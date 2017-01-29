@@ -409,7 +409,7 @@ class MongoDBClient:
             'title':      title,
             'headings':   list() if template_headings is None else template_headings,
             'references': list(),  # list[Reference] (see Loom's wiki for more detail)
-            'aliases':    list(),
+            'aliases':    dict(),
         }
         if _id is not None:
             page['_id'] = _id
@@ -638,11 +638,8 @@ class MongoDBClient:
         update_result: UpdateResult = await self.pages.update_one(
             filter={'_id': page_id},
             update={
-                '$push': {
-                    'aliases': {
-                        'name':     name,
-                        'alias_id': alias_id,
-                    }
+                '$set': {
+                    'aliases.{}'.format(name): alias_id,
                 }
             }
         )
@@ -656,15 +653,14 @@ class MongoDBClient:
         return None if result is None else result['aliases']
 
     async def find_alias_in_page(self, page_id: ObjectId, name: str):
+        alias_field = 'aliases.{}'.format(name)
         pipeline = [
-            {'$unwind':  '$aliases'},
-            {'$match':   {'_id': page_id}},
-            {'$match':   {'aliases.name': name}},
-            {'$project': {'aliases.alias_id': 1, '_id': 0}}
+            {'$match': {'_id': page_id, alias_field: {'$exists': True}}},
+            {'$project': {alias_field: 1, '_id': 0}},
         ]
         results = []
         async for match in self.pages.aggregate(pipeline):
-            results.append(match['aliases']['alias_id'])
+            results.append(match['aliases'][name])
         if len(results) > 1:
             raise ExtraMatchesError
         if not results:
