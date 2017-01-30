@@ -590,6 +590,33 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def insert_links_for_paragraph(self, paragraph_id: ObjectId, links: List[ObjectId], in_section_id: ObjectId,
+                                         at_index=None):
+        inner_parameters = self._insertion_parameters({
+            'paragraph_id': paragraph_id,
+            'links':        links,
+        }, at_index)
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': in_section_id},
+            update={
+                '$push': {
+                    'links': inner_parameters,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def set_links_in_section(self, section_id: ObjectId, links: List[ObjectId], paragraph_id: ObjectId):
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': section_id, 'links.paragraph_id': paragraph_id},
+            update={
+                '$set': {
+                    'links.$.links': links,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
 
     ###########################################################################
     #
