@@ -363,11 +363,11 @@ class TestDBInterface:
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
         section_id = await self.interface.add_inner_subsection(section_title, story_section_id)
-        await self.interface.add_paragraph(section_id, first_paragraph)
-        await self.interface.add_paragraph(section_id, second_paragraph)
+        first_paragraph_id = await self.interface.add_paragraph(section_id, first_paragraph)
+        second_paragraph_id = await self.interface.add_paragraph(section_id, second_paragraph)
         replacement_texts = ['Text 1', 'Text 2']
-        await self.interface.set_paragraph_text(section_id, 0, replacement_texts[0])
-        await self.interface.set_paragraph_text(section_id, 1, replacement_texts[1])
+        await self.interface.set_paragraph_text(section_id, replacement_texts[0], first_paragraph_id)
+        await self.interface.set_paragraph_text(section_id, replacement_texts[1], second_paragraph_id)
         content = await self.interface.get_section_content(section_id)
         text = [paragraph['text'] for paragraph in content]
         assert text == replacement_texts
@@ -418,6 +418,7 @@ class TestDBInterface:
         assert hierarchy['segment_id'] == segment_id
         assert hierarchy['segments'] == list()
         assert hierarchy['pages'] == list()
+        assert hierarchy['links'] == dict()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user,wiki', [
@@ -441,6 +442,7 @@ class TestDBInterface:
         segment_hierarchy = await self.interface.get_segment_hierarchy(segment_id)
         assert wiki_hierarchy == segment_hierarchy
         assert wiki_hierarchy['title'] == db_wiki['title']
+        assert wiki_hierarchy['links'] == dict()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user,wiki,segment_title', [
@@ -575,8 +577,8 @@ class TestDBInterface:
     @pytest.mark.asyncio
     @pytest.mark.parametrize('segment_title,page_title,headings', [
         ('Character', 'John', [
-            {'title': 'Background', 'text': 'John is old.', 'links': list()},
-            {'title': 'Motives', 'text': 'John likes food.', 'links': list()}
+            {'title': 'Background', 'text': 'John is old.'},
+            {'title': 'Motives', 'text': 'John likes food.'}
         ])
     ])
     async def test_set_heading_text(self, segment_title, page_title, headings):

@@ -294,7 +294,7 @@ class MongoDBInterface(AbstractDBInterface):
             'segment_id': segment_id,
             'segments':   [],  #[await self.get_segment_hierarchy(seg_id) for seg_id in segment['segments']],
             'pages':      [],  #[await self.get_page_for_hierarchy(page_id) for page_id in segment['pages']],
-            'links':      [],
+            'links':      {},
         }
         segments = hierarchy['segments']
         links = hierarchy['links']
