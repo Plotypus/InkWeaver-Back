@@ -165,7 +165,8 @@ class MongoDBInterface(AbstractDBInterface):
             raise
         else:
             paragraph_id = ObjectId()
-            return await self.client.insert_paragraph(paragraph_id, text, to_section_id=section_id, at_index=index)
+            await self.client.insert_paragraph(paragraph_id, text, to_section_id=section_id, at_index=index)
+            return paragraph_id
 
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)

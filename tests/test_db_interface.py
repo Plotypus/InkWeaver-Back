@@ -333,9 +333,9 @@ class TestDBInterface:
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
         section_id = await self.interface.add_inner_subsection(section_title, story_section_id)
-        await self.interface.add_paragraph(section_id, second_text)
-        await self.interface.add_paragraph(section_id, first_text, 0)
-        await self.interface.add_paragraph(section_id, third_text, 2)
+        second_id = await self.interface.add_paragraph(section_id, second_text)
+        first_id = await self.interface.add_paragraph(section_id, first_text, second_id)
+        third_id = await self.interface.add_paragraph(section_id, third_text, None)
         content = await self.interface.get_section_content(section_id)
         assert len(content) == 3
         expected_text_order = [first_text, second_text, third_text]
