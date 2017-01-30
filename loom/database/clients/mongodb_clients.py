@@ -546,18 +546,18 @@ class MongoDBClient:
     #
     ###########################################################################
 
-    def _build_context(self, story_id, section_id, paragraph_key, text):
+    def _build_context(self, story_id, section_id, paragraph_id, text):
         context = {
             'story_id':      story_id,
             'section_id':    section_id,
-            'paragraph_key': paragraph_key,
+            'paragraph_id': paragraph_id,
             'text':          text,
         }
         return context
 
     async def create_link(self, alias_id: ObjectId, page_id: ObjectId, story_id=None, section_id=None,
-                          paragraph_key=None, text=None, _id=None) -> ObjectId:
-        context = self._build_context(story_id, section_id, paragraph_key, text)
+                          paragraph_id=None, text=None, _id=None) -> ObjectId:
+        context = self._build_context(story_id, section_id, paragraph_id, text)
         link = {
             'context':  context,
             'alias_id': alias_id,
@@ -573,8 +573,8 @@ class MongoDBClient:
         return result
 
     async def insert_reference_to_page(self, page_id: ObjectId, link_id: ObjectId, story_id: ObjectId,
-                                       section_id: ObjectId, paragraph_key: ObjectId, text=None, index=None):
-        context = self._build_context(story_id, section_id, paragraph_key, text)
+                                       section_id: ObjectId, paragraph_id: ObjectId, text=None, index=None):
+        context = self._build_context(story_id, section_id, paragraph_id, text)
         reference = {
             'link_id': link_id,
             'context': context,
