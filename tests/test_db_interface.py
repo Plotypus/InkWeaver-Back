@@ -3,15 +3,24 @@ from loom.database.interfaces import MongoDBAsyncioInterface
 import asyncio
 import pytest
 
+TEST_DB_NAME = 'test'
+TEST_DB_HOST = 'localhost'
+TEST_DB_PORT = 27017
+
 
 class TestDBInterface:
     def setup(self):
-        self.interface = MongoDBAsyncioInterface('test', 'localhost', 27017)
+        self.interface = MongoDBAsyncioInterface(TEST_DB_NAME, TEST_DB_HOST, TEST_DB_PORT)
 
     def teardown(self):
         event_loop = asyncio.get_event_loop()
         event_loop.run_until_complete(self.interface.drop_database())
         event_loop.close()
+
+    @pytest.mark.asyncio
+    async def test_interface_meta(self):
+        assert self.interface.host == TEST_DB_HOST
+        assert self.interface.port == TEST_DB_PORT
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user', [
@@ -31,6 +40,37 @@ class TestDBInterface:
         assert prefs['email'] == user['email']
         assert await self.interface.get_user_stories(inserted_id) == list()
         assert await self.interface.get_user_wikis(inserted_id) == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,new_password,new_user_name,new_email,new_bio,new_avatar', [
+        (
+            {
+                'username': 'tmctest',
+                'password': 'my gr3at p4ssw0rd',
+                'name':     'Testy McTesterton',
+                'email':    'tmctest@te.st',
+            },
+            'my n3w p4ssw0rd!',
+            'Testesson T McTesterton',
+            'tmctest123@te.st',
+            'I like writing stories. Writing is fun.',
+            'avatar placeholder',
+        )
+    ])
+    async def test_user_updates(self, user, new_password, new_user_name, new_email, new_bio, new_avatar):
+        user_id = await self.interface.create_user(**user)
+        # Set new password.
+        await self.interface.set_user_password(user_id, new_password)
+        assert await self.interface.password_is_valid_for_username(user['username'], new_password)
+        # Set new preferences.
+        await self.interface.set_user_name(user_id, new_user_name)
+        await self.interface.set_user_email(user_id, new_email)
+        await self.interface.set_user_bio(user_id, new_bio)
+        await self.interface.set_user_avatar(user_id, new_avatar)
+        preferences = await self.interface.get_user_preferences(user_id)
+        assert preferences['email'] == new_email
+        assert preferences['bio'] == new_bio
+        assert preferences['avatar'] == new_avatar
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user', [
