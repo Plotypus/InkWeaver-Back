@@ -672,6 +672,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def update_alias_name_in_page(self, page_id: ObjectId, old_name: str, new_name: str):
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$rename': {
+                    'aliases.{}'.format(old_name): 'aliases.{}'.format(new_name),
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def get_aliases_from_page(self, page_id: ObjectId):
         result = await self.pages.find_one(
             filter={'_id': page_id},

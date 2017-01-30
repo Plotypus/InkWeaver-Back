@@ -406,6 +406,17 @@ class MongoDBInterface(AbstractDBInterface):
         # TODO: Implement this.
         pass
 
+    # Alias Object Methods
+
+    async def change_alias_name(self, alias_id: ObjectId, new_name: str):
+        # Update name in alias.
+        alias = await self.client.get_alias(alias_id)
+        page_id = alias['page_id']
+        old_name = alias['name']
+        await self.client.set_alias_name(new_name, alias_id)
+        # Update `aliases` in the appropriate page.
+        await self.client.update_alias_name_in_page(page_id, old_name, new_name)
+
 class MongoDBTornadoInterface(MongoDBInterface):
     def __init__(self, db_name, db_host, db_port):
         super().__init__(MongoDBMotorTornadoClient, db_name, db_host, db_port)
