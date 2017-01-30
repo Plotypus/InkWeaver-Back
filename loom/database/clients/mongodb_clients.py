@@ -93,13 +93,13 @@ class MongoDBClient:
     @staticmethod
     def assert_update_one_was_successful(update_result: UpdateResult):
         if update_result.matched_count == 0:
-            raise NoMatchError                  ## pragma: no cover
+            raise NoMatchError                  # pragma: no cover
         if update_result.matched_count > 1:
-            raise ExtraMatchesError             ## pragma: no cover
+            raise ExtraMatchesError             # pragma: no cover
         if update_result.modified_count == 0:
-            raise NoUpdateError                 ## pragma: no cover
+            raise NoUpdateError                 # pragma: no cover
         if update_result.modified_count > 1:
-            raise ExtraUpdatesError             ## pragma: no cover
+            raise ExtraUpdatesError             # pragma: no cover
 
     ###########################################################################
     #
@@ -707,13 +707,13 @@ class MongoDBClient:
             return results[0]
 
 
-class MongoDBMotorTornadoClient(MongoDBClient):
+class MongoDBMotorTornadoClient(MongoDBClient):  # pragma: no cover
     def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
         from motor.motor_tornado import MotorClient
         super().__init__(MotorClient, db_name, db_host, db_port)
 
 
-class MongoDBMotorAsyncioClient(MongoDBClient):
+class MongoDBMotorAsyncioClient(MongoDBClient):  # pragma: no cover
     def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
         from motor.motor_asyncio import AsyncIOMotorClient
         super().__init__(AsyncIOMotorClient, db_name, db_host, db_port)

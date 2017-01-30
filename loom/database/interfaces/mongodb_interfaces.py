@@ -9,7 +9,7 @@ from typing import ClassVar
 class MongoDBInterface(AbstractDBInterface):
     def __init__(self, db_client_class: ClassVar, db_name, db_host, db_port):
         if not issubclass(db_client_class, MongoDBClient):
-            raise ValueError("invalid MongoDB client class: {}".format(db_client_class.__name__))  ## pragma: no cover
+            raise ValueError("invalid MongoDB client class: {}".format(db_client_class.__name__))  # pragma: no cover
         self._client = db_client_class(db_name, db_host, db_port)
 
     @property
