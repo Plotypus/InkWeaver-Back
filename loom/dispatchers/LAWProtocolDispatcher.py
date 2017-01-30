@@ -38,6 +38,10 @@ APPROVED_METHODS = [
     'get_wiki_hierarchy',
     'get_wiki_segment_hierarchy',
     'get_wiki_page',
+
+    # Links
+    'create_link',
+    'edit_alias_name',
 ]
 
 class LAWError(Exception):
@@ -336,6 +340,6 @@ class LAWProtocolDispatcher:
         message = {'link_id': link_id}
         return self.format_json(message, with_reply_id=message_id)
 
-    async def edit_alias(self, message_id, alias_id, new_name):
+    async def edit_alias_name(self, message_id, alias_id, new_name):
         await self.db_interface.change_alias_name(alias_id, new_name)
         return self.format_json({}, with_reply_id=message_id)
