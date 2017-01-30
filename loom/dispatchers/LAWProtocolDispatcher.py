@@ -328,3 +328,14 @@ class LAWProtocolDispatcher:
             'headings':     page['headings'],
         }
         return self.format_json(message, with_reply_id=message_id)
+
+    ## Links
+
+    async def create_link(self, message_id, story_id, section_id, paragraph_id, name, page_id):
+        link_id = await self.db_interface.create_link(story_id, section_id, paragraph_id, name, page_id)
+        message = {'link_id': link_id}
+        return self.format_json(message, with_reply_id=message_id)
+
+    async def edit_alias(self, message_id, alias_id, new_name):
+        await self.db_interface.change_alias_name(alias_id, new_name)
+        return self.format_json({}, with_reply_id=message_id)
