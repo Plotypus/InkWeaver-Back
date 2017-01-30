@@ -403,6 +403,9 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.insert_link_to_alias(link_id, alias_id)
         return link_id
 
+    async def get_link(self, link_id):
+        return await self.client.get_link(link_id)
+
     async def delete_link(self, link_id):
         # TODO: Implement this.
         pass
@@ -417,6 +420,9 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.set_alias_name(new_name, alias_id)
         # Update `aliases` in the appropriate page.
         await self.client.update_alias_name_in_page(page_id, old_name, new_name)
+
+    async def get_alias(self, alias_id):
+        return await self.client.get_alias(alias_id)
 
 class MongoDBTornadoInterface(MongoDBInterface):
     def __init__(self, db_name, db_host, db_port):

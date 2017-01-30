@@ -299,6 +299,7 @@ class TestDBInterface:
          'Chapter One', 'Once upon a time, there was a little test.', 'The end.')
     ])
     async def test_add_paragraph(self, user, story, section_title, first_paragraph, second_paragraph):
+        # TODO: Test link creation/deletion/updating.
         user_id = await self.interface.create_user(**user)
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
@@ -328,6 +329,7 @@ class TestDBInterface:
          'Chapter One', 'The beginning.', 'The middle.', 'The end.')
     ])
     async def test_insert_paragraph_to_section(self, user, story, section_title, first_text, second_text, third_text):
+        # TODO: Test link creation/deletion/updating.
         user_id = await self.interface.create_user(**user)
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
@@ -358,6 +360,7 @@ class TestDBInterface:
          'Chapter One', 'Once upon a time, there was a little test.', 'The end.')
     ])
     async def test_edit_paragraph_in_section(self, user, story, section_title, first_paragraph, second_paragraph):
+        # TODO: Test link creation/deletion/updating.
         user_id = await self.interface.create_user(**user)
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
@@ -593,4 +596,68 @@ class TestDBInterface:
         db_headings = page['headings']
         assert db_headings == headings
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story,section_title,paragraph,wiki,segment_name,page_name,link_name', [
+        ({
+             'username': 'tmctest',
+             'password': 'my gr3at p4ssw0rd',
+             'name':     'Testy McTesterton',
+             'email':    'tmctest@te.st',
+         },
+         {
+             'title':   'test-story',
+             'summary': 'This is a story for testing',
+             'wiki_id': 'placeholder for wiki id',
+         },
+         'Chapter One', 'Once upon a time, there was a little test.',
+         {
+             'title':   'test-wiki',
+             'summary': 'This is a wiki for testing',
+         },
+         'Character', 'John Smith', 'Johnny Boy'
+        )
+    ])
+    async def test_create_link(self, user, story, section_title, paragraph, wiki, segment_name, page_name, link_name):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        db_story = await self.interface.get_story(story_id)
+        story_section_id = db_story['section_id']
+        section_id = await self.interface.add_inner_subsection(section_title, story_section_id, index=None)
+        paragraph_id = await self.interface.add_paragraph(section_id, paragraph, succeeding_paragraph_id=None)
+
+        wiki_id = await self.interface.create_wiki(user_id, **wiki)
+        db_wiki = await self.interface.get_wiki(wiki_id)
+        wiki_segment_id = db_wiki['segment_id']
+        segment_id = await self.interface.add_child_segment(segment_name, wiki_segment_id)
+        page_id = await self.interface.create_page(page_name, segment_id)
+
+        context = {
+            'story_id': story_id,
+            'section_id': section_id,
+            'paragraph_id': paragraph_id,
+            'text': None,
+        }
+        link_id = await self.interface.create_link(story_id, section_id, paragraph_id, link_name, page_id)
+        assert link_id is not None
+        link = await self.interface.get_link(link_id)
+        assert link['context'] == context
+        assert link['alias_id'] is not None
+        assert link['page_id'] == page_id
+        alias_id = link['alias_id']
+        alias = await self.interface.get_alias(alias_id)
+        assert alias['name'] == link_name
+        assert alias['page_id'] == page_id
+        assert len(alias['links']) == 1
+        assert link_id in alias['links']
+
+        page = await self.interface.get_page(page_id)
+        assert len(page['aliases']) == 1
+        assert page['aliases'][link_name] == alias_id
+        hierarchy = await self.interface.get_wiki_hierarchy(wiki_id)
+        assert len(hierarchy['links']) == 1
+        link_info = {
+            'name': link_name,
+            'page_id': page_id,
+        }
+        assert hierarchy['links'][link_id] == link_info
 
