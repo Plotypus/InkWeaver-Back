@@ -93,13 +93,13 @@ class MongoDBClient:
     @staticmethod
     def assert_update_one_was_successful(update_result: UpdateResult):
         if update_result.matched_count == 0:
-            raise NoMatchError
+            raise NoMatchError                  ## pragma: no cover
         if update_result.matched_count > 1:
-            raise ExtraMatchesError
+            raise ExtraMatchesError             ## pragma: no cover
         if update_result.modified_count == 0:
-            raise NoUpdateError
+            raise NoUpdateError                 ## pragma: no cover
         if update_result.modified_count > 1:
-            raise ExtraUpdatesError
+            raise ExtraUpdatesError             ## pragma: no cover
 
     ###########################################################################
     #
