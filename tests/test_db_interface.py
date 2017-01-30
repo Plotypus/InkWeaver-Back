@@ -637,27 +637,29 @@ class TestDBInterface:
         assert db_headings == headings
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize('user,story,section_title,paragraph,wiki,segment_name,page_name,link_name', [
-        ({
-             'username': 'tmctest',
-             'password': 'my gr3at p4ssw0rd',
-             'name':     'Testy McTesterton',
-             'email':    'tmctest@te.st',
-         },
-         {
-             'title':   'test-story',
-             'summary': 'This is a story for testing',
-             'wiki_id': 'placeholder for wiki id',
-         },
-         'Chapter One', 'Once upon a time, there was a little test.',
-         {
-             'title':   'test-wiki',
-             'summary': 'This is a wiki for testing',
-         },
-         'Character', 'John Smith', 'Johnny Boy'
+    @pytest.mark.parametrize('user,story,section_title,paragraph,wiki,segment_name,page_name,link_name,new_link_name', [
+        (
+            {
+                'username': 'tmctest',
+                'password': 'my gr3at p4ssw0rd',
+                'name':     'Testy McTesterton',
+                'email':    'tmctest@te.st',
+            },
+            {
+                'title':   'test-story',
+                'summary': 'This is a story for testing',
+                'wiki_id': 'placeholder for wiki id',
+            },
+            'Chapter One', 'Once upon a time, there was a little test.',
+            {
+                'title':   'test-wiki',
+                'summary': 'This is a wiki for testing',
+            },
+            'Character', 'John Smith', 'Johnny Boy', 'Smithy'
         )
     ])
-    async def test_create_link(self, user, story, section_title, paragraph, wiki, segment_name, page_name, link_name):
+    async def test_links(self, user, story, section_title, paragraph, wiki, segment_name, page_name, link_name,
+                         new_link_name):
         user_id = await self.interface.create_user(**user)
         story_id = await self.interface.create_story(user_id, **story)
         db_story = await self.interface.get_story(story_id)
@@ -701,3 +703,7 @@ class TestDBInterface:
         }
         assert hierarchy['links'][link_id] == link_info
 
+        # Test alias name change.
+        await self.interface.change_alias_name(alias_id, new_link_name)
+        alias = await self.interface.get_alias(alias_id)
+        assert alias['name'] == new_link_name
