@@ -390,7 +390,7 @@ class MongoDBInterface(AbstractDBInterface):
 
     # Link Object Methods
 
-    async def create_link(self, story_id: ObjectId, section_id: ObjectId, paragraph_key: ObjectId, name: str,
+    async def create_link(self, story_id: ObjectId, section_id: ObjectId, paragraph_id: ObjectId, name: str,
                           page_id: ObjectId):
         # Check if alias exists.
         alias_id = await self.client.find_alias_in_page(page_id, name)
@@ -399,7 +399,7 @@ class MongoDBInterface(AbstractDBInterface):
             alias_id = await self.client.create_alias(name, page_id)
             await self.client.insert_alias_to_page(page_id, name, alias_id)
         # Now create a link with the alias.
-        link_id = await self.client.create_link(alias_id, page_id, story_id, section_id, paragraph_key)
+        link_id = await self.client.create_link(alias_id, page_id, story_id, section_id, paragraph_id)
         await self.client.insert_link_to_alias(link_id, alias_id)
         return link_id
 
