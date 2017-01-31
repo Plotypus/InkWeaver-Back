@@ -4,10 +4,18 @@ from loom.database.interfaces import AbstractDBInterface  # For type hinting.
 from loom.dispatchers import *
 
 from bson import ObjectId
+from tornado import gen
 from tornado.ioloop import IOLoop
+from tornado.queues import Queue
 from typing import Dict
 
 JSON = Dict
+
+TIMEOUT = 10
+
+
+class NeverReadyError(Exception):
+    pass
 
 
 class LoomHandler(GenericHandler):
@@ -19,6 +27,7 @@ class LoomHandler(GenericHandler):
     ############################################################
 
     def open(self):
+        self.ready = False
         # TODO: Remove this.
         super().open()
         session_id = self._get_secure_session_cookie()
@@ -32,6 +41,12 @@ class LoomHandler(GenericHandler):
         self.set_nodelay(True)
         # Instantiate the dispatcher.
         self._dispatcher = LAWProtocolDispatcher(self.db_interface, self.user_id)
+        self.startup()
+        try:
+            self.wait_for_ready()
+        except NeverReadyError:
+            self.on_failure(reason="Something went wrong.")
+            self.close()
 
     def on_failure(self, reply_to=None, reason=None, **fields):
         response = {
@@ -50,6 +65,25 @@ class LoomHandler(GenericHandler):
         json_string = self.encode_json(data)
         self.write_message(json_string)
 
+    def initialize_queue(self):
+        self._messages = Queue()
+        IOLoop.current().spawn_callback(self.process_messages)
+
+    def startup(self):
+        self.initialize_queue()
+        self.ready = True
+
+    @gen.coroutine
+    def wait_for_ready(self):
+        import time
+        start = time.time()
+        while (time.time() - start) < TIMEOUT:
+            if self.ready:
+                break
+            yield gen.sleep(0.5)
+        else:
+            raise NeverReadyError()
+
     @property
     def dispatcher(self) -> LAWProtocolDispatcher:
         return self._dispatcher
@@ -61,6 +95,10 @@ class LoomHandler(GenericHandler):
         except AttributeError:
             self._db_interface = self.settings['db_interface']
             return self._db_interface
+
+    @property
+    def messages(self) -> Queue:
+        return self._messages
 
     @property
     def user_id(self) -> ObjectId:
@@ -106,18 +144,24 @@ class LoomHandler(GenericHandler):
         IOLoop.current().spawn_callback(self.handle_message, json)
 
     async def handle_message(self, message: JSON):
-        message_id = message.get('message_id', None)
-        try:
-            # Remove the `action` key/value. It's only needed for dispatch, so the dispatch methods don't use it.
-            action = message.pop('action')
-        except KeyError:
-            self.on_failure(reply_to=message_id, reason="`action` field not supplied")
-        else:
+        await self.messages.put(message)
+
+    async def process_messages(self):
+        async for message in self.messages:
+            message_id = message.get('message_id', None)
             try:
-                json_result = await self.dispatcher.dispatch(message, action, message_id)
-                self.write_json(json_result)
-            except LAWUnimplementedError:
-                err_message = "invalid `action`: {}".format(action)
-                self.on_failure(reply_to=message_id, reason=err_message)
-            except LAWBadArgumentsError as e:
-                self.on_failure(reply_to=message_id, reason=e.message)
+                # Remove the `action` key/value. It's only needed for dispatch, so the dispatch methods don't use it.
+                action = message.pop('action')
+            except KeyError:
+                self.on_failure(reply_to=message_id, reason="`action` field not supplied")
+            else:
+                try:
+                    json_result = await self.dispatcher.dispatch(message, action, message_id)
+                    self.write_json(json_result)
+                except LAWUnimplementedError:
+                    err_message = "invalid `action`: {}".format(action)
+                    self.on_failure(reply_to=message_id, reason=err_message)
+                except LAWBadArgumentsError as e:
+                    self.on_failure(reply_to=message_id, reason=e.message)
+            finally:
+                self.messages.task_done()
