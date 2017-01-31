@@ -4,11 +4,18 @@ from loom.database.interfaces import AbstractDBInterface  # For type hinting.
 from loom.dispatchers import *
 
 from bson import ObjectId
+from tornado import gen
 from tornado.ioloop import IOLoop
 from tornado.queues import Queue
 from typing import Dict
 
 JSON = Dict
+
+TIMEOUT = 10
+
+
+class NeverReadyError(Exception):
+    pass
 
 
 class LoomHandler(GenericHandler):
@@ -20,6 +27,7 @@ class LoomHandler(GenericHandler):
     ############################################################
 
     def open(self):
+        self.ready = False
         # TODO: Remove this.
         super().open()
         session_id = self._get_secure_session_cookie()
@@ -33,7 +41,12 @@ class LoomHandler(GenericHandler):
         self.set_nodelay(True)
         # Instantiate the dispatcher.
         self._dispatcher = LAWProtocolDispatcher(self.db_interface, self.user_id)
-        self.initialize_queue()
+        self.startup()
+        try:
+            self.wait_for_ready()
+        except NeverReadyError:
+            self.on_failure(reason="Something went wrong.")
+            self.close()
 
     def on_failure(self, reply_to=None, reason=None, **fields):
         response = {
@@ -51,6 +64,25 @@ class LoomHandler(GenericHandler):
             data.update({'reply_to_id': with_reply_id})
         json_string = self.encode_json(data)
         self.write_message(json_string)
+
+    def initialize_queue(self):
+        self._messages = Queue()
+        IOLoop.current().spawn_callback(self.process_messages)
+
+    def startup(self):
+        self.initialize_queue()
+        self.ready = True
+
+    @gen.coroutine
+    def wait_for_ready(self):
+        import time
+        start = time.time()
+        while (time.time() - start) < TIMEOUT:
+            if self.ready:
+                break
+            yield gen.sleep(0.5)
+        else:
+            raise NeverReadyError()
 
     @property
     def dispatcher(self) -> LAWProtocolDispatcher:
@@ -86,10 +118,6 @@ class LoomHandler(GenericHandler):
         # Cookies are retrieved as a byte-string, we need to decode it.
         decoded_cookie = cookie.decode('UTF-8')
         return decoded_cookie
-
-    def initialize_queue(self):
-        self._messages = Queue()
-        IOLoop.current().spawn_callback(self.process_messages)
 
     ############################################################
     #

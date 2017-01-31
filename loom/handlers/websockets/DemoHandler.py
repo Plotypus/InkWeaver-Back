@@ -1,5 +1,5 @@
 from .GenericHandler import GenericHandler
-from .LoomHandler import LoomHandler
+from .LoomHandler import LoomHandler, NeverReadyError
 
 from loom.data_processor import DataProcessor
 from loom.database.interfaces import MongoDBTornadoInterface
@@ -14,6 +14,7 @@ class DemoHandler(LoomHandler):
         self.demo_db_data = demo_db_data
 
     def open(self):
+        self.ready = False
         GenericHandler.open(self)
         self.db_name = '{}-{}'.format(self.settings['demo_db_prefix'], self.uuid)
         self.db_host = self.settings['demo_db_host']
@@ -22,11 +23,20 @@ class DemoHandler(LoomHandler):
         self.write_console_message('using DB: {}'.format(self.db_name))
         self._dispatcher = LAWProtocolDispatcher(self.db_interface)
         self.data_processor = DataProcessor(self.db_interface)
-        IOLoop.current().spawn_callback(self.load_file_and_set_user, self.demo_db_data)
+        self.startup()
+        try:
+            self.wait_for_ready()
+        except NeverReadyError:
+            self.on_failure(reason="Something went wrong.")
+            self.close()
 
     def on_close(self):
         IOLoop.current().spawn_callback(self.teardown)
         super().on_close()
+
+    def startup(self):
+        IOLoop.current().spawn_callback(self.load_file_and_set_user, self.demo_db_data)
+        self.initialize_queue()
 
     async def teardown(self):
         await self.db_interface.drop_database()
@@ -36,6 +46,7 @@ class DemoHandler(LoomHandler):
         user_id = await self.data_processor.load_file(filename)
         self.dispatcher.set_user_id(user_id)
         self.write_console_message("generated database from file: {}".format(self.demo_db_data))
+        self.ready = True
 
     @property
     def db_interface(self):
