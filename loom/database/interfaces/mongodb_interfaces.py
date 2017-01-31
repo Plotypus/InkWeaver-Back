@@ -10,7 +10,7 @@ from os.path import dirname, join as pathjoin
 from typing import ClassVar
 
 # Adjust the NLTK path.
-nltk.data.path.append(pathjoin(dirname(dirname(dirname(__file__))), 'nltk_data'))
+nltk.data.path.insert(0, pathjoin(dirname(dirname(dirname(__file__))), 'nltk_data'))
 
 
 def generate_link_format_regex():
