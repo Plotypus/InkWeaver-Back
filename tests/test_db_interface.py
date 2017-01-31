@@ -718,3 +718,14 @@ class TestDBInterface:
             'text':         text,
         }
         assert reference in page['references']
+
+        # Remove link
+        await self.interface.delete_link(link_id)
+        page = await self.interface.get_page(page_id)
+        assert reference not in page['references']
+        alias = await self.interface.get_alias(alias_id)
+        assert link_id not in alias['links']
+        link = await self.interface.get_link(link_id)
+        assert link is None
+        hierarchy = await self.interface.get_wiki_hierarchy(wiki_id)
+        assert hierarchy['links'] == {}

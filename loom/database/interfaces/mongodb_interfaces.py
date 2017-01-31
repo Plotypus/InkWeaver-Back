@@ -484,8 +484,15 @@ class MongoDBInterface(AbstractDBInterface):
         return await self.client.get_link(link_id)
 
     async def delete_link(self, link_id):
-        # TODO: Implement this.
-        pass
+        # TODO: Should an alias be deleted if no more links are tied to it?
+        link = await self.get_link(link_id)
+        alias_id = link['alias_id']
+        page_id = link['page_id']
+        await self.client.remove_link_from_alias(link_id, alias_id)
+        await self.client.remove_reference_from_page(link_id, page_id)
+        await self.client.delete_link(link_id)
+
+
 
     # Alias Object Methods
 
