@@ -1,7 +1,7 @@
 from bson.objectid import ObjectId
 from motor.core import AgnosticClient, AgnosticDatabase, AgnosticCollection
 from pymongo.results import UpdateResult
-from typing import Dict, List
+from typing import Any, Dict, List
 
 
 class ClientError(Exception):
@@ -96,10 +96,11 @@ class MongoDBClient:
             raise NoMatchError                  # pragma: no cover
         if update_result.matched_count > 1:
             raise ExtraMatchesError             # pragma: no cover
-        if update_result.modified_count == 0:
-            raise NoUpdateError                 # pragma: no cover
-        if update_result.modified_count > 1:
-            raise ExtraUpdatesError             # pragma: no cover
+
+    @staticmethod
+    def update_dict_if_value_is_not_none(dictionary: Dict, field: str, value: Any):
+        if value is not None:
+            dictionary[field] = value
 
     ###########################################################################
     #
@@ -405,6 +406,7 @@ class MongoDBClient:
         return result.inserted_id
 
     async def create_page(self, title: str, template_headings=None, _id=None) -> ObjectId:
+        # TODO: Consider revising references structure as a mapping from link IDs to contexts.
         page = {
             'title':      title,
             'headings':   list() if template_headings is None else template_headings,
@@ -514,6 +516,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_page_references(self, page_id: ObjectId, references: List):
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$set': {
+                    'references': references,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def get_wiki(self, wiki_id: ObjectId) -> Dict:
         result = await self.wikis.find_one({'_id': wiki_id})
         return result
@@ -571,6 +584,33 @@ class MongoDBClient:
     async def get_link(self, link_id: ObjectId):
         result = await self.links.find_one({'_id': link_id})
         return result
+
+    async def set_link_context(self, link_id: ObjectId, context: Dict):
+        update_result: UpdateResult = self.links.update_one(
+            filter={'_id': link_id},
+            update={
+                '$set': {
+                    'context': context,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def update_link_context(self, link_id: ObjectId, paragraph_id: ObjectId, text: str, story_id=None,
+                                  section_id=None):
+        update_fields = {
+            'context.paragraph_id': paragraph_id,
+            'context.text':         text,
+        }
+        self.update_dict_if_value_is_not_none(update_fields, 'context.story_id', story_id)
+        self.update_dict_if_value_is_not_none(update_fields, 'context.section_id', section_id)
+        update_result: UpdateResult = await self.links.update_one(
+            filter={'_id': link_id},
+            update={
+                '$set': update_fields,
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
 
     async def insert_reference_to_page(self, page_id: ObjectId, link_id: ObjectId, story_id: ObjectId,
                                        section_id: ObjectId, paragraph_id: ObjectId, text=None, index=None):
