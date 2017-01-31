@@ -1,4 +1,5 @@
 from loom.database.interfaces import MongoDBAsyncioInterface
+from loom.serialize import decode_bson_to_string
 
 import asyncio
 import pytest
@@ -339,7 +340,6 @@ class TestDBInterface:
          'Chapter One', 'Once upon a time, there was a little test.', 'The end.')
     ])
     async def test_add_paragraph(self, user, story, section_title, first_paragraph, second_paragraph):
-        # TODO: Test link creation/deletion/updating.
         user_id = await self.interface.create_user(**user)
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
@@ -369,15 +369,14 @@ class TestDBInterface:
          'Chapter One', 'The beginning.', 'The middle.', 'The end.')
     ])
     async def test_insert_paragraph_to_section(self, user, story, section_title, first_text, second_text, third_text):
-        # TODO: Test link creation/deletion/updating.
         user_id = await self.interface.create_user(**user)
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
         section_id = await self.interface.add_inner_subsection(section_title, story_section_id)
         second_id = await self.interface.add_paragraph(section_id, second_text)
-        first_id = await self.interface.add_paragraph(section_id, first_text, second_id)
-        third_id = await self.interface.add_paragraph(section_id, third_text, None)
+        await self.interface.add_paragraph(section_id, first_text, second_id)
+        await self.interface.add_paragraph(section_id, third_text, None)
         content = await self.interface.get_section_content(section_id)
         assert len(content) == 3
         expected_text_order = [first_text, second_text, third_text]
@@ -400,7 +399,6 @@ class TestDBInterface:
          'Chapter One', 'Once upon a time, there was a little test.', 'The end.')
     ])
     async def test_edit_paragraph_in_section(self, user, story, section_title, first_paragraph, second_paragraph):
-        # TODO: Test link creation/deletion/updating.
         user_id = await self.interface.create_user(**user)
         story_id = await self.interface.create_story(user_id, **story)
         story = await self.interface.get_story(story_id)
@@ -707,3 +705,16 @@ class TestDBInterface:
         await self.interface.change_alias_name(alias_id, new_link_name)
         alias = await self.interface.get_alias(alias_id)
         assert alias['name'] == new_link_name
+
+        # Insert link into paragraph text.
+        text = "Four score and seven {} ago...".format(decode_bson_to_string(link_id))
+        paragraph_id = await self.interface.add_paragraph(section_id, text, succeeding_paragraph_id=None)
+        page = await self.interface.get_page(page_id)
+        reference = {
+            'link_id':      link_id,
+            'story_id':     story_id,
+            'section_id':   section_id,
+            'paragraph_id': paragraph_id,
+            'text':         text,
+        }
+        assert reference in page['references']
