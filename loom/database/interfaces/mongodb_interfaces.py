@@ -2,11 +2,15 @@ from .abstract_interface import AbstractDBInterface
 
 from loom.database.clients import *
 
+import nltk
 import re
 
 from bson.objectid import ObjectId
-from nltk import sent_tokenize
+from os.path import dirname, join as pathjoin
 from typing import ClassVar
+
+# Adjust the NLTK path.
+nltk.data.path.append(pathjoin(dirname(dirname(dirname(__file__))), 'nltk_data'))
 
 
 def generate_link_format_regex():
@@ -256,7 +260,7 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def get_links_from_paragraph(self, paragraph_text):
         # TODO: Support languages other than English.
-        sentences = sent_tokenize(paragraph_text)
+        sentences = nltk.sent_tokenize(paragraph_text)
         results = []
         for sentence in sentences:
             sentence_links = []
