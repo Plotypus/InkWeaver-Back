@@ -5,6 +5,7 @@ from loom.dispatchers import *
 
 from bson import ObjectId
 from tornado.ioloop import IOLoop
+from tornado.queues import Queue
 from typing import Dict
 
 JSON = Dict
@@ -32,6 +33,7 @@ class LoomHandler(GenericHandler):
         self.set_nodelay(True)
         # Instantiate the dispatcher.
         self._dispatcher = LAWProtocolDispatcher(self.db_interface, self.user_id)
+        self.initialize_queue()
 
     def on_failure(self, reply_to=None, reason=None, **fields):
         response = {
@@ -63,6 +65,10 @@ class LoomHandler(GenericHandler):
             return self._db_interface
 
     @property
+    def messages(self) -> Queue:
+        return self._messages
+
+    @property
     def user_id(self) -> ObjectId:
         return self._user_id
 
@@ -80,6 +86,10 @@ class LoomHandler(GenericHandler):
         # Cookies are retrieved as a byte-string, we need to decode it.
         decoded_cookie = cookie.decode('UTF-8')
         return decoded_cookie
+
+    def initialize_queue(self):
+        self._messages = Queue()
+        IOLoop.current().spawn_callback(self.process_messages)
 
     ############################################################
     #
@@ -106,18 +116,24 @@ class LoomHandler(GenericHandler):
         IOLoop.current().spawn_callback(self.handle_message, json)
 
     async def handle_message(self, message: JSON):
-        message_id = message.get('message_id', None)
-        try:
-            # Remove the `action` key/value. It's only needed for dispatch, so the dispatch methods don't use it.
-            action = message.pop('action')
-        except KeyError:
-            self.on_failure(reply_to=message_id, reason="`action` field not supplied")
-        else:
+        await self.messages.put(message)
+
+    async def process_messages(self):
+        async for message in self.messages:
+            message_id = message.get('message_id', None)
             try:
-                json_result = await self.dispatcher.dispatch(message, action, message_id)
-                self.write_json(json_result)
-            except LAWUnimplementedError:
-                err_message = "invalid `action`: {}".format(action)
-                self.on_failure(reply_to=message_id, reason=err_message)
-            except LAWBadArgumentsError as e:
-                self.on_failure(reply_to=message_id, reason=e.message)
+                # Remove the `action` key/value. It's only needed for dispatch, so the dispatch methods don't use it.
+                action = message.pop('action')
+            except KeyError:
+                self.on_failure(reply_to=message_id, reason="`action` field not supplied")
+            else:
+                try:
+                    json_result = await self.dispatcher.dispatch(message, action, message_id)
+                    self.write_json(json_result)
+                except LAWUnimplementedError:
+                    err_message = "invalid `action`: {}".format(action)
+                    self.on_failure(reply_to=message_id, reason=err_message)
+                except LAWBadArgumentsError as e:
+                    self.on_failure(reply_to=message_id, reason=e.message)
+            finally:
+                self.messages.task_done()
