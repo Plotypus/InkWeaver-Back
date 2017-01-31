@@ -1,0 +1,130 @@
+{
+    "name": "Dickens's Christmas Carol",
+    "last_updated": "2017-01-23",
+    "user": 
+    {
+        "username": "cdickens",
+        "password": "password1234",
+        "name": "Charles Dickens",
+        "email": "cdickens@email.com"
+    },
+    "dispatch_list":
+    [
+        {
+            "message_id": 2,
+            "action": "create_wiki",
+            "title": "A Christmas Carol Wiki",
+            "summary": "The wiki for A Christmas Carol"
+        },
+        {
+            "message_id": 3,
+            "action": "add_segment",
+            "title": "Character",
+            "parent_id": "${2.segment_id}"
+        },
+        {
+            "message_id": 4,
+            "action": "add_page",
+            "title": "Ebenezer Scrooge",
+            "parent_id": "${2.segment_id}"
+        },
+        {
+            "message_id": 5,
+            "action": "add_heading_with_text",
+            "title": "Background",
+            "text": "SCROOGE BACKGROUND TEXT",
+            "page_id": "${4.page_id}"
+        },
+        {
+            "message_id": 6,
+            "action": "add_segment",
+            "title": "Spirit",
+            "parent_id": "${3.segment_id}"
+        },
+        {
+            "message_id": 7,
+            "action": "add_page",
+            "title": "Ghost of Christmas Past",
+            "parent_id": "${6.segment_id}"
+        },
+        {
+            "message_id": 8,
+            "action": "add_page",
+            "title": "Ghost of Christmas Present",
+            "parent_id": "${6.segment_id}"
+        },
+        {
+            "message_id": 9,
+            "action": "add_page",
+            "title": "Ghost of Christmas Yet to Come",
+            "parent_id": "${6.segment_id}"
+        },
+        {
+            "message_id": 10,
+            "action": "create_story",
+            "title": "A Christmas Carol",
+            "wiki_id": "${2.wiki_id}",
+            "summary": "A Christmas Carol is a novella by Charles Dickens about Ebenezer Scrooge, an old man, who is well-known for his miserly ways.\n On Christmas Eve, Scrooge is visited by a series of ghosts, starting with his old business partner, Jacob Marley. The three spirits which follow, the Ghosts of Christmas Past, Christmas Present and Christmas Yet to Come, show Scrooge how his mean behaviour has affected those around him. At the end of the story he is relieved to discover that there is still time for him to change and we see him transformed into a generous and kind-hearted human being."
+        },
+        {
+            "message_id": 11,
+            "action": "add_inner_subsection",
+            "title": "STAVE ONE—MARLEY'S GHOST",
+            "parent_id": "${10.section_id}"
+        },
+        {
+            "message_id": 12,
+            "action": "add_inner_subsection",
+            "title": "STAVE TWO—THE FIRST OF THE THREE SPIRITS",
+            "parent_id": "${10.section_id}"
+        },
+        {
+            "message_id": 13,
+            "action": "add_inner_subsection",
+            "title": "STAVE THREE—THE SECOND OF THE THREE SPIRITS",
+            "parent_id": "${10.section_id}"
+        },
+        {
+            "message_id": 14,
+            "action": "add_inner_subsection",
+            "title": "STAVE FOUR—THE LAST OF THE SPIRITS",
+            "parent_id": "${10.section_id}"
+        },
+        {
+            "message_id": 15,
+            "action": "add_inner_subsection",
+            "title": "STAVE FIVE—THE END OF IT",
+            "parent_id": "${10.section_id}"
+        },
+        {
+            "message_id": 16,
+            "action": "add_text_to_section",
+            "text": "STAVE ONE TEXT",
+            "section_id": "${11.section_id}"
+        },
+        {
+            "message_id": 17,
+            "action": "add_text_to_section",
+            "text": "STAVE TWO TEXT",
+            "section_id": "${12.section_id}"
+        },
+        {
+            "message_id": 18,
+            "action": "add_text_to_section",
+            "text": "STAVE THREE TEXT",
+            "section_id": "${13.section_id}"
+        },
+        {
+            "message_id": 19,
+            "action": "add_text_to_section",
+            "text": "STAVE FOUR TEXT",
+            "section_id": "${14.section_id}"
+        },
+        {
+            "message_id": 20,
+            "action": "add_text_to_section",
+            "text": "STAVE FIVE TEXT",
+            "section_id": "${15.section_id}"
+        }
+    ]
+}

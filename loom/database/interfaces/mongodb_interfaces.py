@@ -2,19 +2,52 @@ from .abstract_interface import AbstractDBInterface
 
 from loom.database.clients import *
 
+import nltk
+import re
+
 from bson.objectid import ObjectId
+from os.path import dirname, join as pathjoin
 from typing import ClassVar
+
+# Adjust the NLTK path.
+nltk.data.path.append(pathjoin(dirname(dirname(dirname(__file__))), 'nltk_data'))
+
+
+def generate_link_format_regex():
+    from loom.serialize import decode_bson_to_string
+    o = ObjectId()
+    inner_regex = r'([a-f\d]{24})'
+    pattern = re.escape(decode_bson_to_string(o)).replace(str(o), inner_regex)
+    return re.compile(pattern)
 
 
 class MongoDBInterface(AbstractDBInterface):
     def __init__(self, db_client_class: ClassVar, db_name, db_host, db_port):
         if not issubclass(db_client_class, MongoDBClient):
-            raise ValueError("invalid MongoDB client class: {}".format(db_client_class.__name__))
+            raise ValueError("invalid MongoDB client class: {}".format(db_client_class.__name__))  # pragma: no cover
         self._client = db_client_class(db_name, db_host, db_port)
+        self._link_format_regex = generate_link_format_regex()
 
     @property
-    def client(self):
+    def client(self) -> MongoDBClient:
         return self._client
+
+    @property
+    def host(self):
+        return self.client.host
+
+    @property
+    def port(self):
+        return self.client.port
+
+    @property
+    def link_format_regex(self):
+        return self._link_format_regex
+
+    # Database methods.
+
+    async def drop_database(self):
+        await self.client.drop_database()
 
     # User object methods.
 
@@ -139,8 +172,24 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return subsection_id
 
-    async def add_paragraph(self, section_id, text, index=None):
-        return await self.client.insert_paragraph(text, to_section_id=section_id, at_index=index)
+    async def add_paragraph(self, section_id, text, succeeding_paragraph_id=None):
+        # TODO: Read paragraph, get embedded links and generate list of links and update the links in the section
+        paragraph_ids = await self.client.get_paragraph_ids(section_id)
+        try:
+            if not succeeding_paragraph_id:
+                index = None
+            else:
+                index = paragraph_ids.index(succeeding_paragraph_id)
+        except ValueError:
+            # TODO: Handle case when client provides bad paragraph_id
+            raise
+        else:
+            paragraph_id = ObjectId()
+            await self.client.insert_paragraph(paragraph_id, '', to_section_id=section_id, at_index=index)
+            await self.client.insert_links_for_paragraph(paragraph_id, list(), in_section_id=section_id, at_index=index)
+            if text is not None:
+                await self.set_paragraph_text(section_id, text, paragraph_id)
+            return paragraph_id
 
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)
@@ -169,8 +218,60 @@ class MongoDBInterface(AbstractDBInterface):
         section = await self.client.get_section(section_id)
         return section['content']
 
-    async def set_paragraph_text(self, section_id, index, text):
-        return await self.client.set_paragraph_text(text, in_section_id=section_id, at_index=index)
+    async def set_paragraph_text(self, section_id, text, paragraph_id):
+        # TODO: Remove outdated links which are no longer in the paragraph.
+        sentences_and_links = await self.get_links_from_paragraph(text)
+        page_updates = {}
+        section_links = []
+        for sentence, links in sentences_and_links:
+            for link in links:
+                link_id = link['_id']
+                context = link['context']
+                context['paragraph_id'] = paragraph_id
+                context['text'] = text
+                # Update context in link.
+                await self.client.set_link_context(link_id, context)
+                # Get page ID from link and add its context to `page_updates`.
+                page_id = link['page_id']
+                link_updates = page_updates.get(page_id)
+                if link_updates is None:
+                    link_updates = {}
+                    page_updates[page_id] = link_updates
+                link_updates[link_id] = context
+                # Add link to `section_links` to update the links for the paragraph.
+                section_links.append(link_id)
+        # Apply updates to references in pages.
+        for page_id, updates in page_updates.items():
+            page = await self.client.get_page(page_id)
+            references = page['references']
+            for link_id, context in updates.items():
+                self._update_link_in_references_with_context(references, link_id, context)
+            await self.client.set_page_references(page_id, references)
+        # Update links for this paragraph for the section.
+        await self.client.set_links_in_section(section_id, section_links, paragraph_id)
+        await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
+
+    @staticmethod
+    def _update_link_in_references_with_context(references, link_id, context):
+        for reference in references:
+            if reference['link_id'] == link_id:
+                reference['context'] = context
+                break
+
+    async def get_links_from_paragraph(self, paragraph_text):
+        # TODO: Support languages other than English.
+        sentences = nltk.sent_tokenize(paragraph_text)
+        results = []
+        for sentence in sentences:
+            sentence_links = []
+            potential_link_ids = map(ObjectId, re.findall(self.link_format_regex, sentence))
+            for potential_id in potential_link_ids:
+                link = await self.get_link(potential_id)
+                if link is not None:
+                    sentence_links.append(link)
+            if sentence_links:
+                results.append( (sentence, sentence_links) )
+        return results
 
     async def delete_story(self, story_id):
         # TODO: Do this.
@@ -254,25 +355,47 @@ class MongoDBInterface(AbstractDBInterface):
         return wiki
 
     async def get_wiki_hierarchy(self, wiki_id):
+        # TODO: Build wiki link table
         wiki = await self.get_wiki(wiki_id)
         segment_id = wiki['segment_id']
         return await self.get_segment_hierarchy(segment_id)
 
     async def get_segment_hierarchy(self, segment_id):
+        # TODO: Build wiki link table
         segment = await self.client.get_segment(segment_id)
         hierarchy = {
             'title':      segment['title'],
             'segment_id': segment_id,
-            'segments':   [await self.get_segment_hierarchy(seg_id) for seg_id in segment['segments']],
-            'pages':      [await self.get_page_for_hierarchy(page_id) for page_id in segment['pages']],
+            'segments':   [],  #[await self.get_segment_hierarchy(seg_id) for seg_id in segment['segments']],
+            'pages':      [],  #[await self.get_page_for_hierarchy(page_id) for page_id in segment['pages']],
+            'links':      {},
         }
+        segments = hierarchy['segments']
+        links = hierarchy['links']
+        pages = hierarchy['pages']
+        # Iterate through the segments, popping out the `links` field and inserting them into the top-level `links`.
+        for segment_id in segment['segments']:
+            inner_segment = await self.get_segment_hierarchy(segment_id)
+            links.update(inner_segment.pop('links'))
+            segments.append(inner_segment)
+        # Iterate through the pages, pulling the links from the aliases inside of each.
+        for page_id in segment['pages']:
+            page = await self.get_page_for_hierarchy(page_id)
+            aliases = page.pop('aliases')
+            pages.append(page)
+            for name, alias_id in aliases.items():
+                alias = await self.client.get_alias(alias_id)
+                for link_id in alias['links']:
+                    links[link_id] = {'name': name, 'page_id': page_id}
         return hierarchy
 
     async def get_page_for_hierarchy(self, page_id):
+        # TODO: Build wiki link table
         page = await self.client.get_page(page_id)
         return {
             'title':   page['title'],
             'page_id': page_id,
+            'aliases': page['aliases'],
         }
 
     async def get_segment(self, segment_id):
@@ -281,6 +404,9 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def get_page(self, page_id):
         page = await self.client.get_page(page_id)
+        for reference in page['references']:
+            # Take the context from inside the reference and push it to the next level up.
+            reference.update(reference.pop('context'))
         return page
 
     async def get_heading(self, heading_id):
@@ -337,6 +463,43 @@ class MongoDBInterface(AbstractDBInterface):
         # TODO: Implement this.
         pass
 
+    # Link Object Methods
+
+    async def create_link(self, story_id: ObjectId, section_id: ObjectId, paragraph_id: ObjectId, name: str,
+                          page_id: ObjectId):
+        # Check if alias exists.
+        alias_id = await self.client.find_alias_in_page(page_id, name)
+        if alias_id is None:
+            # Create a new alias and add it to the page.
+            alias_id = await self.client.create_alias(name, page_id)
+            await self.client.insert_alias_to_page(page_id, name, alias_id)
+        # Now create a link with the alias.
+        link_id = await self.client.create_link(alias_id, page_id, story_id, section_id, paragraph_id)
+        await self.client.insert_link_to_alias(link_id, alias_id)
+        # Insert the reference into the appropriate page.
+        await self.client.insert_reference_to_page(page_id, link_id, story_id, section_id, paragraph_id)
+        return link_id
+
+    async def get_link(self, link_id):
+        return await self.client.get_link(link_id)
+
+    async def delete_link(self, link_id):
+        # TODO: Implement this.
+        pass
+
+    # Alias Object Methods
+
+    async def change_alias_name(self, alias_id: ObjectId, new_name: str):
+        # Update name in alias.
+        alias = await self.client.get_alias(alias_id)
+        page_id = alias['page_id']
+        old_name = alias['name']
+        await self.client.set_alias_name(new_name, alias_id)
+        # Update `aliases` in the appropriate page.
+        await self.client.update_alias_name_in_page(page_id, old_name, new_name)
+
+    async def get_alias(self, alias_id):
+        return await self.client.get_alias(alias_id)
 
 class MongoDBTornadoInterface(MongoDBInterface):
     def __init__(self, db_name, db_host, db_port):

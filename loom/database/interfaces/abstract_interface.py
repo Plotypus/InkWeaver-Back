@@ -5,6 +5,11 @@ from passlib.hash import pbkdf2_sha512 as hasher
 
 class AbstractDBInterface(ABC):
 
+    # Database methods.
+    @abstractmethod
+    async def drop_database(self):
+        pass
+
     # User object methods.
 
     @abstractmethod
@@ -82,7 +87,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def add_paragraph(self, section_id, text, index=None):
+    async def add_paragraph(self, section_id, text, succeeding_paragarph_id=None):
         pass
 
     @abstractmethod
@@ -102,7 +107,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def set_paragraph_text(self, section_id, index, text):
+    async def set_paragraph_text(self, section_id, text, paragraph_id):
         pass
 
     @abstractmethod
@@ -189,4 +194,28 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def delete_heading(self, heading_title, page_id):
+        pass
+
+    # Link object methods.
+
+    @abstractmethod
+    async def create_link(self, story_id, section_id, paragraph_key, name, page_id):
+        pass
+
+    @abstractmethod
+    async def get_link(self, link_id):
+        pass
+
+    @abstractmethod
+    async def delete_link(self, link_id):
+        pass
+
+    # Alias object methods.
+
+    @abstractmethod
+    async def get_alias(self, alias_id):
+        pass
+
+    @abstractmethod
+    async def change_alias_name(self, alias_id, name: str):
         pass

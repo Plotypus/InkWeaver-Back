@@ -1,60 +1,13 @@
 from .GenericHandler import *
 
 from loom.database.interfaces import AbstractDBInterface  # For type hinting.
+from loom.dispatchers import *
 
 from bson import ObjectId
-from decorator import decorator
-from inspect import signature
 from tornado.ioloop import IOLoop
 from typing import Dict
 
 JSON = Dict
-
-
-class LoomWSError(Exception):
-    def __init__(self, message=None):
-        if message is None:
-            message = "no information given"
-        self.message = message
-
-    def __str__(self):
-        return '{}: {}'.format(type(self).__name__, self.message)
-
-
-class LoomWSUnimplementedError(LoomWSError):
-    """
-    Raised when a connection attempts an unimplemented task.
-    """
-    pass
-
-
-class LoomWSBadArgumentsError(LoomWSError):
-    """
-    Raised when necessary arguments were omitted or formatted incorrectly.
-    """
-    pass
-
-
-class LoomWSNoLoginError(LoomWSError):
-    """
-    Raised when a user should be logged in but isn't.
-    """
-    pass
-
-
-############################################################
-##
-## LoomHandler decorators
-##
-############################################################
-
-
-@decorator
-def requires_login(func, *args, **kwargs):
-    self = args[0]
-    if self.user_id is None:
-        raise LoomWSNoLoginError
-    return func(*args, **kwargs)
 
 
 class LoomHandler(GenericHandler):
@@ -66,6 +19,8 @@ class LoomHandler(GenericHandler):
     ############################################################
 
     def open(self):
+        # TODO: Remove this.
+        super().open()
         session_id = self._get_secure_session_cookie()
         user_id = self._get_user_id_for_session_id(session_id)
         if user_id is None:
@@ -73,9 +28,10 @@ class LoomHandler(GenericHandler):
             # TODO: Clean up session
             self.close()
         self._user_id = user_id
-        super().open()
         # By default, small messages are coalesced. This can cause delay. We don't want delay.
         self.set_nodelay(True)
+        # Instantiate the dispatcher.
+        self._dispatcher = LAWProtocolDispatcher(self.db_interface, self.user_id)
 
     def on_failure(self, reply_to=None, reason=None, **fields):
         response = {
@@ -95,8 +51,16 @@ class LoomHandler(GenericHandler):
         self.write_message(json_string)
 
     @property
+    def dispatcher(self) -> LAWProtocolDispatcher:
+        return self._dispatcher
+
+    @property
     def db_interface(self) -> AbstractDBInterface:
-        return self.settings['db_interface']
+        try:
+            return self._db_interface
+        except AttributeError:
+            self._db_interface = self.settings['db_interface']
+            return self._db_interface
 
     @property
     def user_id(self) -> ObjectId:
@@ -112,8 +76,10 @@ class LoomHandler(GenericHandler):
     def _get_secure_session_cookie(self):
         cookie_name = self.settings['session_cookie_name']
         # Make sure users cannot use cookies for more than their session
-        cookie = self.get_secure_cookie(cookie_name, max_age_days=0)  # Might need to be set to 1?
-        return cookie
+        cookie = self.get_secure_cookie(cookie_name, max_age_days=0.5)
+        # Cookies are retrieved as a byte-string, we need to decode it.
+        decoded_cookie = cookie.decode('UTF-8')
+        return decoded_cookie
 
     ############################################################
     #
@@ -146,298 +112,12 @@ class LoomHandler(GenericHandler):
             action = message.pop('action')
         except KeyError:
             self.on_failure(reply_to=message_id, reason="`action` field not supplied")
-            return
-        try:
-            await self.dispatch(message, action, message_id)
-        except LoomWSUnimplementedError:
-            err_message = "invalid `action`: {}".format(action)
-            self.on_failure(reply_to=message_id, reason=err_message)
-        except LoomWSBadArgumentsError as e:
-            self.on_failure(reply_to=message_id, reason=e.message)
-
-    async def dispatch(self, message: JSON, action: str, message_id=None):
-        try:
-            func = self.DISPATCH[action]
+        else:
             try:
-                return await func(self, **message)
-            except TypeError:
-                # Most likely, the wrong arguments were given.
-                # We do some introspection to give back useful error messages.
-                sig = signature(func)
-                # The first assumption is that not all of the necessary arguments were given, so check for that.
-                missing_fields = []
-                print("params: {}".format(signature(func).parameters.values()))
-                for param in filter(lambda p: p.name != 'self' and p.kind == p.POSITIONAL_OR_KEYWORD and p.default == p.empty, sig.parameters.values()):
-                    if param.name not in message:
-                        missing_fields.append(param.name)
-                if missing_fields:
-                    # So something *was* missing!
-                    message = "request of type '{}' missing fields: {}".format(action, missing_fields)
-                    raise LoomWSBadArgumentsError(message)
-                else:
-                    # Something else has gone wrong...
-                    # Let's check if too many arguments were given.
-                    num_required_arguments = len(sig.parameters) - 1  # We subtract 1 for `self`.
-                    num_given_arguments = len(message)
-                    if num_required_arguments != num_given_arguments:
-                        # Yep, they gave the wrong number. Let them know.
-                        # We don't check them all because somebody could create a large JSON with an absurd number of
-                        # arguments and we'd spend cycles counting them all... easy DOS.
-                        raise LoomWSBadArgumentsError("too many fields given for request of type '{}'".format(action))
-                    else:
-                        # It was something else entirely.
-                        raise
-            except LoomWSNoLoginError:
-                self.on_failure(message_id, "not logged in")
-            except LoomWSError as e:
-                self.on_failure(message_id, str(e))
-            except Exception as e:
-                # General exceptions store messages as the first argument in their `.args` property.
-                message = type(e).__name__
-                if e.args:
-                    message += ": {}".format(e.args[0])
-                self.on_failure(message_id, message)
-        except KeyError:
-            # The method is not implemented.
-            raise LoomWSUnimplementedError
-
-    ############################################################
-    #
-    # Protocol implementation
-    #
-    ############################################################
-
-    ## User Information
-
-    @requires_login
-    async def get_user_preferences(self, message_id):
-        preferences = await self.db_interface.get_user_preferences(self.user_id)
-        self.write_json(preferences, with_reply_id=message_id)
-
-    @requires_login
-    async def get_user_stories(self, message_id):
-        stories = await self.db_interface.get_user_stories(self.user_id)
-        message = {'stories': stories}
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def get_user_wikis(self, message_id):
-        wikis = await self.db_interface.get_user_wikis(self.user_id)
-        message = {'wikis': wikis}
-        self.write_json(message, with_reply_id=message_id)
-
-    ## Stories
-
-    @requires_login
-    async def create_story(self, message_id, title, wiki_id, summary):
-        story_id = await self.db_interface.create_story(self.user_id, title, summary, wiki_id)
-        story = await self.db_interface.get_story(story_id)
-        message = {
-            'story_title':  story['title'],
-            'section_id':   story['section_id'],
-            'wiki_id':      story['wiki_id'],
-            'users':        story['users'],
-            'summary':      story['summary'],
-        }
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def add_preceding_subsection(self, message_id, title, parent_id, index=None):
-        subsection_id = await self.db_interface.add_preceding_subsection(title, parent_id, index)
-        message = {'section_id': subsection_id}
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def add_inner_subsection(self, message_id, title, parent_id, index=None):
-        subsection_id = await self.db_interface.add_inner_subsection(title, parent_id, index)
-        message = {'section_id': subsection_id}
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def add_succeeding_subsection(self, message_id, title, parent_id, index=None):
-        subsection_id = await self.db_interface.add_succeeding_subsection(title, parent_id, index)
-        message = {'section_id': subsection_id}
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def add_paragraph(self, message_id, section_id, text, index=None):
-        # TODO: Decide whether or not to add more to response
-        await self.db_interface.add_paragraph(section_id, text, index)
-        self.write_json({}, with_reply_id=message_id)
-
-    @requires_login
-    async def edit_paragraph(self, message_id, section_id, update, index):
-        # TODO: Decide whether or not to add more to response
-        if update['update_type'] == 'replace':
-            text = update['text']
-            await self.db_interface.set_paragraph_text(section_id, index=index, text=text)
-            self.write_json({}, with_reply_id=message_id)
-        else:
-            raise LoomWSUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
-
-    @requires_login
-    async def get_story_information(self, message_id, story_id):
-        story = await self.db_interface.get_story(story_id)
-        message = {
-            'story_title':  story['title'],
-            'section_id':   story['section_id'],
-            'wiki_id':      story['wiki_id'],
-            'users':        story['users'],
-            'summary':      story['summary'],
-        }
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def get_story_hierarchy(self, message_id, story_id):
-        message = {
-            'hierarchy': await self.db_interface.get_story_hierarchy(story_id)
-        }
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def get_section_hierarchy(self, message_id, section_id):
-        message = {
-            'hierarchy': await self.db_interface.get_section_hierarchy(section_id)
-        }
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def get_section_content(self, message_id, section_id):
-        paragraphs = await self.db_interface.get_section_content(section_id)
-        content = [{'text': paragraph['text']} for paragraph in paragraphs]
-        self.write_json({'content': content}, with_reply_id=message_id)
-
-    ## Wikis
-
-    @requires_login
-    async def create_wiki(self, message_id, title, summary):
-        wiki_id = await self.db_interface.create_wiki(self.user_id, title, summary)
-        wiki = await self.db_interface.get_wiki(wiki_id)
-        message = {
-            'wiki_title':   wiki['title'],
-            'segment_id':   wiki['segment_id'],
-            'users':        wiki['users'],
-            'summary':      wiki['summary'],
-        }
-        self.write_json(message, with_reply_id=message_id)
-        pass
-
-    @requires_login
-    async def add_segment(self, message_id, title, parent_id):
-        segment_id = await self.db_interface.add_child_segment(title, parent_id)
-        self.write_json({'segment_id': segment_id}, with_reply_id=message_id)
-
-    @requires_login
-    async def add_template_heading(self, message_id, title, segment_id):
-        await self.db_interface.add_template_heading(title, segment_id)
-        # TODO: Decide whether or not to add more to response
-        self.write_json({}, with_reply_id=message_id)
-
-    @requires_login
-    async def add_page(self, message_id, title, parent_id):
-        page_id = await self.db_interface.create_page(title, parent_id)
-        self.write_json({'page_id': page_id}, with_reply_id=message_id)
-
-    @requires_login
-    async def add_heading(self, message_id, title, page_id, index=None):
-        await self.db_interface.add_heading(title, page_id, index)
-        # TODO: Decide whether or not to add more to response
-        self.write_json({}, with_reply_id=message_id)
-
-    @requires_login
-    async def edit_segment(self, message_id, segment_id, update):
-        # TODO: Decide whether or not to add more to response
-        if update['update_type'] == 'set_title':
-            title = update['title']
-            await self.db_interface.set_segment_title(title, segment_id)
-            self.write_json({}, with_reply_id=message_id)
-        else:
-            raise LoomWSUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
-
-    @requires_login
-    async def edit_page(self, message_id, page_id, update):
-        # TODO: Implement this.
-        pass
-
-    @requires_login
-    async def edit_heading(self, message_id, page_id, heading_title, update):
-        # TODO: Decide whether or not to add more to response
-        if update['update_type'] == 'set_title':
-            title = update['title']
-            await self.db_interface.set_heading_title(old_title=heading_title, new_title=title, page_id=page_id)
-            self.write_json({}, with_reply_id=message_id)
-        elif update['update_type'] == 'set_text':
-            text = update['text']
-            await self.db_interface.set_heading_text(heading_title, text, page_id)
-            self.write_json({}, with_reply_id=message_id)
-        else:
-            raise LoomWSUnimplementedError("invalid `update_type`: {}".format(update('update_type')))
-
-    @requires_login
-    async def get_wiki_information(self, message_id, wiki_id):
-        wiki = await self.db_interface.get_wiki(wiki_id)
-        message = {
-            'wiki_title':   wiki['title'],
-            'segment_id':   wiki['segment_id'],
-            'users':        wiki['users'],
-            'summary':      wiki['summary'],
-        }
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def get_wiki_hierarchy(self, message_id, wiki_id):
-        message = {
-            'hierarchy': await self.db_interface.get_wiki_hierarchy(wiki_id)
-        }
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def get_wiki_segment_hierarchy(self, message_id, segment_id):
-        message = {
-            'hierarchy': await self.db_interface.get_segment_hierarchy(segment_id)
-        }
-        self.write_json(message, with_reply_id=message_id)
-
-    @requires_login
-    async def get_wiki_page(self, message_id, page_id):
-        page = await self.db_interface.get_page(page_id)
-        message = {
-            'title':        page['title'],
-            'aliases':      list(),  # TODO: Change when aliases are implemented.
-            'references':   list(),  # TODO: Change when references are implemented.
-            'headings':     page['headings'],
-        }
-        self.write_json(message, with_reply_id=message_id)
-
-    DISPATCH = {
-        # User Information
-        'get_user_preferences':       get_user_preferences,
-        'get_user_stories':           get_user_stories,
-        'get_user_wikis':             get_user_wikis,
-
-        # Stories
-        'create_story':               create_story,
-        'add_preceding_subsection':   add_preceding_subsection,
-        'add_inner_subsection':       add_inner_subsection,
-        'add_succeeding_subsection':  add_succeeding_subsection,
-        'add_paragraph':              add_paragraph,
-        'edit_paragraph':             edit_paragraph,
-        'get_story_information':      get_story_information,
-        'get_story_hierarchy':        get_story_hierarchy,
-        'get_section_hierarchy':      get_section_hierarchy,
-        'get_section_content':        get_section_content,
-
-        # Wikis
-        'create_wiki':                create_wiki,
-        'add_segment':                add_segment,
-        'add_template_heading':       add_template_heading,
-        'add_page':                   add_page,
-        'add_heading':                add_heading,
-        'edit_segment':               edit_segment,
-        'edit_page':                  edit_page,
-        'edit_heading':               edit_heading,
-        'get_wiki_information':       get_wiki_information,
-        'get_wiki_hierarchy':         get_wiki_hierarchy,
-        'get_wiki_segment_hierarchy': get_wiki_segment_hierarchy,
-        'get_wiki_page':              get_wiki_page,
-    }
+                json_result = await self.dispatcher.dispatch(message, action, message_id)
+                self.write_json(json_result)
+            except LAWUnimplementedError:
+                err_message = "invalid `action`: {}".format(action)
+                self.on_failure(reply_to=message_id, reason=err_message)
+            except LAWBadArgumentsError as e:
+                self.on_failure(reply_to=message_id, reason=e.message)

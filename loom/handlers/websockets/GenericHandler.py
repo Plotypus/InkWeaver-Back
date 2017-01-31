@@ -11,11 +11,11 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
     """
     @classmethod
     def encode_json(cls, data):
-        return serialize.to_bson(data)
+        return serialize.decode_bson_to_string(data)
 
     @classmethod
     def decode_json(cls, data):
-        return serialize.from_bson(data)
+        return serialize.encode_string_to_bson(data)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -25,12 +25,18 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
     def uuid(self):
         return self._uuid
 
+    def __repr__(self):
+        return '<{} {}>'.format(type(self).__name__, self.uuid)
+
+    def write_console_message(self, message):
+        print("{} {}".format(repr(self), message))
+
     def open(self):
         """
         Accept an incoming WS connection.
         :return:
         """
-        print("{} opened".format(self.uuid))
+        self.write_console_message('opened')
 
     def on_message(self, message):
         """
@@ -38,14 +44,14 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
         :param message:
         :return:
         """
-        print("{} received: {}".format(self.uuid, repr(message)))
+        self.write_console_message('received: {}'.format(message))
 
     def on_close(self):
         """
         Handle WS termination.
         :return:
         """
-        print("{} closed".format(self.uuid))
+        self.write_console_message('closed')
 
     def check_origin(self, origin):
         """

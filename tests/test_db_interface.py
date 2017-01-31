@@ -1,17 +1,27 @@
 from loom.database.interfaces import MongoDBAsyncioInterface
+from loom.serialize import decode_bson_to_string
 
 import asyncio
 import pytest
 
+TEST_DB_NAME = 'test'
+TEST_DB_HOST = 'localhost'
+TEST_DB_PORT = 27017
+
 
 class TestDBInterface:
     def setup(self):
-        self.interface = MongoDBAsyncioInterface('test', 'localhost', 27017)
+        self.interface = MongoDBAsyncioInterface(TEST_DB_NAME, TEST_DB_HOST, TEST_DB_PORT)
 
     def teardown(self):
         event_loop = asyncio.get_event_loop()
-        event_loop.run_until_complete(self.interface.client.drop_database())
+        event_loop.run_until_complete(self.interface.drop_database())
         event_loop.close()
+
+    @pytest.mark.asyncio
+    async def test_interface_meta(self):
+        assert self.interface.host == TEST_DB_HOST
+        assert self.interface.port == TEST_DB_PORT
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user', [
@@ -31,6 +41,37 @@ class TestDBInterface:
         assert prefs['email'] == user['email']
         assert await self.interface.get_user_stories(inserted_id) == list()
         assert await self.interface.get_user_wikis(inserted_id) == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,new_password,new_user_name,new_email,new_bio,new_avatar', [
+        (
+            {
+                'username': 'tmctest',
+                'password': 'my gr3at p4ssw0rd',
+                'name':     'Testy McTesterton',
+                'email':    'tmctest@te.st',
+            },
+            'my n3w p4ssw0rd!',
+            'Testesson T McTesterton',
+            'tmctest123@te.st',
+            'I like writing stories. Writing is fun.',
+            'avatar placeholder',
+        )
+    ])
+    async def test_user_updates(self, user, new_password, new_user_name, new_email, new_bio, new_avatar):
+        user_id = await self.interface.create_user(**user)
+        # Set new password.
+        await self.interface.set_user_password(user_id, new_password)
+        assert await self.interface.password_is_valid_for_username(user['username'], new_password)
+        # Set new preferences.
+        await self.interface.set_user_name(user_id, new_user_name)
+        await self.interface.set_user_email(user_id, new_email)
+        await self.interface.set_user_bio(user_id, new_bio)
+        await self.interface.set_user_avatar(user_id, new_avatar)
+        preferences = await self.interface.get_user_preferences(user_id)
+        assert preferences['email'] == new_email
+        assert preferences['bio'] == new_bio
+        assert preferences['avatar'] == new_avatar
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user', [
@@ -333,9 +374,9 @@ class TestDBInterface:
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
         section_id = await self.interface.add_inner_subsection(section_title, story_section_id)
-        await self.interface.add_paragraph(section_id, second_text)
-        await self.interface.add_paragraph(section_id, first_text, 0)
-        await self.interface.add_paragraph(section_id, third_text, 2)
+        second_id = await self.interface.add_paragraph(section_id, second_text)
+        await self.interface.add_paragraph(section_id, first_text, second_id)
+        await self.interface.add_paragraph(section_id, third_text, None)
         content = await self.interface.get_section_content(section_id)
         assert len(content) == 3
         expected_text_order = [first_text, second_text, third_text]
@@ -363,11 +404,11 @@ class TestDBInterface:
         story = await self.interface.get_story(story_id)
         story_section_id = story['section_id']
         section_id = await self.interface.add_inner_subsection(section_title, story_section_id)
-        await self.interface.add_paragraph(section_id, first_paragraph)
-        await self.interface.add_paragraph(section_id, second_paragraph)
+        first_paragraph_id = await self.interface.add_paragraph(section_id, first_paragraph)
+        second_paragraph_id = await self.interface.add_paragraph(section_id, second_paragraph)
         replacement_texts = ['Text 1', 'Text 2']
-        await self.interface.set_paragraph_text(section_id, 0, replacement_texts[0])
-        await self.interface.set_paragraph_text(section_id, 1, replacement_texts[1])
+        await self.interface.set_paragraph_text(section_id, replacement_texts[0], first_paragraph_id)
+        await self.interface.set_paragraph_text(section_id, replacement_texts[1], second_paragraph_id)
         content = await self.interface.get_section_content(section_id)
         text = [paragraph['text'] for paragraph in content]
         assert text == replacement_texts
@@ -418,6 +459,7 @@ class TestDBInterface:
         assert hierarchy['segment_id'] == segment_id
         assert hierarchy['segments'] == list()
         assert hierarchy['pages'] == list()
+        assert hierarchy['links'] == dict()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user,wiki', [
@@ -441,6 +483,7 @@ class TestDBInterface:
         segment_hierarchy = await self.interface.get_segment_hierarchy(segment_id)
         assert wiki_hierarchy == segment_hierarchy
         assert wiki_hierarchy['title'] == db_wiki['title']
+        assert wiki_hierarchy['links'] == dict()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user,wiki,segment_title', [
@@ -591,4 +634,87 @@ class TestDBInterface:
         db_headings = page['headings']
         assert db_headings == headings
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('user,story,section_title,paragraph,wiki,segment_name,page_name,link_name,new_link_name', [
+        (
+            {
+                'username': 'tmctest',
+                'password': 'my gr3at p4ssw0rd',
+                'name':     'Testy McTesterton',
+                'email':    'tmctest@te.st',
+            },
+            {
+                'title':   'test-story',
+                'summary': 'This is a story for testing',
+                'wiki_id': 'placeholder for wiki id',
+            },
+            'Chapter One', 'Once upon a time, there was a little test.',
+            {
+                'title':   'test-wiki',
+                'summary': 'This is a wiki for testing',
+            },
+            'Character', 'John Smith', 'Johnny Boy', 'Smithy'
+        )
+    ])
+    async def test_links(self, user, story, section_title, paragraph, wiki, segment_name, page_name, link_name,
+                         new_link_name):
+        user_id = await self.interface.create_user(**user)
+        story_id = await self.interface.create_story(user_id, **story)
+        db_story = await self.interface.get_story(story_id)
+        story_section_id = db_story['section_id']
+        section_id = await self.interface.add_inner_subsection(section_title, story_section_id, index=None)
+        paragraph_id = await self.interface.add_paragraph(section_id, paragraph, succeeding_paragraph_id=None)
 
+        wiki_id = await self.interface.create_wiki(user_id, **wiki)
+        db_wiki = await self.interface.get_wiki(wiki_id)
+        wiki_segment_id = db_wiki['segment_id']
+        segment_id = await self.interface.add_child_segment(segment_name, wiki_segment_id)
+        page_id = await self.interface.create_page(page_name, segment_id)
+
+        context = {
+            'story_id': story_id,
+            'section_id': section_id,
+            'paragraph_id': paragraph_id,
+            'text': None,
+        }
+        link_id = await self.interface.create_link(story_id, section_id, paragraph_id, link_name, page_id)
+        assert link_id is not None
+        link = await self.interface.get_link(link_id)
+        assert link['context'] == context
+        assert link['alias_id'] is not None
+        assert link['page_id'] == page_id
+        alias_id = link['alias_id']
+        alias = await self.interface.get_alias(alias_id)
+        assert alias['name'] == link_name
+        assert alias['page_id'] == page_id
+        assert len(alias['links']) == 1
+        assert link_id in alias['links']
+
+        page = await self.interface.get_page(page_id)
+        assert len(page['aliases']) == 1
+        assert page['aliases'][link_name] == alias_id
+        hierarchy = await self.interface.get_wiki_hierarchy(wiki_id)
+        assert len(hierarchy['links']) == 1
+        link_info = {
+            'name': link_name,
+            'page_id': page_id,
+        }
+        assert hierarchy['links'][link_id] == link_info
+
+        # Test alias name change.
+        await self.interface.change_alias_name(alias_id, new_link_name)
+        alias = await self.interface.get_alias(alias_id)
+        assert alias['name'] == new_link_name
+
+        # Insert link into paragraph text.
+        text = "Four score and seven {} ago...".format(decode_bson_to_string(link_id))
+        paragraph_id = await self.interface.add_paragraph(section_id, text, succeeding_paragraph_id=None)
+        page = await self.interface.get_page(page_id)
+        reference = {
+            'link_id':      link_id,
+            'story_id':     story_id,
+            'section_id':   section_id,
+            'paragraph_id': paragraph_id,
+            'text':         text,
+        }
+        assert reference in page['references']

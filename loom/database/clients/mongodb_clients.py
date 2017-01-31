@@ -1,7 +1,7 @@
 from bson.objectid import ObjectId
 from motor.core import AgnosticClient, AgnosticDatabase, AgnosticCollection
 from pymongo.results import UpdateResult
-from typing import Dict, List
+from typing import Any, Dict, List
 
 
 class ClientError(Exception):
@@ -79,19 +79,28 @@ class MongoDBClient:
     def pages(self) -> AgnosticCollection:
         return self.database.pages
 
+    @property
+    def links(self) -> AgnosticCollection:
+        return self.database.links
+
+    @property
+    def aliases(self) -> AgnosticCollection:
+        return self.database.aliases
+
     async def drop_database(self):
         await self.client.drop_database(self.database)
 
     @staticmethod
     def assert_update_one_was_successful(update_result: UpdateResult):
         if update_result.matched_count == 0:
-            raise NoMatchError
+            raise NoMatchError                  # pragma: no cover
         if update_result.matched_count > 1:
-            raise ExtraMatchesError
-        if update_result.modified_count == 0:
-            raise NoUpdateError
-        if update_result.modified_count > 1:
-            raise ExtraUpdatesError
+            raise ExtraMatchesError             # pragma: no cover
+
+    @staticmethod
+    def update_dict_if_value_is_not_none(dictionary: Dict, field: str, value: Any):
+        if value is not None:
+            dictionary[field] = value
 
     ###########################################################################
     #
@@ -107,29 +116,6 @@ class MongoDBClient:
                           bio: str,
                           avatar=None,
                           _id=None) -> ObjectId:
-        """Inserts a new user to the users collection.
-
-        Adds a new user to the `users` collection. Stories and wikis are
-        initialized to empty lists. Unless `_id` is provided, a random BSON
-        ObjectId will be assigned to `_id`.
-
-        Args:
-            username: The username of the user.
-            password_hash: The hash of the user's password.
-            name: The full name of the user.
-            email: The email address of the user.
-            bio: A short description of the user.
-            avatar (str): Base-64 encoded image user chooses to identify
-                themselves with.
-            _id (ObjectId): `_id` is optional, but if provided, will create a
-                user with the provided ObjectId.
-
-        Returns:
-            The ObjectId that is associated with the newly created user. If
-            `_id` was provided, `_id` will be returned. Otherwise, a randomly
-            generated BSON ObjectId will be returned.
-
-        """
         # TODO: Implement statistics.
         user = {
             'username':      username,
@@ -148,11 +134,6 @@ class MongoDBClient:
         return result.inserted_id
 
     async def get_password_hash_for_username(self, username: str) -> str:
-        """
-
-        :param user_id:
-        :return:
-        """
         user = await self.users.find_one(
             filter={'username': username},
             projection={
@@ -219,20 +200,6 @@ class MongoDBClient:
         self.assert_update_one_was_successful(update_result)
 
     async def get_user_preferences(self, user_id: ObjectId) -> Dict:
-        """Grabs the preferences for the provided user.
-
-        Finds the user in the database and extracts the fields specified by
-        The LAW Protocol.
-
-        Args:
-            user_id: BSON ObjectId of user to query for.
-
-        Returns:
-            A filtered document of the user. According to the LAW Protocol,
-            returns `username`, `name`, `email`, `bio`, and `avatar` of the
-            user.
-
-        """
         result = await self.users.find_one(
             filter={'_id': user_id},
             projection={
@@ -247,16 +214,6 @@ class MongoDBClient:
         return result
 
     async def get_user_story_ids(self, user_id: ObjectId) -> List[ObjectId]:
-        """Grabs the ObjectIds of the user's stories.
-
-        Args:
-            user_id: BSON ObjectId of user to query for.
-
-        Returns:
-            A list of the BSON ObjectIds of the `stories` that the user has
-            access to.
-
-        """
         result = await self.users.find_one(
             filter={'_id': user_id},
             projection={
@@ -267,16 +224,6 @@ class MongoDBClient:
         return result['stories']
 
     async def get_user_wiki_ids(self, user_id: ObjectId) -> List[ObjectId]:
-        """Grabs the ObjectIds of the user's wikis.
-
-        Args:
-            user_id: BSON ObjectId of user to query for.
-
-        Returns:
-            A list of the BSON ObjectIds of the `wikis` that the user has
-            access to.
-
-        """
         result = await self.users.find_one(
             filter={'_id': user_id},
             projection={
@@ -299,38 +246,6 @@ class MongoDBClient:
                            summary: str,
                            section_id: ObjectId,
                            _id=None) -> ObjectId:
-        """Inserts a new story to the stories collection.
-
-        Adds a new story to the stories collection. A section for the story
-        should be created before calling this function, in which the
-        `section_id` is specified. `_id` is optional and if provided will
-        create the story with the given `_id`, rather than the generated BSON
-        ObjectId. Currently, statistics and settings are unimplemented.
-
-        Args:
-            title: The title of the story.
-            wiki_id: The unique ID of the associated wiki.
-            user_description: A dict containing information of the story's
-                owner. A user description contains a `user_id`, `name`, and
-                `access_level`.
-
-                `user_description` args:
-                    user_id (ObjectId): The unique ID of the user.
-                    name (str): The name of the user.
-                    access_level (str): A description of the user's
-                        privileges in the story.
-            summary: A brief summary of the story.
-            section_id: The unique ID of the story's recursive section
-                representation.
-            _id (ObjectId): `_id` is optional, but if provided will create a
-                story with the provided ObjectId.
-
-        Returns:
-            The ObjectId that is associated with the newly created story. If
-            `_id` was provided, `_id` will be returned. Otherwise, a randomly
-            generated BSON ObjectId will be returned.
-
-        """
         # TODO: Implement statistics and settings.
         story = {
             'title':      title,
@@ -347,28 +262,6 @@ class MongoDBClient:
         return result.inserted_id
 
     async def create_section(self, title: str, _id=None) -> ObjectId:
-        """Inserts a new section to the sections collection.
-
-        Adds a new section to the sections collection. Sections are nodes in a
-        tree that represent a story. Each section can contain text (content) and
-        also sub-sections. As a leaf node, sections can be thought of as a
-        chapter. Pre-sections can be used to represent a prologue and
-        post-sections an epilogue. `_id` is optional, and if provided will add a
-        section to the collection with the given `_id`, otherwise a BSON
-        ObjectId will be generated in its place. Currently, statistics are not
-        implemented.
-
-        Args:
-            title: The title of the section.
-            _id (ObjectId): `_id` is optional, but if provided will create a
-                section with the provided ObjectId.
-
-        Returns:
-            The ObjectId that is associated with the newly created section. If
-            `_id` was provided, `_id`, will be returned. Otherwise, the `_id`
-            associated with the section will be returned.
-
-        """
         # TODO: Implement statistics.
         section = {
             'title':                  title,
@@ -377,6 +270,7 @@ class MongoDBClient:
             'inner_subsections':      list(),
             'succeeding_subsections': list(),
             'statistics':             None,
+            'links':                  list(),  # links is a list of lists of links (runs parallel to paragraphs)
         }
         if _id is not None:
             section['_id'] = _id
@@ -428,8 +322,12 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def insert_paragraph(self, text: str, to_section_id, at_index=None):
-        inner_parameters = self._insertion_parameters({'text': text, 'statistics': None}, at_index)
+    async def insert_paragraph(self, paragraph_id: ObjectId, text: str, to_section_id, at_index=None):
+        inner_parameters = self._insertion_parameters({
+            '_id':        paragraph_id,
+            'text':       text,
+            'statistics': None,
+        }, at_index)
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': to_section_id},
             update={
@@ -440,46 +338,37 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def set_paragraph_text(self, text: str, in_section_id: ObjectId, at_index: int):
+    async def set_paragraph_text(self, paragraph_id: ObjectId, text: str, in_section_id: ObjectId):
         update_result: UpdateResult = await self.sections.update_one(
-            filter={'_id': in_section_id},
+            # For filtering documents in an array, we use the name of the array field
+            # combined with the field in the document we want to filter with. In this case,
+            # we want to filter for the `_id` in the `content` array.
+            filter={'_id': in_section_id, 'content._id': paragraph_id},
             update={
                 '$set': {
-                    # Look in the content array of the matching section. Find the object by index using `.index`.
-                    # Set the `.text` field to `paragraph`.
-                    'content.{}.text'.format(at_index): text
+                    # The `$` acts as a placeholder to update the first element that
+                    # matches the query condition.
+                    'content.$.text': text
                 }
             }
         )
         self.assert_update_one_was_successful(update_result)
 
     async def get_story(self, story_id: ObjectId) -> Dict:
-        """Grabs the information associated with the provided story.
-
-        Finds the story in the database and returns the document.
-
-        Args:
-            story_id: BSON ObjectId of story to query for.
-
-        Returns:
-            A copy of the document of the story.
-
-        """
         result = await self.stories.find_one({'_id': story_id})
         return result
 
     async def get_section(self, section_id: ObjectId) -> Dict:
-        # TODO: Add docstring
-        """
-
-        Args:
-            section_id:
-
-        Returns:
-
-        """
         result = await self.sections.find_one({'_id': section_id})
         return result
+
+    async def get_paragraph_ids(self, section_id: ObjectId):
+        pipeline = [{'$unwind': '$content'}, {'$match': {'_id': section_id}},
+                    {'$project': {'content._id': 1, '_id': 0}}]
+        results = []
+        async for doc in self.sections.aggregate(pipeline):
+            results.append(doc['content']['_id'])
+        return results
 
     ###########################################################################
     #
@@ -488,37 +377,6 @@ class MongoDBClient:
     ###########################################################################
 
     async def create_wiki(self, title: str, user_description, summary: str, segment_id: ObjectId, _id=None) -> ObjectId:
-        """Inserts a new wiki to the wikis collection.
-
-        Adds a new wiki to the wikis collection. A segment for the wiki should
-        be created before calling this function, in which the `segment_id` is
-        specified. `_id` is optional and if provided will create the wiki with
-        the given `_id`, rather than the generated BSON ObjectId. Currently,
-        statistics and settings are unimplemented.
-
-        Args:
-            title: The title of the wiki.
-            user_description: A dict containing the information of the wiki's
-                owner. A user description contains a `user_id`, `name`, and
-                `access_level`.
-
-                `user_description` args:
-                    user_id (ObjectId): The unique ID of the user.
-                    name (str): The name of the user.
-                    access_level (str): A description of the user's privileges
-                    in the story.
-            summary: A brief summary of the the wiki.
-            segment_id: The unique ID of the wiki's recursive segment
-                representation.
-            _id (ObjectId): `_id` is optional, but if provided will create a
-                wiki with the provided ObjectId.
-
-        Returns:
-            The ObjectId that is associated with the newly created wiki. If
-            `_id` was provided, `_id` will be returned. Otherwise, a randomly
-            generated BSON ObjectId will be returned.
-
-        """
         # TODO: Implement statistics and settings.
         wiki = {
             'title':      title,
@@ -534,30 +392,7 @@ class MongoDBClient:
         return result.inserted_id
 
     async def create_segment(self, title: str, _id=None) -> ObjectId:
-        """Inserts a new segment to the segments collection.
-
-        Adds a new segment to the segments collection. Segments are nodes in a
-        tree that represent a wiki. Each segment can contain sub-segments and
-        pages. Segments can be thought of as non-leaf nodes in the tree, where
-        pages are the leaf nodes. `template_headings` track headings that are
-        added to pages when pages are first created. Note, `template_headings`
-        only apply to pages directly under this segment. `_id` is optional, and
-        if provided will add a segment to the collection with the given `_id`,
-        otherwise a BSON ObjectId will be generated in its place. Currently,
-        statistics are not implemented.
-
-        Args:
-            title: The title of the wiki segment.
-            _id (ObjectId): `_id` is optional, but if provided will create a
-                segment with the provided ObjectId.
-
-        Returns:
-            The ObjectId that is associated with the newly created segment. If
-            `_id` was provided, `_id`, will be returned. Otherwise, the `_id`
-            associated with the segment will be returned.
-
-        """
-        # TODO: Implement statistics. 
+        # TODO: Implement statistics.
         segment = {
             'title':             title,
             'segments':          list(),
@@ -571,34 +406,12 @@ class MongoDBClient:
         return result.inserted_id
 
     async def create_page(self, title: str, template_headings=None, _id=None) -> ObjectId:
-        """Inserts a new page to the pages collection.
-
-        Adds a new page to the pages collection. Pages are leaf nodes in a tree
-        that represent a wiki. Each page contains `headings`, which hold the
-        content for a wiki page. `_id` is optional, and if provided will add a
-        page to the collection with the given `_id`, otherwise a BSON ObjectId
-        will be generated in its place. Currently, references and aliases are
-        not implemented.
-
-        Args:
-            title: The title of the wiki page.
-            template_headings (List[Dict]): The list of template headings to
-                inherit.
-            _id (ObjectId): `_id` is optional, but if provided will create a
-                page with the provided ObjectId.
-
-        Returns:
-            The ObjectId that is associated with the newly created page. If
-            `_id` was provided, `_id`, will be returned. Otherwise, the `_id`
-            associated with the page will be returned.
-
-        """
-        # TODO: Implement references and aliases.
+        # TODO: Consider revising references structure as a mapping from link IDs to contexts.
         page = {
             'title':      title,
             'headings':   list() if template_headings is None else template_headings,
-            'references': None,
-            'aliases':    None,
+            'references': list(),  # list[Reference] (see Loom's wiki for more detail)
+            'aliases':    dict(),
         }
         if _id is not None:
             page['_id'] = _id
@@ -703,48 +516,26 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_page_references(self, page_id: ObjectId, references: List):
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$set': {
+                    'references': references,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def get_wiki(self, wiki_id: ObjectId) -> Dict:
-        """Grabs the information associated with the provided wiki.
-
-        Finds the wiki in the database and returns the document.
-
-        Args:
-            wiki_id: BSON ObjectId of wiki to query for.
-
-        Returns:
-            A copy of the document of the wiki.
-
-        """
         result = await self.wikis.find_one({'_id': wiki_id})
         return result
 
     async def get_segment(self, segment_id: ObjectId) -> Dict:
-        """Grabs the information associated with the provided segment.
-
-        Finds the segment in the database and returns the document.
-
-        Args:
-            segment_id: BSON ObjectId of segment to query for.
-
-        Returns:
-            A copy of the document of the segment.
-
-        """
         result = await self.segments.find_one({'_id': segment_id})
         return result
 
     async def get_page(self, page_id: ObjectId) -> Dict:
-        """Grabs the information associated with the provided page.
-
-        Finds the page in the database and returns the document.
-
-        Args:
-            page_id: BSON ObjectId of page to query for.
-
-        Returns:
-            A copy of the document of the page.
-
-        """
         result = await self.pages.find_one({'_id': page_id})
         return result
 
@@ -762,13 +553,207 @@ class MongoDBClient:
         })
         return result
 
-class MongoDBMotorTornadoClient(MongoDBClient):
+    ###########################################################################
+    #
+    # Link Methods
+    #
+    ###########################################################################
+
+    def _build_context(self, story_id, section_id, paragraph_id, text):
+        context = {
+            'story_id':      story_id,
+            'section_id':    section_id,
+            'paragraph_id': paragraph_id,
+            'text':          text,
+        }
+        return context
+
+    async def create_link(self, alias_id: ObjectId, page_id: ObjectId, story_id=None, section_id=None,
+                          paragraph_id=None, text=None, _id=None) -> ObjectId:
+        context = self._build_context(story_id, section_id, paragraph_id, text)
+        link = {
+            'context':  context,
+            'alias_id': alias_id,
+            'page_id':  page_id,
+        }
+        if _id is not None:
+            link['_id'] = _id
+        result = await self.links.insert_one(link)
+        return result.inserted_id
+
+    async def get_link(self, link_id: ObjectId):
+        result = await self.links.find_one({'_id': link_id})
+        return result
+
+    async def set_link_context(self, link_id: ObjectId, context: Dict):
+        update_result: UpdateResult = await self.links.update_one(
+            filter={'_id': link_id},
+            update={
+                '$set': {
+                    'context': context,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def update_link_context(self, link_id: ObjectId, paragraph_id: ObjectId, text: str, story_id=None,
+                                  section_id=None):
+        update_fields = {
+            'context.paragraph_id': paragraph_id,
+            'context.text':         text,
+        }
+        self.update_dict_if_value_is_not_none(update_fields, 'context.story_id', story_id)
+        self.update_dict_if_value_is_not_none(update_fields, 'context.section_id', section_id)
+        update_result: UpdateResult = await self.links.update_one(
+            filter={'_id': link_id},
+            update={
+                '$set': update_fields,
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def insert_reference_to_page(self, page_id: ObjectId, link_id: ObjectId, story_id: ObjectId,
+                                       section_id: ObjectId, paragraph_id: ObjectId, text=None, index=None):
+        context = self._build_context(story_id, section_id, paragraph_id, text)
+        reference = {
+            'link_id': link_id,
+            'context': context,
+        }
+        parameters = self._insertion_parameters(reference, index)
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$push': {
+                    'references': parameters,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def insert_links_for_paragraph(self, paragraph_id: ObjectId, links: List[ObjectId], in_section_id: ObjectId,
+                                         at_index=None):
+        inner_parameters = self._insertion_parameters({
+            'paragraph_id': paragraph_id,
+            'links':        links,
+        }, at_index)
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': in_section_id},
+            update={
+                '$push': {
+                    'links': inner_parameters,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def set_links_in_section(self, section_id: ObjectId, links: List[ObjectId], paragraph_id: ObjectId):
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': section_id, 'links.paragraph_id': paragraph_id},
+            update={
+                '$set': {
+                    'links.$.links': links,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+
+    ###########################################################################
+    #
+    # Alias Methods
+    #
+    ###########################################################################
+
+    async def create_alias(self, name: str, page_id: ObjectId, _id=None) -> ObjectId:
+        alias = {
+            'name':    name,
+            'page_id': page_id,
+            'links':   list(),
+        }
+        if _id is not None:
+            alias['_id'] = _id
+        result = await self.aliases.insert_one(alias)
+        return result.inserted_id
+
+    async def set_alias_name(self, name: str, alias_id: ObjectId):
+        update_result: UpdateResult = await self.aliases.update_one(
+            filter={'_id': alias_id},
+            update={
+                '$set': {
+                    'name': name
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def insert_link_to_alias(self, link_id: ObjectId, alias_id: ObjectId):
+        update_result: UpdateResult = await self.aliases.update_one(
+            filter={'_id': alias_id},
+            update={
+                '$push': {
+                    'links': link_id,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def get_alias(self, alias_id: ObjectId):
+        result = await self.aliases.find_one({'_id': alias_id})
+        return result
+
+    async def insert_alias_to_page(self, page_id: ObjectId, name: str, alias_id: ObjectId):
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$set': {
+                    'aliases.{}'.format(name): alias_id,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def update_alias_name_in_page(self, page_id: ObjectId, old_name: str, new_name: str):
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$rename': {
+                    'aliases.{}'.format(old_name): 'aliases.{}'.format(new_name),
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def get_aliases_from_page(self, page_id: ObjectId):
+        result = await self.pages.find_one(
+            filter={'_id': page_id},
+            projection={'_id': 0, 'aliases': 1}
+        )
+        return None if result is None else result['aliases']
+
+    async def find_alias_in_page(self, page_id: ObjectId, name: str):
+        alias_field = 'aliases.{}'.format(name)
+        pipeline = [
+            {'$match': {'_id': page_id, alias_field: {'$exists': True}}},
+            {'$project': {alias_field: 1, '_id': 0}},
+        ]
+        results = []
+        async for match in self.pages.aggregate(pipeline):
+            results.append(match['aliases'][name])
+        if len(results) > 1:
+            raise ExtraMatchesError
+        if not results:
+            return None
+        else:
+            return results[0]
+
+
+class MongoDBMotorTornadoClient(MongoDBClient):  # pragma: no cover
     def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
         from motor.motor_tornado import MotorClient
         super().__init__(MotorClient, db_name, db_host, db_port)
 
 
-class MongoDBMotorAsyncioClient(MongoDBClient):
+class MongoDBMotorAsyncioClient(MongoDBClient):  # pragma: no cover
     def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
         from motor.motor_asyncio import AsyncIOMotorClient
         super().__init__(AsyncIOMotorClient, db_name, db_host, db_port)
