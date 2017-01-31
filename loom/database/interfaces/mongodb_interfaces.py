@@ -472,6 +472,8 @@ class MongoDBInterface(AbstractDBInterface):
         # Now create a link with the alias.
         link_id = await self.client.create_link(alias_id, page_id, story_id, section_id, paragraph_id)
         await self.client.insert_link_to_alias(link_id, alias_id)
+        # Insert the reference into the appropriate page.
+        await self.client.insert_reference_to_page(page_id, link_id, story_id, section_id, paragraph_id)
         return link_id
 
     async def get_link(self, link_id):
