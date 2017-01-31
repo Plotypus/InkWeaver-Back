@@ -586,7 +586,7 @@ class MongoDBClient:
         return result
 
     async def set_link_context(self, link_id: ObjectId, context: Dict):
-        update_result: UpdateResult = self.links.update_one(
+        update_result: UpdateResult = await self.links.update_one(
             filter={'_id': link_id},
             update={
                 '$set': {
