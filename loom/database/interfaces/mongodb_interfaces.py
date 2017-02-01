@@ -400,7 +400,16 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def get_segment(self, segment_id):
         segment = await self.client.get_segment(segment_id)
+        segment['segments'] = [await self.get_segment_summary(child_id) for child_id in segment['segments']]
+        segment['pages'] = [await self.get_page_summary(page_id) for page_id in segment['pages']]
         return segment
+
+    async def get_segment_summary(self, segment_id):
+        segment = await self.client.get_segment(segment_id)
+        return {
+            'segment_id': segment_id,
+            'title':      segment['title'],
+        }
 
     async def get_page(self, page_id):
         page = await self.client.get_page(page_id)
@@ -408,6 +417,13 @@ class MongoDBInterface(AbstractDBInterface):
             # Take the context from inside the reference and push it to the next level up.
             reference.update(reference.pop('context'))
         return page
+
+    async def get_page_summary(self, page_id):
+        page = await self.client.get_page(page_id)
+        return {
+            'page_id':   page_id,
+            'title':     page['title'],
+        }
 
     async def get_heading(self, heading_id):
         pass
