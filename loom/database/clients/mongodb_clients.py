@@ -377,6 +377,16 @@ class MongoDBClient:
             results.append(doc['content']['_id'])
         return results
 
+    async def get_paragraph_text(self, section_id: ObjectId, paragraph_id: ObjectId):
+        projected_section = await self.sections.find_one(
+            filter={'_id': section_id, 'content._id': paragraph_id},
+            projection={
+                'content.$.text': 1,
+                '_id': 0,
+            }
+        )
+        return projected_section['content'][0]['text']
+
     ###########################################################################
     #
     # Wiki Methods
@@ -771,6 +781,17 @@ class MongoDBClient:
         else:
             return results[0]
 
+    async def remove_alias_from_page(self, alias_name: str, page_id: ObjectId):
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$unset': {
+                    'aliases.{}'.format(alias_name): '',
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def remove_link_from_alias(self, link_id: ObjectId, page_id: ObjectId):
         update_result: UpdateResult = await self.aliases.update_one(
             filter={'_id': page_id},
@@ -781,6 +802,12 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+
+    async def delete_alias(self, alias_id: ObjectId):
+        delete_result: DeleteResult = await self.aliases.delete_one(
+            filter={'_id': alias_id}
+        )
+        self.assert_delete_one_was_successful(delete_result)
 
 
 class MongoDBMotorTornadoClient(MongoDBClient):  # pragma: no cover
