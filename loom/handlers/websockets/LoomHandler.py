@@ -4,7 +4,6 @@ from loom.database.interfaces import AbstractDBInterface  # For type hinting.
 from loom.dispatchers import *
 
 from bson import ObjectId
-from tornado import gen
 from tornado.ioloop import IOLoop
 from tornado.queues import Queue
 from typing import Dict
