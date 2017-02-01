@@ -11,12 +11,6 @@ from typing import Dict
 
 JSON = Dict
 
-TIMEOUT = 10
-
-
-class NeverReadyError(Exception):
-    pass
-
 
 class LoomHandler(GenericHandler):
 
@@ -42,11 +36,6 @@ class LoomHandler(GenericHandler):
         # Instantiate the dispatcher.
         self._dispatcher = LAWProtocolDispatcher(self.db_interface, self.user_id)
         self.startup()
-        try:
-            self.wait_for_ready()
-        except NeverReadyError:
-            self.on_failure(reason="Something went wrong.")
-            self.close()
 
     def on_failure(self, reply_to=None, reason=None, **fields):
         response = {
@@ -72,17 +61,7 @@ class LoomHandler(GenericHandler):
     def startup(self):
         self.initialize_queue()
         self.ready = True
-
-    @gen.coroutine
-    def wait_for_ready(self):
-        import time
-        start = time.time()
-        while (time.time() - start) < TIMEOUT:
-            if self.ready:
-                break
-            yield gen.sleep(0.5)
-        else:
-            raise NeverReadyError()
+        self.send_ready_acknowledgement()
 
     @property
     def dispatcher(self) -> LAWProtocolDispatcher:
@@ -143,8 +122,17 @@ class LoomHandler(GenericHandler):
         #   http://stackoverflow.com/questions/33723830/exception-ignored-in-tornado-websocket-on-message-method
         IOLoop.current().spawn_callback(self.handle_message, json)
 
+    def send_ready_acknowledgement(self):
+        message = {
+            'event': 'acknowledged'
+        }
+        self.write_json(message)
+
     async def handle_message(self, message: JSON):
-        await self.messages.put(message)
+        if self.ready:
+            await self.messages.put(message)
+        else:
+            self.write_console_message("Dropping message: {}".format(message))
 
     async def process_messages(self):
         async for message in self.messages:
