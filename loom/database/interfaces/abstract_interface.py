@@ -210,6 +210,10 @@ class AbstractDBInterface(ABC):
     async def delete_link(self, link_id):
         pass
 
+    @abstractmethod
+    async def comprehensive_remove_link(self, link_id, replacement_text):
+        pass
+
     # Alias object methods.
 
     @abstractmethod
@@ -217,5 +221,9 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def change_alias_name(self, alias_id, name: str):
+    async def change_alias_name(self, alias_id, name):
+        pass
+
+    @abstractmethod
+    async def delete_alias(self, alias_id):
         pass
