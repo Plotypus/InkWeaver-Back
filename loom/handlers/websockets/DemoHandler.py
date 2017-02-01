@@ -1,5 +1,5 @@
 from .GenericHandler import GenericHandler
-from .LoomHandler import LoomHandler, NeverReadyError
+from .LoomHandler import LoomHandler
 
 from loom.data_processor import DataProcessor
 from loom.database.interfaces import MongoDBTornadoInterface
@@ -24,11 +24,6 @@ class DemoHandler(LoomHandler):
         self._dispatcher = LAWProtocolDispatcher(self.db_interface)
         self.data_processor = DataProcessor(self.db_interface)
         self.startup()
-        try:
-            self.wait_for_ready()
-        except NeverReadyError:
-            self.on_failure(reason="Something went wrong.")
-            self.close()
 
     def on_close(self):
         IOLoop.current().spawn_callback(self.teardown)
@@ -47,6 +42,7 @@ class DemoHandler(LoomHandler):
         self.dispatcher.set_user_id(user_id)
         self.write_console_message("generated database from file: {}".format(self.demo_db_data))
         self.ready = True
+        self.send_ready_acknowledgement()
 
     @property
     def db_interface(self):
