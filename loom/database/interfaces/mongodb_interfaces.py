@@ -1,7 +1,7 @@
 from .abstract_interface import AbstractDBInterface
 
 from loom.database.clients import *
-from loom.serialize import decode_bson_to_string
+from loom.serialize import encode_bson_to_string
 
 import nltk
 import re
@@ -17,7 +17,7 @@ nltk.data.path.insert(0, pathjoin(dirname(dirname(dirname(__file__))), 'nltk_dat
 def generate_link_format_regex():
     o = ObjectId()
     inner_regex = r'([a-f\d]{24})'
-    pattern = re.escape(decode_bson_to_string(o)).replace(str(o), inner_regex)
+    pattern = re.escape(encode_bson_to_string(o)).replace(str(o), inner_regex)
     return re.compile(pattern)
 
 
@@ -496,7 +496,7 @@ class MongoDBInterface(AbstractDBInterface):
         link = await self.get_link(link_id)
         context = link['context']
         text = await self.client.get_paragraph_text(context['section_id'], context['paragraph_id'])
-        serialized_link = decode_bson_to_string(link_id)
+        serialized_link = encode_bson_to_string(link_id)
         updated_text = text.replace(serialized_link, replacement_text)
         await self.set_paragraph_text(context['section_id'], updated_text, context['paragraph_id'])
         await self.delete_link(link_id)

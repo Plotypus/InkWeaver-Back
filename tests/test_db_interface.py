@@ -1,5 +1,5 @@
 from loom.database.interfaces import MongoDBAsyncioInterface
-from loom.serialize import decode_bson_to_string
+from loom.serialize import encode_bson_to_string
 
 import asyncio
 import pytest
@@ -707,7 +707,7 @@ class TestDBInterface:
         assert alias['name'] == new_link_name
 
         # Insert link into paragraph text.
-        text = "Four score and seven {} ago...".format(decode_bson_to_string(link_id))
+        text = "Four score and seven {} ago...".format(encode_bson_to_string(link_id))
         paragraph_id = await self.interface.add_paragraph(section_id, text, succeeding_paragraph_id=None)
         page = await self.interface.get_page(page_id)
         reference = {

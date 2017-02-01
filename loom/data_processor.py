@@ -1,6 +1,6 @@
 from loom.database.interfaces import AbstractDBInterface
 from loom.dispatchers import DemoDataDispatcher
-from loom.serialize import encode_string_to_bson
+from loom.serialize import decode_string_to_bson
 
 import re
 
@@ -26,7 +26,7 @@ class DataProcessor:
     async def load_file(self, filename):
         with open(filename) as json_file:
             json_string = json_file.read()
-        json = encode_string_to_bson(json_string)
+        json = decode_string_to_bson(json_string)
         user_id = await self.create_user(json['user'])
         await self.process_list(json['dispatch_list'])
         return user_id

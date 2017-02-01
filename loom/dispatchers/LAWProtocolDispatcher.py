@@ -76,7 +76,7 @@ class LAWProtocolDispatcher:
 
     @classmethod
     def encode_json(cls, data):
-        return loom.serialize.decode_bson_to_string(data)
+        return loom.serialize.encode_bson_to_string(data)
 
     @property
     def db_interface(self):
