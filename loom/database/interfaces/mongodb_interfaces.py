@@ -1,6 +1,7 @@
 from .abstract_interface import AbstractDBInterface
 
 from loom.database.clients import *
+from loom.serialize import encode_bson_to_string
 
 import nltk
 import re
@@ -10,14 +11,13 @@ from os.path import dirname, join as pathjoin
 from typing import ClassVar
 
 # Adjust the NLTK path.
-nltk.data.path.append(pathjoin(dirname(dirname(dirname(__file__))), 'nltk_data'))
+nltk.data.path.insert(0, pathjoin(dirname(dirname(dirname(__file__))), 'nltk_data'))
 
 
 def generate_link_format_regex():
-    from loom.serialize import decode_bson_to_string
     o = ObjectId()
     inner_regex = r'([a-f\d]{24})'
-    pattern = re.escape(decode_bson_to_string(o)).replace(str(o), inner_regex)
+    pattern = re.escape(encode_bson_to_string(o)).replace(str(o), inner_regex)
     return re.compile(pattern)
 
 
@@ -484,8 +484,22 @@ class MongoDBInterface(AbstractDBInterface):
         return await self.client.get_link(link_id)
 
     async def delete_link(self, link_id):
-        # TODO: Implement this.
-        pass
+        # TODO: Should an alias be deleted if no more links are tied to it?
+        link = await self.get_link(link_id)
+        alias_id = link['alias_id']
+        page_id = link['page_id']
+        await self.client.remove_link_from_alias(link_id, alias_id)
+        await self.client.remove_reference_from_page(link_id, page_id)
+        await self.client.delete_link(link_id)
+
+    async def comprehensive_remove_link(self, link_id: ObjectId, replacement_text: str):
+        link = await self.get_link(link_id)
+        context = link['context']
+        text = await self.client.get_paragraph_text(context['section_id'], context['paragraph_id'])
+        serialized_link = encode_bson_to_string(link_id)
+        updated_text = text.replace(serialized_link, replacement_text)
+        await self.set_paragraph_text(context['section_id'], updated_text, context['paragraph_id'])
+        await self.delete_link(link_id)
 
     # Alias Object Methods
 
@@ -498,8 +512,16 @@ class MongoDBInterface(AbstractDBInterface):
         # Update `aliases` in the appropriate page.
         await self.client.update_alias_name_in_page(page_id, old_name, new_name)
 
-    async def get_alias(self, alias_id):
+    async def get_alias(self, alias_id: ObjectId):
         return await self.client.get_alias(alias_id)
+
+    async def delete_alias(self, alias_id: ObjectId):
+        alias = await self.get_alias(alias_id)
+        for link_id in alias['links']:
+            await self.comprehensive_remove_link(link_id, alias['name'])
+        await self.client.remove_alias_from_page(alias['name'], alias['page_id'])
+        await self.client.delete_alias(alias_id)
+
 
 class MongoDBTornadoInterface(MongoDBInterface):
     def __init__(self, db_name, db_host, db_port):

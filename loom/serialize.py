@@ -2,7 +2,7 @@ from bson.json_util import dumps as __bson_encode, loads as __bson_decode
 from tornado.escape import to_basestring
 
 
-def decode_bson_to_string(dictionary):
+def encode_bson_to_string(dictionary):
     """
     Encode a BSON dictionary into a string.
 
@@ -20,7 +20,7 @@ def decode_bson_to_string(dictionary):
     return __bson_encode(dictionary).replace("</", "<\\/")
 
 
-def encode_string_to_bson(bson):
+def decode_string_to_bson(bson):
     """
     Decode a string into a BSON object dictionary.
 

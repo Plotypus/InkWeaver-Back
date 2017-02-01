@@ -1,6 +1,6 @@
 from bson.objectid import ObjectId
 from motor.core import AgnosticClient, AgnosticDatabase, AgnosticCollection
-from pymongo.results import UpdateResult
+from pymongo.results import DeleteResult, UpdateResult
 from typing import Any, Dict, List
 
 
@@ -95,6 +95,13 @@ class MongoDBClient:
         if update_result.matched_count == 0:
             raise NoMatchError                  # pragma: no cover
         if update_result.matched_count > 1:
+            raise ExtraMatchesError             # pragma: no cover
+
+    @staticmethod
+    def assert_delete_one_was_successful(delete_result: DeleteResult):
+        if delete_result.deleted_count == 0:
+            raise NoMatchError                  # pragma: no cover
+        if delete_result.deleted_count > 1:
             raise ExtraMatchesError             # pragma: no cover
 
     @staticmethod
@@ -369,6 +376,16 @@ class MongoDBClient:
         async for doc in self.sections.aggregate(pipeline):
             results.append(doc['content']['_id'])
         return results
+
+    async def get_paragraph_text(self, section_id: ObjectId, paragraph_id: ObjectId):
+        projected_section = await self.sections.find_one(
+            filter={'_id': section_id, 'content._id': paragraph_id},
+            projection={
+                'content.$.text': 1,
+                '_id': 0,
+            }
+        )
+        return projected_section['content'][0]['text']
 
     ###########################################################################
     #
@@ -657,6 +674,24 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def remove_reference_from_page(self, link_id: ObjectId, page_id: ObjectId):
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$pull': {
+                    'references': {
+                        'link_id': link_id,
+                    }
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def delete_link(self, link_id: ObjectId):
+        delete_result: DeleteResult = await self.links.delete_one(
+            filter={'_id': link_id}
+        )
+        self.assert_delete_one_was_successful(delete_result)
 
     ###########################################################################
     #
@@ -745,6 +780,34 @@ class MongoDBClient:
             return None
         else:
             return results[0]
+
+    async def remove_alias_from_page(self, alias_name: str, page_id: ObjectId):
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$unset': {
+                    'aliases.{}'.format(alias_name): '',
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def remove_link_from_alias(self, link_id: ObjectId, page_id: ObjectId):
+        update_result: UpdateResult = await self.aliases.update_one(
+            filter={'_id': page_id},
+            update={
+                '$pull': {
+                    'links': link_id,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def delete_alias(self, alias_id: ObjectId):
+        delete_result: DeleteResult = await self.aliases.delete_one(
+            filter={'_id': alias_id}
+        )
+        self.assert_delete_one_was_successful(delete_result)
 
 
 class MongoDBMotorTornadoClient(MongoDBClient):  # pragma: no cover
