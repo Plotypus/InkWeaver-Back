@@ -338,8 +338,8 @@ class LAWProtocolDispatcher:
         page = await self.db_interface.get_page(page_id)
         message = {
             'title':        page['title'],
-            'aliases':      list(),  # TODO: Change when aliases are implemented.
-            'references':   list(),  # TODO: Change when references are implemented.
+            'aliases':      page['aliases'],
+            'references':   page['references'],
             'headings':     page['headings'],
         }
         return self.format_json(message, with_reply_id=message_id)
