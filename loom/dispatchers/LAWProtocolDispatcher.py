@@ -13,10 +13,10 @@ APPROVED_METHODS = [
     'get_user_preferences',
     'get_user_stories',
     'get_user_wikis',
-    'user_login',
     'set_user_name',
     'set_user_email',
     'set_user_bio',
+    'user_login',
 
     # Stories
     'create_story',
@@ -230,9 +230,10 @@ class LAWProtocolDispatcher:
             return self.format_failure_json(message_id, "Already logged in.")
         if await self.db_interface.password_is_valid_for_username(username, password):
             self._user_id = await self.db_interface.get_user_id_for_username(username)
-            return self.format_json({}, reply_to_id=message_id)
+            message = {'event': 'logged in'}
         else:
-            return self.format_failure_json(message_id, "Invalid username or password.")
+            message = {'event': 'denied'}
+        return self.format_json(message, reply_to_id=message_id)
 
     ###########################################################################
     #
