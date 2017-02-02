@@ -142,6 +142,7 @@ class LAWProtocolDispatcher:
         except LAWError as e:
             return self.format_failure_json(message_id, str(e))
         except Exception as e:
+            # TODO: Replace this with a generic message for production.
             # General exceptions store messages as the first argument in their `.args` property.
             message = type(e).__name__
             if e.args:
