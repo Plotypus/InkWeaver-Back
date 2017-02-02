@@ -2,6 +2,7 @@ import loom.serialize
 
 from loom.database.interfaces import AbstractDBInterface
 
+from decorator import decorator
 from inspect import signature
 from typing import Dict
 
@@ -12,6 +13,7 @@ APPROVED_METHODS = [
     'get_user_preferences',
     'get_user_stories',
     'get_user_wikis',
+    'user_login',
 
     # Stories
     'create_story',
@@ -67,6 +69,26 @@ class LAWBadArgumentsError(LAWError):
     Raised when necessary arguments were omitted or formatted incorrectly.
     """
     pass
+
+class LAWNotLoggedInError(LAWError):
+    """
+    Raised when an action is requested without having logged in.
+    """
+    pass
+
+############################################################
+#
+# LAWProtocolDispatcher Decorators
+#
+############################################################
+
+
+@decorator
+def requires_login(func, *args, **kwargs):
+    self = args[0]
+    if self.user_id is None:
+        raise LAWNotLoggedInError
+    return func(*args, **kwargs)
 
 
 class LAWProtocolDispatcher:
@@ -157,22 +179,36 @@ class LAWProtocolDispatcher:
 
     ## User Information
 
+    @requires_login
     async def get_user_preferences(self, message_id):
         preferences = await self.db_interface.get_user_preferences(self.user_id)
         return self.format_json(preferences, with_reply_id=message_id)
 
+    @requires_login
     async def get_user_stories(self, message_id):
         stories = await self.db_interface.get_user_stories(self.user_id)
         message = {'stories': stories}
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def get_user_wikis(self, message_id):
         wikis = await self.db_interface.get_user_wikis(self.user_id)
         message = {'wikis': wikis}
         return self.format_json(message, with_reply_id=message_id)
 
+    async def user_login(self, message_id, username, password):
+        if self.user_id is not None:
+            return self.format_failure_json(message_id, "Already logged in.")
+        if await self.db_interface.password_is_valid_for_username(username, password):
+            self._user_id = await self.db_interface.get_user_id_for_username(username)
+            return self.format_json({}, reply_to_id=message_id)
+        else:
+            return self.format_failure_json(message_id, "Invalid username or password.")
+
+
     ## Stories
 
+    @requires_login
     async def create_story(self, message_id, title, wiki_id, summary):
         story_id = await self.db_interface.create_story(self.user_id, title, summary, wiki_id)
         story = await self.db_interface.get_story(story_id)
@@ -186,26 +222,31 @@ class LAWProtocolDispatcher:
         }
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def add_preceding_subsection(self, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_preceding_subsection(title, parent_id, index)
         message = {'section_id': subsection_id}
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def add_inner_subsection(self, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_inner_subsection(title, parent_id, index)
         message = {'section_id': subsection_id}
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def add_succeeding_subsection(self, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_succeeding_subsection(title, parent_id, index)
         message = {'section_id': subsection_id}
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def add_paragraph(self, message_id, section_id, text, index=None):
         # TODO: Decide whether or not to add more to response
         await self.db_interface.add_paragraph(section_id, text, index)
         return self.format_json({}, with_reply_id=message_id)
 
+    @requires_login
     async def edit_paragraph(self, message_id, section_id, update, index):
         # TODO: Decide whether or not to add more to response
         if update['update_type'] == 'replace':
@@ -215,6 +256,7 @@ class LAWProtocolDispatcher:
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
+    @requires_login
     async def get_story_information(self, message_id, story_id):
         story = await self.db_interface.get_story(story_id)
         message = {
@@ -226,18 +268,21 @@ class LAWProtocolDispatcher:
         }
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def get_story_hierarchy(self, message_id, story_id):
         message = {
             'hierarchy': await self.db_interface.get_story_hierarchy(story_id)
         }
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def get_section_hierarchy(self, message_id, section_id):
         message = {
             'hierarchy': await self.db_interface.get_section_hierarchy(section_id)
         }
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def get_section_content(self, message_id, section_id):
         paragraphs = await self.db_interface.get_section_content(section_id)
         content = [{'text': paragraph['text']} for paragraph in paragraphs]
@@ -245,6 +290,7 @@ class LAWProtocolDispatcher:
 
     ## Wikis
 
+    @requires_login
     async def create_wiki(self, message_id, title, summary):
         wiki_id = await self.db_interface.create_wiki(self.user_id, title, summary)
         wiki = await self.db_interface.get_wiki(wiki_id)
@@ -258,24 +304,29 @@ class LAWProtocolDispatcher:
         return self.format_json(message, with_reply_id=message_id)
         pass
 
+    @requires_login
     async def add_segment(self, message_id, title, parent_id):
         segment_id = await self.db_interface.add_child_segment(title, parent_id)
         return self.format_json({'segment_id': segment_id}, with_reply_id=message_id)
 
+    @requires_login
     async def add_template_heading(self, message_id, title, segment_id):
         await self.db_interface.add_template_heading(title, segment_id)
         # TODO: Decide whether or not to add more to response
         return self.format_json({}, with_reply_id=message_id)
 
+    @requires_login
     async def add_page(self, message_id, title, parent_id):
         page_id = await self.db_interface.create_page(title, parent_id)
         return self.format_json({'page_id': page_id}, with_reply_id=message_id)
 
+    @requires_login
     async def add_heading(self, message_id, title, page_id, index=None):
         await self.db_interface.add_heading(title, page_id, index)
         # TODO: Decide whether or not to add more to response
         return self.format_json({}, with_reply_id=message_id)
 
+    @requires_login
     async def edit_segment(self, message_id, segment_id, update):
         # TODO: Decide whether or not to add more to response
         if update['update_type'] == 'set_title':
@@ -285,10 +336,12 @@ class LAWProtocolDispatcher:
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
+    @requires_login
     async def edit_page(self, message_id, page_id, update):
         # TODO: Implement this.
         pass
 
+    @requires_login
     async def edit_heading(self, message_id, page_id, heading_title, update):
         # TODO: Decide whether or not to add more to response
         if update['update_type'] == 'set_title':
@@ -302,6 +355,7 @@ class LAWProtocolDispatcher:
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update('update_type')))
 
+    @requires_login
     async def get_wiki_information(self, message_id, wiki_id):
         wiki = await self.db_interface.get_wiki(wiki_id)
         message = {
@@ -312,18 +366,21 @@ class LAWProtocolDispatcher:
         }
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def get_wiki_hierarchy(self, message_id, wiki_id):
         message = {
             'hierarchy': await self.db_interface.get_wiki_hierarchy(wiki_id)
         }
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def get_wiki_segment_hierarchy(self, message_id, segment_id):
         message = {
             'hierarchy': await self.db_interface.get_segment_hierarchy(segment_id)
         }
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def get_wiki_segment(self, message_id, segment_id):
         segment = await self.db_interface.get_segment(segment_id)
         message = {
@@ -334,6 +391,7 @@ class LAWProtocolDispatcher:
         }
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def get_wiki_page(self, message_id, page_id):
         page = await self.db_interface.get_page(page_id)
         message = {
@@ -346,11 +404,13 @@ class LAWProtocolDispatcher:
 
     ## Links
 
+    @requires_login
     async def create_link(self, message_id, story_id, section_id, paragraph_id, name, page_id):
         link_id = await self.db_interface.create_link(story_id, section_id, paragraph_id, name, page_id)
         message = {'link_id': link_id}
         return self.format_json(message, with_reply_id=message_id)
 
+    @requires_login
     async def edit_alias_name(self, message_id, alias_id, new_name):
         await self.db_interface.change_alias_name(alias_id, new_name)
         return self.format_json({}, with_reply_id=message_id)
