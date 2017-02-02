@@ -389,7 +389,17 @@ class LAWProtocolDispatcher:
 
     @requires_login
     async def edit_template_heading(self, message_id, segment_id, template_heading_title, update):
-        pass
+        if update['update_type'] == 'set_title':
+            title = update['title']
+            await self.db_interface.set_template_heading_title(old_title=template_heading_title, new_title=title,
+                                                               segment_id=segment_id)
+            return self.format_json({}, reply_to_id=message_id)
+        elif update['update_type'] == 'set_text':
+            text = update['text']
+            await self.db_interface.set_template_heading_text(template_heading_title, text, segment_id)
+            return self.format_json({}, reply_to_id=message_id)
+        else:
+            raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
     @requires_login
     async def edit_page(self, message_id, page_id, update):
@@ -467,7 +477,7 @@ class LAWProtocolDispatcher:
 
     @requires_login
     async def delete_template_heading(self, message_id, segment_id, template_heading_title):
-        pass
+        await self.db_interface.delete_template_heading(template_heading_title, segment_id)
 
     @requires_login
     async def delete_page(self, message_id, page_id):
