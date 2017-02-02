@@ -281,6 +281,12 @@ class MongoDBInterface(AbstractDBInterface):
         # TODO: Do this.
         pass
 
+    async def delete_paragraph(self, section_id, paragraph_id):
+        link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
+        for link_id in link_ids:
+            await self.delete_link(link_id)
+        await self.client.delete_paragraph(section_id, paragraph_id)
+
     # Wiki object methods.
 
     async def create_wiki(self, user_id, title, summary):
