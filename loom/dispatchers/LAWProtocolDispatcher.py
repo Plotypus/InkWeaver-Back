@@ -12,6 +12,9 @@ APPROVED_METHODS = [
     'get_user_preferences',
     'get_user_stories',
     'get_user_wikis',
+    'set_user_name',
+    'set_user_email',
+    'set_user_bio',
 
     # Stories
     'create_story',
@@ -24,6 +27,9 @@ APPROVED_METHODS = [
     'get_story_hierarchy',
     'get_section_hierarchy',
     'get_section_content',
+    'delete_story',
+    'delete_section',
+    'delete_paragraph',
 
     # Wikis
     'create_wiki',
@@ -39,11 +45,19 @@ APPROVED_METHODS = [
     'get_wiki_segment_hierarchy',
     'get_wiki_segment',
     'get_wiki_page',
+    'delete_segment',
+    'delete_page',
+    'delete_heading',
 
     # Links
     'create_link',
-    'edit_alias_name',
+    'delete_link',
+
+    # Aliases
+    'delete_alias',
+    'change_alias_name',
 ]
+
 
 class LAWError(Exception):
     def __init__(self, message=None):
@@ -169,6 +183,19 @@ class LAWProtocolDispatcher:
         message = {'wikis': wikis}
         return self.format_json(message, with_reply_id=message_id)
 
+    async def set_user_name(self, message_id, name):
+        await self.db_interface.set_user_name(self.user_id, name)
+
+    async def set_user_email(self, message_id, email):
+        await self.db_interface.set_user_email(self.user_id, email)
+
+    async def set_user_bio(self, message_id, bio):
+        await self.db_interface.set_user_bio(self.user_id, bio)
+
+    # TODO: Implement this.
+    # async def set_user_avatar(self, message_id, avatar):
+    #     await self.db_interface.set_user_avatar(self.user_id, avatar)
+
     ###########################################################################
     #
     # Story Methods
@@ -244,6 +271,15 @@ class LAWProtocolDispatcher:
         paragraphs = await self.db_interface.get_section_content(section_id)
         content = [{'text': paragraph['text']} for paragraph in paragraphs]
         return self.format_json({'content': content}, with_reply_id=message_id)
+
+    async def delete_story(self, message_id, story_id):
+        await self.db_interface.delete_story(story_id)
+
+    async def delete_section(self, message_id, section_id):
+        await self.db_interface.delete_section(section_id)
+
+    async def delete_paragraph(self, message_id, section_id, paragraph_id):
+        await self.db_interface.delete_paragraph(section_id, paragraph_id)
 
     ###########################################################################
     #
@@ -350,6 +386,19 @@ class LAWProtocolDispatcher:
         }
         return self.format_json(message, with_reply_id=message_id)
 
+    # TODO: Figure this out.
+    # async def delete_wiki(self, wiki_id):
+    #     pass
+
+    async def delete_segment(self, message_id, segment_id):
+        await self.db_interface.delete_segment(segment_id)
+
+    async def delete_page(self, message_id, page_id):
+        await self.db_interface.delete_page(page_id)
+
+    async def delete_heading(self, message_id, heading_title, page_id):
+        await self.db_interface.delete_heading(heading_title, page_id)
+
     ###########################################################################
     #
     # Link Methods
@@ -361,6 +410,18 @@ class LAWProtocolDispatcher:
         message = {'link_id': link_id}
         return self.format_json(message, with_reply_id=message_id)
 
-    async def edit_alias_name(self, message_id, alias_id, new_name):
+    async def delete_link(self, message_id, link_id):
+        await self.db_interface.delete_link(link_id)
+
+    ###########################################################################
+    #
+    # Alias Methods
+    #
+    ###########################################################################
+
+    async def change_alias_name(self, message_id, alias_id, new_name):
         await self.db_interface.change_alias_name(alias_id, new_name)
         return self.format_json({}, with_reply_id=message_id)
+
+    async def delete_alias(self, alias_id):
+        await self.db_interface.delete_alias(alias_id)
