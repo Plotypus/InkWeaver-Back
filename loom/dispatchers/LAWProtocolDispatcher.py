@@ -149,14 +149,11 @@ class LAWProtocolDispatcher:
                 message += ": {}".format(e.args[0])
             return self.format_failure_json(message_id, message)
 
-
-    ############################################################
+    ###########################################################################
     #
-    # Protocol implementation
+    # User Methods
     #
-    ############################################################
-
-    ## User Information
+    ###########################################################################
 
     async def get_user_preferences(self, message_id):
         preferences = await self.db_interface.get_user_preferences(self.user_id)
@@ -172,7 +169,11 @@ class LAWProtocolDispatcher:
         message = {'wikis': wikis}
         return self.format_json(message, with_reply_id=message_id)
 
-    ## Stories
+    ###########################################################################
+    #
+    # Story Methods
+    #
+    ###########################################################################
 
     async def create_story(self, message_id, title, wiki_id, summary):
         story_id = await self.db_interface.create_story(self.user_id, title, summary, wiki_id)
@@ -244,7 +245,11 @@ class LAWProtocolDispatcher:
         content = [{'text': paragraph['text']} for paragraph in paragraphs]
         return self.format_json({'content': content}, with_reply_id=message_id)
 
-    ## Wikis
+    ###########################################################################
+    #
+    # Wiki Methods
+    #
+    ###########################################################################
 
     async def create_wiki(self, message_id, title, summary):
         wiki_id = await self.db_interface.create_wiki(self.user_id, title, summary)
@@ -345,7 +350,11 @@ class LAWProtocolDispatcher:
         }
         return self.format_json(message, with_reply_id=message_id)
 
-    ## Links
+    ###########################################################################
+    #
+    # Link Methods
+    #
+    ###########################################################################
 
     async def create_link(self, message_id, story_id, section_id, paragraph_id, name, page_id):
         link_id = await self.db_interface.create_link(story_id, section_id, paragraph_id, name, page_id)
