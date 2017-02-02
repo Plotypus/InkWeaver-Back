@@ -278,8 +278,12 @@ class MongoDBInterface(AbstractDBInterface):
         pass
 
     async def delete_section(self, section_id):
-        # TODO: Do this.
-        pass
+        section = await self.client.get_section(section_id)
+        for link_summary in section['links']:
+            link_ids = link_summary['links']
+            for link_id in link_ids:
+                await self.delete_link(link_id)
+        await self.client.delete_section(section_id)
 
     async def delete_paragraph(self, section_id, paragraph_id):
         link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)

@@ -387,6 +387,23 @@ class MongoDBClient:
         )
         return projected_section['content'][0]['text']
 
+    async def delete_section(self, section_id: ObjectId):
+        parent_update_result: UpdateResult = await self.sections.update_one(
+            filter={},
+            update={
+                '$pull': {
+                    'preceding_subsections':  section_id,
+                    'inner_subsections':      section_id,
+                    'succeeding_subsections': section_id,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(parent_update_result)
+        delete_result: DeleteResult = await self.sections.delete_one(
+            filter={'_id': section_id}
+        )
+        self.assert_delete_one_was_successful(delete_result)
+
     async def delete_paragraph(self, section_id: ObjectId, paragraph_id: ObjectId):
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': section_id},
