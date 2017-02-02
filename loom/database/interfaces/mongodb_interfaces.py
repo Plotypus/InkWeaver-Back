@@ -482,6 +482,22 @@ class MongoDBInterface(AbstractDBInterface):
             # TODO: Should this return something?
             pass
 
+    async def set_template_heading_title(self, old_title, new_title, segment_id):
+        try:
+            await self.client.set_template_heading_title(old_title, new_title, segment_id)
+        except ClientError:
+            raise
+        else:
+            pass
+
+    async def set_template_heading_text(self, title, text, segment_id):
+        try:
+            await self.client.set_template_heading_text(title, text, segment_id)
+        except ClientError:
+            raise
+        else:
+            pass
+
     async def set_heading_title(self, old_title, new_title, page_id):
         heading = await self.client.get_heading(new_title, page_id)
         # Heading already exists within the page

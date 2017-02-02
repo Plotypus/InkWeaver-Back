@@ -202,6 +202,14 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_template_heading_title(self, old_title, new_title, segment_id):
+        pass
+
+    @abstractmethod
+    async def set_template_heading_text(self, title, text, segment_id):
+        pass
+
+    @abstractmethod
     async def set_heading_title(self, old_title, new_title, page_id):
         pass
 
