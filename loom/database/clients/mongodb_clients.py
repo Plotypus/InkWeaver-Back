@@ -240,6 +240,17 @@ class MongoDBClient:
         )
         return result['wikis']
 
+    async def remove_story_from_user(self, user_id: ObjectId, story_id: ObjectId):
+        update_result: UpdateResult = await self.users.update_one(
+            filter={'_id': user_id},
+            update={
+                '$pull': {
+                    'stories': story_id
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     ###########################################################################
     #
     # Story Methods
@@ -386,6 +397,12 @@ class MongoDBClient:
             }
         )
         return projected_section['content'][0]['text']
+
+    async def delete_story(self, story_id: ObjectId):
+        delete_result: DeleteResult = await self.stories.delete_one(
+            filter={'_id': story_id}
+        )
+        self.assert_delete_one_was_successful(delete_result)
 
     async def delete_section(self, section_id: ObjectId):
         parent_update_result: UpdateResult = await self.sections.update_one(
