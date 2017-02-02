@@ -19,23 +19,6 @@ class LoomHandler(GenericHandler):
     #
     ############################################################
 
-    # def open(self):
-    #     self.ready = False
-    #     # TODO: Remove this.
-    #     super().open()
-    #     session_id = self._get_secure_session_cookie()
-    #     user_id = self._get_user_id_for_session_id(session_id)
-    #     if user_id is None:
-    #         self.on_failure(reason="Something went wrong.")
-    #         # TODO: Clean up session
-    #         self.close()
-    #     self._user_id = user_id
-    #     # By default, small messages are coalesced. This can cause delay. We don't want delay.
-    #     self.set_nodelay(True)
-    #     # Instantiate the dispatcher.
-    #     self._dispatcher = LAWProtocolDispatcher(self.db_interface, self.user_id)
-    #     self.startup()
-
     def open(self):
         self.ready = False
         super().open()
