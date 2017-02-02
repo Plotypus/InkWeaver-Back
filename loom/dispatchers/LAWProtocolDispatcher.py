@@ -164,6 +164,7 @@ class LAWProtocolDispatcher:
                     missing_fields.append(param.name)
             if missing_fields:
                 # So something *was* missing!
+                message = "request of type '{}' missing fields: {}".format(action, missing_fields)
                 raise LAWBadArgumentsError(message)
             else:
                 # Something else has gone wrong...
