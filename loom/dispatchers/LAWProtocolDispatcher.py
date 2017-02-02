@@ -40,6 +40,7 @@ APPROVED_METHODS = [
     'add_page',
     'add_heading',
     'edit_segment',
+    'edit_template_heading',
     'edit_page',
     'edit_heading',
     'get_wiki_information',
@@ -49,6 +50,7 @@ APPROVED_METHODS = [
     'get_wiki_page',
     'delete_wiki',
     'delete_segment',
+    'delete_template_heading',
     'delete_page',
     'delete_heading',
 
@@ -162,6 +164,7 @@ class LAWProtocolDispatcher:
                     missing_fields.append(param.name)
             if missing_fields:
                 # So something *was* missing!
+                message = "request of type '{}' missing fields: {}".format(action, missing_fields)
                 raise LAWBadArgumentsError(message)
             else:
                 # Something else has gone wrong...
@@ -386,6 +389,20 @@ class LAWProtocolDispatcher:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
     @requires_login
+    async def edit_template_heading(self, message_id, segment_id, template_heading_title, update):
+        if update['update_type'] == 'set_title':
+            title = update['title']
+            await self.db_interface.set_template_heading_title(old_title=template_heading_title, new_title=title,
+                                                               segment_id=segment_id)
+            return self.format_json({}, reply_to_id=message_id)
+        elif update['update_type'] == 'set_text':
+            text = update['text']
+            await self.db_interface.set_template_heading_text(template_heading_title, text, segment_id)
+            return self.format_json({}, reply_to_id=message_id)
+        else:
+            raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
+
+    @requires_login
     async def edit_page(self, message_id, page_id, update):
         # TODO: Implement this.
         pass
@@ -458,6 +475,10 @@ class LAWProtocolDispatcher:
     @requires_login
     async def delete_segment(self, message_id, segment_id):
         await self.db_interface.delete_segment(segment_id)
+
+    @requires_login
+    async def delete_template_heading(self, message_id, segment_id, template_heading_title):
+        await self.db_interface.delete_template_heading(template_heading_title, segment_id)
 
     @requires_login
     async def delete_page(self, message_id, page_id):

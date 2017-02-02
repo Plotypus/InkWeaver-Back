@@ -561,6 +561,28 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_template_heading_title(self, old_title: str, new_title: str, segment_id: ObjectId):
+        update_result: UpdateResult = await self.segments.update_one(
+            filter={'_id': segment_id, 'template_headings.title': old_title},
+            update={
+                '$set': {
+                    'template_headings.$.title': new_title
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def set_template_heading_text(self, title: str, text: str, segment_id: ObjectId):
+        update_result: UpdateResult = await self.segments.update_one(
+            filter={'_id': segment_id, 'template_headings.title': title},
+            update={
+                '$set': {
+                    'template_headings.$.text': text
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def set_heading_title(self, old_title: str, new_title: str, page_id: ObjectId):
         update_result: UpdateResult = await self.pages.update_one(
             # For filtering documents in an array, we use the name of the array field
@@ -671,6 +693,19 @@ class MongoDBClient:
             filter={'_id': segment_id}
         )
         self.assert_delete_one_was_successful(delete_result)
+
+    async def delete_template_heading(self, template_heading_title: str, segment_id: ObjectId):
+        update_result: UpdateResult = await self.segments.update_one(
+            filter={'_id': segment_id},
+            update={
+                '$pull': {
+                    'template_headings': {
+                        'title': template_heading_title
+                    }
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
 
     async def delete_page(self, page_id: ObjectId):
         parent_update_result: UpdateResult = await self.segments.update_one(

@@ -482,6 +482,22 @@ class MongoDBInterface(AbstractDBInterface):
             # TODO: Should this return something?
             pass
 
+    async def set_template_heading_title(self, old_title, new_title, segment_id):
+        try:
+            await self.client.set_template_heading_title(old_title, new_title, segment_id)
+        except ClientError:
+            raise
+        else:
+            pass
+
+    async def set_template_heading_text(self, title, text, segment_id):
+        try:
+            await self.client.set_template_heading_text(title, text, segment_id)
+        except ClientError:
+            raise
+        else:
+            pass
+
     async def set_heading_title(self, old_title, new_title, page_id):
         heading = await self.client.get_heading(new_title, page_id)
         # Heading already exists within the page
@@ -536,6 +552,14 @@ class MongoDBInterface(AbstractDBInterface):
         for page_id in segment['pages']:
             await self.delete_page(page_id)
         await self.client.delete_segment(segment_id)
+
+    async def delete_template_heading(self, title, segment_id):
+        try:
+            await self.client.delete_template_heading(title, segment_id)
+        except ClientError:
+            raise
+        else:
+            pass
 
     async def delete_page(self, page_id):
         page = await self.client.get_page(page_id)
