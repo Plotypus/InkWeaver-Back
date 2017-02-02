@@ -283,19 +283,15 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.remove_story_from_user(user_id, story_id)
         await self.client.delete_story(story_id)
 
+    async def delete_section(self, section_id):
+        await self.recur_delete_section_and_subsections(section_id)
+
     async def recur_delete_section_and_subsections(self, section_id):
         section = await self.client.get_section(section_id)
         for subsection_id in chain(section['preceding_subsections'],
                                    section['inner_subsections'],
                                    section['succeeding_subsections']):
             await self.recur_delete_section_and_subsections(subsection_id)
-        await self._delete_section(section)
-
-    async def delete_section(self, section_id):
-        section = await self.client.get_section(section_id)
-        await self._delete_section(section)
-
-    async def _delete_section(self, section):
         for link_summary in section['links']:
             link_ids = link_summary['links']
             for link_id in link_ids:
