@@ -240,6 +240,17 @@ class MongoDBClient:
         )
         return result['wikis']
 
+    async def remove_story_from_user(self, user_id: ObjectId, story_id: ObjectId):
+        update_result: UpdateResult = await self.users.update_one(
+            filter={'_id': user_id},
+            update={
+                '$pull': {
+                    'stories': story_id
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     ###########################################################################
     #
     # Story Methods
@@ -386,6 +397,45 @@ class MongoDBClient:
             }
         )
         return projected_section['content'][0]['text']
+
+    async def delete_story(self, story_id: ObjectId):
+        delete_result: DeleteResult = await self.stories.delete_one(
+            filter={'_id': story_id}
+        )
+        self.assert_delete_one_was_successful(delete_result)
+
+    async def delete_section(self, section_id: ObjectId):
+        parent_update_result: UpdateResult = await self.sections.update_one(
+            filter={},
+            update={
+                '$pull': {
+                    'preceding_subsections':  section_id,
+                    'inner_subsections':      section_id,
+                    'succeeding_subsections': section_id,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(parent_update_result)
+        delete_result: DeleteResult = await self.sections.delete_one(
+            filter={'_id': section_id}
+        )
+        self.assert_delete_one_was_successful(delete_result)
+
+    async def delete_paragraph(self, section_id: ObjectId, paragraph_id: ObjectId):
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': section_id},
+            update={
+                '$pull': {
+                    'content': {
+                        '_id': paragraph_id,
+                    },
+                    'links': {
+                        'paragraph_id': paragraph_id,
+                    }
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
 
     ###########################################################################
     #
@@ -601,6 +651,13 @@ class MongoDBClient:
     async def get_link(self, link_id: ObjectId):
         result = await self.links.find_one({'_id': link_id})
         return result
+
+    async def get_links_in_paragraph(self, paragraph_id: ObjectId, section_id: ObjectId):
+        section_projection = await self.sections.find_one(
+            filter={'_id': section_id, 'links.paragraph_id': paragraph_id},
+            projection={'links.links': 1, '_id': 0}
+        )
+        return section_projection['links'][0]['links']
 
     async def set_link_context(self, link_id: ObjectId, context: Dict):
         update_result: UpdateResult = await self.links.update_one(
