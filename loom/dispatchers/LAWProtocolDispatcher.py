@@ -109,13 +109,13 @@ class LAWProtocolDispatcher:
             base_message[key] = value
         return base_message
 
-    def format_failure_json(self, reply_to=None, reason=None, **fields):
+    def format_failure_json(self, reply_to_id=None, reason=None, **fields):
         response = {
             'success': False,
             'reason':  reason,
         }
-        if reply_to is not None:
-            response['reply_to'] = reply_to
+        if reply_to_id is not None:
+            response['reply_to_id'] = reply_to_id
         response.update(fields)
         json = self.encode_json(response)
         return json
@@ -171,17 +171,17 @@ class LAWProtocolDispatcher:
 
     async def get_user_preferences(self, message_id):
         preferences = await self.db_interface.get_user_preferences(self.user_id)
-        return self.format_json(preferences, with_reply_id=message_id)
+        return self.format_json(preferences, reply_to_id=message_id)
 
     async def get_user_stories(self, message_id):
         stories = await self.db_interface.get_user_stories(self.user_id)
         message = {'stories': stories}
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def get_user_wikis(self, message_id):
         wikis = await self.db_interface.get_user_wikis(self.user_id)
         message = {'wikis': wikis}
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def set_user_name(self, message_id, name):
         await self.db_interface.set_user_name(self.user_id, name)
@@ -213,34 +213,34 @@ class LAWProtocolDispatcher:
             'users':        story['users'],
             'summary':      story['summary'],
         }
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def add_preceding_subsection(self, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_preceding_subsection(title, parent_id, index)
         message = {'section_id': subsection_id}
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def add_inner_subsection(self, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_inner_subsection(title, parent_id, index)
         message = {'section_id': subsection_id}
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def add_succeeding_subsection(self, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_succeeding_subsection(title, parent_id, index)
         message = {'section_id': subsection_id}
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def add_paragraph(self, message_id, section_id, text, index=None):
         # TODO: Decide whether or not to add more to response
         await self.db_interface.add_paragraph(section_id, text, index)
-        return self.format_json({}, with_reply_id=message_id)
+        return self.format_json({}, reply_to_id=message_id)
 
     async def edit_paragraph(self, message_id, section_id, update, index):
         # TODO: Decide whether or not to add more to response
         if update['update_type'] == 'replace':
             text = update['text']
             await self.db_interface.set_paragraph_text(section_id, index=index, text=text)
-            return self.format_json({}, with_reply_id=message_id)
+            return self.format_json({}, reply_to_id=message_id)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
@@ -253,24 +253,24 @@ class LAWProtocolDispatcher:
             'users':        story['users'],
             'summary':      story['summary'],
         }
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def get_story_hierarchy(self, message_id, story_id):
         message = {
             'hierarchy': await self.db_interface.get_story_hierarchy(story_id)
         }
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def get_section_hierarchy(self, message_id, section_id):
         message = {
             'hierarchy': await self.db_interface.get_section_hierarchy(section_id)
         }
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def get_section_content(self, message_id, section_id):
         paragraphs = await self.db_interface.get_section_content(section_id)
         content = [{'text': paragraph['text']} for paragraph in paragraphs]
-        return self.format_json({'content': content}, with_reply_id=message_id)
+        return self.format_json({'content': content}, reply_to_id=message_id)
 
     async def delete_story(self, message_id, story_id):
         await self.db_interface.delete_story(story_id)
@@ -297,33 +297,33 @@ class LAWProtocolDispatcher:
             'users':        wiki['users'],
             'summary':      wiki['summary'],
         }
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
         pass
 
     async def add_segment(self, message_id, title, parent_id):
         segment_id = await self.db_interface.add_child_segment(title, parent_id)
-        return self.format_json({'segment_id': segment_id}, with_reply_id=message_id)
+        return self.format_json({'segment_id': segment_id}, reply_to_id=message_id)
 
     async def add_template_heading(self, message_id, title, segment_id):
         await self.db_interface.add_template_heading(title, segment_id)
         # TODO: Decide whether or not to add more to response
-        return self.format_json({}, with_reply_id=message_id)
+        return self.format_json({}, reply_to_id=message_id)
 
     async def add_page(self, message_id, title, parent_id):
         page_id = await self.db_interface.create_page(title, parent_id)
-        return self.format_json({'page_id': page_id}, with_reply_id=message_id)
+        return self.format_json({'page_id': page_id}, reply_to_id=message_id)
 
     async def add_heading(self, message_id, title, page_id, index=None):
         await self.db_interface.add_heading(title, page_id, index)
         # TODO: Decide whether or not to add more to response
-        return self.format_json({}, with_reply_id=message_id)
+        return self.format_json({}, reply_to_id=message_id)
 
     async def edit_segment(self, message_id, segment_id, update):
         # TODO: Decide whether or not to add more to response
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_segment_title(title, segment_id)
-            return self.format_json({}, with_reply_id=message_id)
+            return self.format_json({}, reply_to_id=message_id)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
@@ -336,11 +336,11 @@ class LAWProtocolDispatcher:
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_heading_title(old_title=heading_title, new_title=title, page_id=page_id)
-            return self.format_json({}, with_reply_id=message_id)
+            return self.format_json({}, reply_to_id=message_id)
         elif update['update_type'] == 'set_text':
             text = update['text']
             await self.db_interface.set_heading_text(heading_title, text, page_id)
-            return self.format_json({}, with_reply_id=message_id)
+            return self.format_json({}, reply_to_id=message_id)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update('update_type')))
 
@@ -352,19 +352,19 @@ class LAWProtocolDispatcher:
             'users':        wiki['users'],
             'summary':      wiki['summary'],
         }
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def get_wiki_hierarchy(self, message_id, wiki_id):
         message = {
             'hierarchy': await self.db_interface.get_wiki_hierarchy(wiki_id)
         }
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def get_wiki_segment_hierarchy(self, message_id, segment_id):
         message = {
             'hierarchy': await self.db_interface.get_segment_hierarchy(segment_id)
         }
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def get_wiki_segment(self, message_id, segment_id):
         segment = await self.db_interface.get_segment(segment_id)
@@ -374,7 +374,7 @@ class LAWProtocolDispatcher:
             'pages':             segment['pages'],
             'template_headings': segment['template_headings'],
         }
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def get_wiki_page(self, message_id, page_id):
         page = await self.db_interface.get_page(page_id)
@@ -384,7 +384,7 @@ class LAWProtocolDispatcher:
             'references':   page['references'],
             'headings':     page['headings'],
         }
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     # TODO: Figure this out.
     # async def delete_wiki(self, wiki_id):
@@ -408,7 +408,7 @@ class LAWProtocolDispatcher:
     async def create_link(self, message_id, story_id, section_id, paragraph_id, name, page_id):
         link_id = await self.db_interface.create_link(story_id, section_id, paragraph_id, name, page_id)
         message = {'link_id': link_id}
-        return self.format_json(message, with_reply_id=message_id)
+        return self.format_json(message, reply_to_id=message_id)
 
     async def delete_link(self, message_id, link_id):
         await self.db_interface.delete_link(link_id)
@@ -421,7 +421,7 @@ class LAWProtocolDispatcher:
 
     async def change_alias_name(self, message_id, alias_id, new_name):
         await self.db_interface.change_alias_name(alias_id, new_name)
-        return self.format_json({}, with_reply_id=message_id)
+        return self.format_json({}, reply_to_id=message_id)
 
     async def delete_alias(self, alias_id):
         await self.db_interface.delete_alias(alias_id)
