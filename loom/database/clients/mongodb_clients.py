@@ -147,6 +147,8 @@ class MongoDBClient:
                 'password_hash': 1,
             }
         )
+        if user is None:
+            raise NoMatchError()
         return user['password_hash']
 
     async def get_user_id_for_username(self, username: str) -> ObjectId:

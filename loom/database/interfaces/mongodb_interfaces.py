@@ -66,8 +66,12 @@ class MongoDBInterface(AbstractDBInterface):
         return inserted_id
 
     async def password_is_valid_for_username(self, username, password):
-        stored_hash = await self.client.get_password_hash_for_username(username)
-        return super().verify_hash(password, stored_hash)
+        try:
+            stored_hash = await self.client.get_password_hash_for_username(username)
+        except NoMatchError:
+            return False
+        else:
+            return super().verify_hash(password, stored_hash)
 
     async def get_user_id_for_username(self, username):
         user_id = await self.client.get_user_id_for_username(username)
