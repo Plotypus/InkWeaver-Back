@@ -40,6 +40,7 @@ APPROVED_METHODS = [
     'add_page',
     'add_heading',
     'edit_segment',
+    'edit_template_heading',
     'edit_page',
     'edit_heading',
     'get_wiki_information',
@@ -49,6 +50,7 @@ APPROVED_METHODS = [
     'get_wiki_page',
     'delete_wiki',
     'delete_segment',
+    'delete_template_heading',
     'delete_page',
     'delete_heading',
 
@@ -386,6 +388,10 @@ class LAWProtocolDispatcher:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
     @requires_login
+    async def edit_template_heading(self, message_id, segment_id, template_heading_title, update):
+        pass
+
+    @requires_login
     async def edit_page(self, message_id, page_id, update):
         # TODO: Implement this.
         pass
@@ -458,6 +464,10 @@ class LAWProtocolDispatcher:
     @requires_login
     async def delete_segment(self, message_id, segment_id):
         await self.db_interface.delete_segment(segment_id)
+
+    @requires_login
+    async def delete_template_heading(self, message_id, segment_id, template_heading_title):
+        pass
 
     @requires_login
     async def delete_page(self, message_id, page_id):
