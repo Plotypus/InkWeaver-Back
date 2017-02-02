@@ -121,6 +121,8 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def set_user_password(self, user_id, password):
         # TODO: Check the password is not equal to the previous password.
+        # Maybe even check that it's not too similar, like:
+        #   https://security.stackexchange.com/questions/53481/does-facebook-store-plain-text-passwords
         password_hash = super().hash_password(password)
         await self.client.set_user_password_hash(user_id, password_hash)
 
@@ -186,7 +188,6 @@ class MongoDBInterface(AbstractDBInterface):
             return subsection_id
 
     async def add_paragraph(self, section_id, text, succeeding_paragraph_id=None):
-        # TODO: Read paragraph, get embedded links and generate list of links and update the links in the section
         paragraph_ids = await self.client.get_paragraph_ids(section_id)
         try:
             if not succeeding_paragraph_id:
@@ -232,7 +233,6 @@ class MongoDBInterface(AbstractDBInterface):
         return section['content']
 
     async def set_paragraph_text(self, section_id, text, paragraph_id):
-        # TODO: Remove outdated links which are no longer in the paragraph.
         sentences_and_links = await self.get_links_from_paragraph(text)
         page_updates = {}
         section_links = []
@@ -283,7 +283,8 @@ class MongoDBInterface(AbstractDBInterface):
                 if link is not None:
                     sentence_links.append(link)
             if sentence_links:
-                results.append( (sentence, sentence_links) )
+                sentence_tuple = (sentence, sentence_links)
+                results.append(sentence_tuple)
         return results
 
     async def delete_story(self, story_id):
@@ -429,7 +430,6 @@ class MongoDBInterface(AbstractDBInterface):
         return hierarchy
 
     async def get_page_for_hierarchy(self, page_id):
-        # TODO: Build wiki link table
         page = await self.client.get_page(page_id)
         return {
             'title':   page['title'],

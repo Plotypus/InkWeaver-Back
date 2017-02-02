@@ -473,7 +473,6 @@ class MongoDBClient:
         return result.inserted_id
 
     async def create_page(self, title: str, template_headings=None, _id=None) -> ObjectId:
-        # TODO: Consider revising references structure as a mapping from link IDs to contexts.
         page = {
             'title':      title,
             'headings':   list() if template_headings is None else template_headings,
