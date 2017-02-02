@@ -650,6 +650,19 @@ class MongoDBClient:
         )
         self.assert_delete_one_was_successful(delete_result)
 
+    async def delete_heading(self, heading_title, page_id):
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$pull': {
+                    'headings': {
+                        'title': heading_title
+                    }
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     ###########################################################################
     #
     # Link Methods

@@ -524,9 +524,8 @@ class MongoDBInterface(AbstractDBInterface):
             await self.delete_alias(alias_id)
         await self.client.delete_page(page_id)
 
-    async def delete_heading(self, heading_title, page_id):
-        # TODO: Implement this.
-        pass
+    async def delete_heading(self, heading_title: str, page_id: ObjectId):
+        await self.client.delete_heading(heading_title, page_id)
 
     ###########################################################################
     #
