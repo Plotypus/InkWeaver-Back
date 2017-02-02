@@ -553,6 +553,14 @@ class MongoDBInterface(AbstractDBInterface):
             await self.delete_page(page_id)
         await self.client.delete_segment(segment_id)
 
+    async def delete_template_heading(self, title, segment_id):
+        try:
+            await self.client.delete_template_heading(title, segment_id)
+        except ClientError:
+            raise
+        else:
+            pass
+
     async def delete_page(self, page_id):
         page = await self.client.get_page(page_id)
         for alias_id in page['aliases'].values():

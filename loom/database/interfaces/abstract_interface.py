@@ -226,6 +226,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def delete_template_heading(self, title, segment_id):
+        pass
+
+    @abstractmethod
     async def delete_page(self, page_id):
         pass
 

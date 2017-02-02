@@ -694,6 +694,19 @@ class MongoDBClient:
         )
         self.assert_delete_one_was_successful(delete_result)
 
+    async def delete_template_heading(self, template_heading_title: str, segment_id: ObjectId):
+        update_result: UpdateResult = await self.segments.update_one(
+            filter={'_id': segment_id},
+            update={
+                '$pull': {
+                    'template_headings': {
+                        'title': template_heading_title
+                    }
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def delete_page(self, page_id: ObjectId):
         parent_update_result: UpdateResult = await self.segments.update_one(
             filter={},
