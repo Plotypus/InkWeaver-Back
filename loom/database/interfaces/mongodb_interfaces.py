@@ -45,12 +45,20 @@ class MongoDBInterface(AbstractDBInterface):
     def link_format_regex(self):
         return self._link_format_regex
 
-    # Database methods.
+    ###########################################################################
+    #
+    # Database Methods
+    #
+    ###########################################################################
 
     async def drop_database(self):
         await self.client.drop_database()
 
-    # User object methods.
+    ###########################################################################
+    #
+    # User Methods
+    #
+    ###########################################################################
 
     async def create_user(self, username, password, name, email):
         # TODO: Check the username is not currently in use.
@@ -117,6 +125,8 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def set_user_password(self, user_id, password):
         # TODO: Check the password is not equal to the previous password.
+        # Maybe even check that it's not too similar, like:
+        #   https://security.stackexchange.com/questions/53481/does-facebook-store-plain-text-passwords
         password_hash = super().hash_password(password)
         await self.client.set_user_password_hash(user_id, password_hash)
 
@@ -132,7 +142,11 @@ class MongoDBInterface(AbstractDBInterface):
     async def set_user_avatar(self, user_id, avatar):
         await self.client.set_user_avatar(user_id, avatar)
 
-    # Story object methods.
+    ###########################################################################
+    #
+    # Story Methods
+    #
+    ###########################################################################
 
     async def create_story(self, user_id, title, summary, wiki_id) -> ObjectId:
         user = await self.get_user_preferences(user_id)
@@ -178,7 +192,6 @@ class MongoDBInterface(AbstractDBInterface):
             return subsection_id
 
     async def add_paragraph(self, section_id, text, succeeding_paragraph_id=None):
-        # TODO: Read paragraph, get embedded links and generate list of links and update the links in the section
         paragraph_ids = await self.client.get_paragraph_ids(section_id)
         try:
             if not succeeding_paragraph_id:
@@ -224,7 +237,6 @@ class MongoDBInterface(AbstractDBInterface):
         return section['content']
 
     async def set_paragraph_text(self, section_id, text, paragraph_id):
-        # TODO: Remove outdated links which are no longer in the paragraph.
         sentences_and_links = await self.get_links_from_paragraph(text)
         page_updates = {}
         section_links = []
@@ -275,7 +287,8 @@ class MongoDBInterface(AbstractDBInterface):
                 if link is not None:
                     sentence_links.append(link)
             if sentence_links:
-                results.append( (sentence, sentence_links) )
+                sentence_tuple = (sentence, sentence_links)
+                results.append(sentence_tuple)
         return results
 
     async def delete_story(self, story_id):
@@ -287,19 +300,15 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.remove_story_from_user(user_id, story_id)
         await self.client.delete_story(story_id)
 
+    async def delete_section(self, section_id):
+        await self.recur_delete_section_and_subsections(section_id)
+
     async def recur_delete_section_and_subsections(self, section_id):
         section = await self.client.get_section(section_id)
         for subsection_id in chain(section['preceding_subsections'],
                                    section['inner_subsections'],
                                    section['succeeding_subsections']):
             await self.recur_delete_section_and_subsections(subsection_id)
-        await self._delete_section(section)
-
-    async def delete_section(self, section_id):
-        section = await self.client.get_section(section_id)
-        await self._delete_section(section)
-
-    async def _delete_section(self, section):
         for link_summary in section['links']:
             link_ids = link_summary['links']
             for link_id in link_ids:
@@ -312,7 +321,11 @@ class MongoDBInterface(AbstractDBInterface):
             await self.delete_link(link_id)
         await self.client.delete_paragraph(section_id, paragraph_id)
 
-    # Wiki object methods.
+    ###########################################################################
+    #
+    # Wiki Methods
+    #
+    ###########################################################################
 
     async def create_wiki(self, user_id, title, summary):
         user = await self.get_user_preferences(user_id)
@@ -421,7 +434,6 @@ class MongoDBInterface(AbstractDBInterface):
         return hierarchy
 
     async def get_page_for_hierarchy(self, page_id):
-        # TODO: Build wiki link table
         page = await self.client.get_page(page_id)
         return {
             'title':   page['title'],
@@ -457,6 +469,7 @@ class MongoDBInterface(AbstractDBInterface):
         }
 
     async def get_heading(self, heading_id):
+        # TODO: Do this.
         pass
 
     async def set_segment_title(self, title, segment_id):
@@ -494,23 +507,50 @@ class MongoDBInterface(AbstractDBInterface):
             # TODO: Should this return something?
             pass
 
-    async def delete_wiki(self, wiki_id):
-        # TODO: Implement this.
-        pass
+    async def delete_wiki(self, user_id, wiki_id):
+        # TODO: Is this the best way to handle this? Should all stories use one new wiki? Should this be an option?
+        wiki = await self.client.get_wiki(wiki_id)
+        # Update each story using this wiki with a new wiki.
+        story_summaries = await self.client.get_summaries_of_stories_using_wiki(wiki_id)
+        for summary in story_summaries:
+            story_id = summary['_id']
+            title = summary['title']
+            wiki_title = f"{title} Wiki"
+            wiki_summary = f"A wiki for {title}."
+            # Create the new wiki and set it for the story.
+            new_wiki_id = await self.create_wiki(user_id, wiki_title, wiki_summary)
+            await self.client.set_story_wiki(story_id, new_wiki_id)
+        # Recursively delete all segments in the wiki.
+        segment_id = wiki['segment_id']
+        await self.delete_segment(segment_id)
+        # Delete the wiki proper.
+        await self.client.delete_wiki(wiki_id)
 
     async def delete_segment(self, segment_id):
-        # TODO: Implement this.
-        pass
+        await self.recur_delete_segment_and_subsegments(segment_id)
+
+    async def recur_delete_segment_and_subsegments(self, segment_id):
+        segment = await self.client.get_segment(segment_id)
+        for subsegment_id in segment['segments']:
+            await self.recur_delete_segment_and_subsegments(subsegment_id)
+        for page_id in segment['pages']:
+            await self.delete_page(page_id)
+        await self.client.delete_segment(segment_id)
 
     async def delete_page(self, page_id):
-        # TODO: Implement this.
-        pass
+        page = await self.client.get_page(page_id)
+        for alias_id in page['aliases'].values():
+            await self.delete_alias(alias_id)
+        await self.client.delete_page(page_id)
 
-    async def delete_heading(self, heading_title, page_id):
-        # TODO: Implement this.
-        pass
+    async def delete_heading(self, heading_title: str, page_id: ObjectId):
+        await self.client.delete_heading(heading_title, page_id)
 
-    # Link Object Methods
+    ###########################################################################
+    #
+    # Link Methods
+    #
+    ###########################################################################
 
     async def create_link(self, story_id: ObjectId, section_id: ObjectId, paragraph_id: ObjectId, name: str,
                           page_id: ObjectId):
@@ -548,7 +588,11 @@ class MongoDBInterface(AbstractDBInterface):
         await self.set_paragraph_text(context['section_id'], updated_text, context['paragraph_id'])
         await self.delete_link(link_id)
 
-    # Alias Object Methods
+    ###########################################################################
+    #
+    # Alias Methods
+    #
+    ###########################################################################
 
     async def change_alias_name(self, alias_id: ObjectId, new_name: str):
         # Update name in alias.

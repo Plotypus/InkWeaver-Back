@@ -8,13 +8,13 @@ import asyncio
 
 
 def main(jsonfile, db_name):
-    interface = MongoDBAsyncioInterface(db_name, 'localhost', 27017)
     answer = input("This will drop the `{}` database... continue? [y/N] ".format(db_name))
     if not answer.lower().startswith('y'):
         print("Quitting...")
         return
     print("Continuing.")
     event_loop = asyncio.get_event_loop()
+    interface = MongoDBAsyncioInterface(db_name, 'localhost', 27017)
     processor = DataProcessor(interface)
     event_loop.run_until_complete(interface.client.drop_database())
     event_loop.run_until_complete(processor.load_file(jsonfile))
