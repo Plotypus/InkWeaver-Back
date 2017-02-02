@@ -620,6 +620,21 @@ class MongoDBClient:
         })
         return result
 
+    async def delete_segment(self, segment_id: ObjectId):
+        parent_update_result: UpdateResult = await self.segments.update_one(
+            filter={},
+            update={
+                '$pull': {
+                    'segments': segment_id
+                }
+            }
+        )
+        self.assert_update_one_was_successful(parent_update_result)
+        delete_result: DeleteResult = await self.segments.delete_one(
+            filter={'_id': segment_id}
+        )
+        self.assert_delete_one_was_successful(delete_result)
+
     async def delete_page(self, page_id: ObjectId):
         parent_update_result: UpdateResult = await self.segments.update_one(
             filter={},

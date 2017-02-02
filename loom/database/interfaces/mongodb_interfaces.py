@@ -453,6 +453,7 @@ class MongoDBInterface(AbstractDBInterface):
         }
 
     async def get_heading(self, heading_id):
+        # TODO: Do this.
         pass
 
     async def set_segment_title(self, title, segment_id):
@@ -495,8 +496,15 @@ class MongoDBInterface(AbstractDBInterface):
         pass
 
     async def delete_segment(self, segment_id):
-        # TODO: Implement this.
-        pass
+        await self.recur_delete_segment_and_subsegments(segment_id)
+
+    async def recur_delete_segment_and_subsegments(self, segment_id):
+        segment = await self.client.get_segment(segment_id)
+        for subsegment_id in segment['segments']:
+            await self.recur_delete_segment_and_subsegments(subsegment_id)
+        for page_id in segment['pages']:
+            await self.delete_page(page_id)
+        await self.client.delete_segment(segment_id)
 
     async def delete_page(self, page_id):
         page = await self.client.get_page(page_id)
