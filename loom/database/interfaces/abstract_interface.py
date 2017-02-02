@@ -210,7 +210,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def delete_wiki(self, wiki_id):
+    async def delete_wiki(self, user_id, wiki_id):
         pass
 
     @abstractmethod

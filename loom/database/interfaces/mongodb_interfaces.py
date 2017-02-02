@@ -503,9 +503,24 @@ class MongoDBInterface(AbstractDBInterface):
             # TODO: Should this return something?
             pass
 
-    async def delete_wiki(self, wiki_id):
-        # TODO: Implement this.
-        pass
+    async def delete_wiki(self, user_id, wiki_id):
+        # TODO: Is this the best way to handle this? Should all stories use one new wiki? Should this be an option?
+        wiki = await self.client.get_wiki(wiki_id)
+        # Update each story using this wiki with a new wiki.
+        story_summaries = await self.client.get_summaries_of_stories_using_wiki(wiki_id)
+        for summary in story_summaries:
+            story_id = summary['_id']
+            title = summary['title']
+            wiki_title = f"{title} Wiki"
+            wiki_summary = f"A wiki for {title}."
+            # Create the new wiki and set it for the story.
+            new_wiki_id = await self.create_wiki(user_id, wiki_title, wiki_summary)
+            await self.client.set_story_wiki(story_id, new_wiki_id)
+        # Recursively delete all segments in the wiki.
+        segment_id = wiki['segment_id']
+        await self.delete_segment(segment_id)
+        # Delete the wiki proper.
+        await self.client.delete_wiki(wiki_id)
 
     async def delete_segment(self, segment_id):
         await self.recur_delete_segment_and_subsegments(segment_id)

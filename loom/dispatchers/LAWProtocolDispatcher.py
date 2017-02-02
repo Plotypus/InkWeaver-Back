@@ -45,6 +45,7 @@ APPROVED_METHODS = [
     'get_wiki_segment_hierarchy',
     'get_wiki_segment',
     'get_wiki_page',
+    'delete_wiki',
     'delete_segment',
     'delete_page',
     'delete_heading',
@@ -386,9 +387,8 @@ class LAWProtocolDispatcher:
         }
         return self.format_json(message, reply_to_id=message_id)
 
-    # TODO: Figure this out.
-    # async def delete_wiki(self, wiki_id):
-    #     pass
+    async def delete_wiki(self, message_id, wiki_id):
+        await self.db_interface.delete_wiki(self.user_id, wiki_id)
 
     async def delete_segment(self, message_id, segment_id):
         await self.db_interface.delete_segment(segment_id)
