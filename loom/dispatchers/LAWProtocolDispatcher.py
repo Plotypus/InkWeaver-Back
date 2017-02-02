@@ -37,6 +37,7 @@ APPROVED_METHODS = [
     'get_wiki_information',
     'get_wiki_hierarchy',
     'get_wiki_segment_hierarchy',
+    'get_wiki_segment',
     'get_wiki_page',
 
     # Links
@@ -320,6 +321,16 @@ class LAWProtocolDispatcher:
     async def get_wiki_segment_hierarchy(self, message_id, segment_id):
         message = {
             'hierarchy': await self.db_interface.get_segment_hierarchy(segment_id)
+        }
+        return self.format_json(message, with_reply_id=message_id)
+
+    async def get_wiki_segment(self, message_id, segment_id):
+        segment = await self.db_interface.get_segment(segment_id)
+        message = {
+            'title':             segment['title'],
+            'segments':          segment['segments'],
+            'pages':             segment['pages'],
+            'template_headings': segment['template_headings'],
         }
         return self.format_json(message, with_reply_id=message_id)
 

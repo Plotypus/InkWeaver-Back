@@ -161,7 +161,15 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_segment_summary(self, segment_id):
+        pass
+
+    @abstractmethod
     async def get_page(self, page_id):
+        pass
+
+    @abstractmethod
+    async def get_page_summary(self, page_id):
         pass
 
     @abstractmethod
