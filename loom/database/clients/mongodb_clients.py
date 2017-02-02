@@ -356,6 +356,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_story_wiki(self, story_id: ObjectId, wiki_id: ObjectId):
+        update_result: UpdateResult = await self.stories.update_one(
+            filter={'_id': story_id},
+            update={
+                '$set': {
+                    'wiki_id': wiki_id
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def set_paragraph_text(self, paragraph_id: ObjectId, text: str, in_section_id: ObjectId):
         update_result: UpdateResult = await self.sections.update_one(
             # For filtering documents in an array, we use the name of the array field
@@ -473,7 +484,6 @@ class MongoDBClient:
         return result.inserted_id
 
     async def create_page(self, title: str, template_headings=None, _id=None) -> ObjectId:
-        # TODO: Consider revising references structure as a mapping from link IDs to contexts.
         page = {
             'title':      title,
             'headings':   list() if template_headings is None else template_headings,
@@ -619,6 +629,74 @@ class MongoDBClient:
             'headings.title': title
         })
         return result
+
+    async def get_summaries_of_stories_using_wiki(self, wiki_id: ObjectId):
+        result_cursor = self.stories.find(
+            filter={'wiki_id': wiki_id},
+            projection={'_id': 1, 'title': 1}
+        )
+        results = []
+        async for result in result_cursor:
+            results.append(result)
+        return results
+
+    async def delete_wiki(self, wiki_id: ObjectId):
+        parent_update_result: UpdateResult = await self.users.update_many(
+            filter={},
+            update={
+                '$pull': {
+                    'wikis': wiki_id
+                }
+            }
+        )
+        self.assert_update_one_was_successful(parent_update_result)
+        delete_result: DeleteResult = await self.wikis.delete_one(
+            filter={'_id': wiki_id}
+        )
+        self.assert_delete_one_was_successful(delete_result)
+
+    async def delete_segment(self, segment_id: ObjectId):
+        parent_update_result: UpdateResult = await self.segments.update_one(
+            filter={},
+            update={
+                '$pull': {
+                    'segments': segment_id
+                }
+            }
+        )
+        self.assert_update_one_was_successful(parent_update_result)
+        delete_result: DeleteResult = await self.segments.delete_one(
+            filter={'_id': segment_id}
+        )
+        self.assert_delete_one_was_successful(delete_result)
+
+    async def delete_page(self, page_id: ObjectId):
+        parent_update_result: UpdateResult = await self.segments.update_one(
+            filter={},
+            update={
+                '$pull': {
+                    'pages': page_id
+                }
+            }
+        )
+        self.assert_update_one_was_successful(parent_update_result)
+        delete_result: DeleteResult = await self.pages.delete_one(
+            filter={'_id': page_id}
+        )
+        self.assert_delete_one_was_successful(delete_result)
+
+    async def delete_heading(self, heading_title, page_id):
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$pull': {
+                    'headings': {
+                        'title': heading_title
+                    }
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
 
     ###########################################################################
     #

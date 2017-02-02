@@ -5,12 +5,21 @@ from passlib.hash import pbkdf2_sha512 as hasher
 
 class AbstractDBInterface(ABC):
 
-    # Database methods.
+    ###########################################################################
+    #
+    # Database Methods
+    #
+    ###########################################################################
+
     @abstractmethod
     async def drop_database(self):
         pass
 
-    # User object methods.
+    ###########################################################################
+    #
+    # User Methods
+    #
+    ###########################################################################
 
     @abstractmethod
     async def create_user(self, username, password, name, email):
@@ -64,7 +73,11 @@ class AbstractDBInterface(ABC):
     async def set_user_avatar(self, user_id, avatar):
         pass
 
-    # Story object methods.
+    ###########################################################################
+    #
+    # Story Methods
+    #
+    ###########################################################################
 
     @abstractmethod
     async def create_story(self, user_id, title, summary, wiki_id):
@@ -118,7 +131,15 @@ class AbstractDBInterface(ABC):
     async def delete_section(self, section_id):
         pass
 
-    # Wiki object methods.
+    @abstractmethod
+    async def delete_paragraph(self, section_id, paragraph_id):
+        pass
+
+    ###########################################################################
+    #
+    # Wiki Methods
+    #
+    ###########################################################################
 
     @abstractmethod
     async def create_wiki(self, user_id, title, summary):
@@ -189,7 +210,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def delete_wiki(self, wiki_id):
+    async def delete_wiki(self, user_id, wiki_id):
         pass
 
     @abstractmethod
@@ -204,7 +225,11 @@ class AbstractDBInterface(ABC):
     async def delete_heading(self, heading_title, page_id):
         pass
 
-    # Link object methods.
+    ###########################################################################
+    #
+    # Link Methods
+    #
+    ###########################################################################
 
     @abstractmethod
     async def create_link(self, story_id, section_id, paragraph_key, name, page_id):
@@ -218,11 +243,11 @@ class AbstractDBInterface(ABC):
     async def delete_link(self, link_id):
         pass
 
-    @abstractmethod
-    async def comprehensive_remove_link(self, link_id, replacement_text):
-        pass
-
-    # Alias object methods.
+    ###########################################################################
+    #
+    # Alias Methods
+    #
+    ###########################################################################
 
     @abstractmethod
     async def get_alias(self, alias_id):
