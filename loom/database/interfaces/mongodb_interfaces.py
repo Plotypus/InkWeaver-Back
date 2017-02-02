@@ -45,12 +45,20 @@ class MongoDBInterface(AbstractDBInterface):
     def link_format_regex(self):
         return self._link_format_regex
 
-    # Database methods.
+    ###########################################################################
+    #
+    # Database Methods
+    #
+    ###########################################################################
 
     async def drop_database(self):
         await self.client.drop_database()
 
-    # User object methods.
+    ###########################################################################
+    #
+    # User Methods
+    #
+    ###########################################################################
 
     async def create_user(self, username, password, name, email):
         # TODO: Check the username is not currently in use.
@@ -128,7 +136,11 @@ class MongoDBInterface(AbstractDBInterface):
     async def set_user_avatar(self, user_id, avatar):
         await self.client.set_user_avatar(user_id, avatar)
 
-    # Story object methods.
+    ###########################################################################
+    #
+    # Story Methods
+    #
+    ###########################################################################
 
     async def create_story(self, user_id, title, summary, wiki_id) -> ObjectId:
         user = await self.get_user_preferences(user_id)
@@ -304,7 +316,11 @@ class MongoDBInterface(AbstractDBInterface):
             await self.delete_link(link_id)
         await self.client.delete_paragraph(section_id, paragraph_id)
 
-    # Wiki object methods.
+    ###########################################################################
+    #
+    # Wiki Methods
+    #
+    ###########################################################################
 
     async def create_wiki(self, user_id, title, summary):
         user = await self.get_user_preferences(user_id)
@@ -512,7 +528,11 @@ class MongoDBInterface(AbstractDBInterface):
         # TODO: Implement this.
         pass
 
-    # Link Object Methods
+    ###########################################################################
+    #
+    # Link Methods
+    #
+    ###########################################################################
 
     async def create_link(self, story_id: ObjectId, section_id: ObjectId, paragraph_id: ObjectId, name: str,
                           page_id: ObjectId):
@@ -550,7 +570,11 @@ class MongoDBInterface(AbstractDBInterface):
         await self.set_paragraph_text(context['section_id'], updated_text, context['paragraph_id'])
         await self.delete_link(link_id)
 
-    # Alias Object Methods
+    ###########################################################################
+    #
+    # Alias Methods
+    #
+    ###########################################################################
 
     async def change_alias_name(self, alias_id: ObjectId, new_name: str):
         # Update name in alias.
