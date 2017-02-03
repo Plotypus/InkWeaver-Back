@@ -23,4 +23,6 @@ class DemoDataDispatcher(LAWProtocolDispatcher):
         await super().edit_heading(message_id, page_id, title, update)
 
     async def add_text_to_section(self, message_id, text, section_id):
-        await super().add_paragraph(message_id, section_id, text)
+        paragraphs = text.split('\n\n')
+        for paragraph in paragraphs:
+            await super().add_paragraph(message_id, section_id, paragraph)
