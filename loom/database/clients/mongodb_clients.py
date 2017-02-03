@@ -471,7 +471,7 @@ class MongoDBClient:
         result = await self.wikis.insert_one(wiki)
         return result.inserted_id
 
-    async def create_segment(self, title: str, _id=None) -> ObjectId:
+    async def create_segment(self, title: str, template_headings=None, _id=None) -> ObjectId:
         # TODO: Implement statistics.
         segment = {
             'title':             title,
@@ -480,6 +480,8 @@ class MongoDBClient:
             'template_headings': list(),
             'statistics':        None,
         }
+        if template_headings is not None:
+            segment['template_headings'] = template_headings
         if _id is not None:
             segment['_id'] = _id
         result = await self.segments.insert_one(segment)

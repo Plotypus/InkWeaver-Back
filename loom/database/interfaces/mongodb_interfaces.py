@@ -351,16 +351,18 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.append_page_to_parent_segment(page_id, in_parent_segment)
         except ClientError:
-            self.delete_page(page_id)
+            await self.delete_page(page_id)
         else:
             return page_id
 
     async def add_child_segment(self, title, parent_id):
-        child_segment_id = await self.create_segment(title)
+        parent_segment = await self.client.get_segment(parent_id)
+        template_headings = parent_segment['template_headings']
+        child_segment_id = await self.client.create_segment(title, template_headings)
         try:
             await self.client.append_segment_to_parent_segment(child_segment_id, parent_id)
         except ClientError:
-            self.delete_segment(child_segment_id)
+            await self.delete_segment(child_segment_id)
         else:
             return child_segment_id
 
