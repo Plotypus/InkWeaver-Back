@@ -1,5 +1,8 @@
 import sys
-sys.path.append('..')
+
+from os.path import dirname
+
+sys.path.append(dirname(dirname(__file__)))
 
 from loom.data_processor import DataProcessor
 from loom.database.interfaces import MongoDBAsyncioInterface
