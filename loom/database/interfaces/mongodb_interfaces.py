@@ -192,11 +192,11 @@ class MongoDBInterface(AbstractDBInterface):
             return subsection_id
 
     async def add_paragraph(self, section_id, text, succeeding_paragraph_id=None):
-        paragraph_ids = await self.client.get_paragraph_ids(section_id)
         try:
             if not succeeding_paragraph_id:
                 index = None
             else:
+                paragraph_ids = await self.client.get_paragraph_ids(section_id)
                 index = paragraph_ids.index(succeeding_paragraph_id)
         except ValueError:
             # TODO: Handle case when client provides bad paragraph_id
