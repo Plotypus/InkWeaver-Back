@@ -46,6 +46,10 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
         """
         self.write_console_message('received: {}'.format(message))
 
+    def write_message(self, message, binary=False):
+        self.write_console_message(f'sent response to client: {message}')
+        super().write_message(message, binary)
+
     def on_close(self):
         """
         Handle WS termination.
