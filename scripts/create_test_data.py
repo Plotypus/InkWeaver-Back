@@ -12,12 +12,13 @@ from loom.database.interfaces import MongoDBAsyncioInterface
 import asyncio
 
 
-def main(jsonfile, db_name):
-    answer = input("This will drop the `{}` database... continue? [y/N] ".format(db_name))
-    if not answer.lower().startswith('y'):
-        print("Quitting...")
-        return
-    print("Continuing.")
+def main(jsonfile, db_name, blind_override=False):
+    if not blind_override:
+        answer = input("This will drop the `{}` database... continue? [y/N] ".format(db_name))
+        if not answer.lower().startswith('y'):
+            print("Quitting...")
+            return
+        print("Continuing.")
     event_loop = asyncio.get_event_loop()
     interface = MongoDBAsyncioInterface(db_name, 'localhost', 27017)
     processor = DataProcessor(interface)
@@ -30,6 +31,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('data_file', help='Path to the data file.')
     parser.add_argument('--db_name', default='inkweaver', help='Name of the database you want to use.')
+    parser.add_argument('--no-ask', help='Do not ask for verification to dump existing database.',
+                        action='store_true')
     args = parser.parse_args()
 
-    main(args.data_file, args.db_name)
+    main(args.data_file, args.db_name, args.no_ask)
