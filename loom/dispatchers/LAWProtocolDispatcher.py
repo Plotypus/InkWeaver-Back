@@ -321,7 +321,7 @@ class LAWProtocolDispatcher:
     @requires_login
     async def get_section_content(self, message_id, section_id):
         paragraphs = await self.db_interface.get_section_content(section_id)
-        content = [{'text': paragraph['text']} for paragraph in paragraphs]
+        content = [{'text': paragraph['text'], 'paragraph_id': paragraph['_id']} for paragraph in paragraphs]
         return self.format_json({'content': content}, reply_to_id=message_id)
 
     @requires_login
