@@ -327,14 +327,17 @@ class LAWProtocolDispatcher:
     @requires_login
     async def delete_story(self, message_id, story_id):
         await self.db_interface.delete_story(story_id)
+        return self.format_json({'event': 'story_deleted'}, reply_to_id=message_id)
 
     @requires_login
     async def delete_section(self, message_id, section_id):
         await self.db_interface.delete_section(section_id)
+        return self.format_json({'event': 'section_deleted'}, reply_to_id=message_id)
 
     @requires_login
     async def delete_paragraph(self, message_id, section_id, paragraph_id):
         await self.db_interface.delete_paragraph(section_id, paragraph_id)
+        return self.format_json({'event': 'paragraph_deleted'}, reply_to_id=message_id)
 
     ###########################################################################
     #
@@ -477,22 +480,27 @@ class LAWProtocolDispatcher:
     @requires_login
     async def delete_wiki(self, message_id, wiki_id):
         await self.db_interface.delete_wiki(self.user_id, wiki_id)
+        return self.format_json({'event': 'wiki_deleted'}, reply_to_id=message_id)
         
     @requires_login
     async def delete_segment(self, message_id, segment_id):
         await self.db_interface.delete_segment(segment_id)
+        return self.format_json({'event': 'segment_deleted'}, reply_to_id=message_id)
 
     @requires_login
     async def delete_template_heading(self, message_id, segment_id, template_heading_title):
         await self.db_interface.delete_template_heading(template_heading_title, segment_id)
+        return self.format_json({'event': 'template_heading_deleted'}, reply_to_id=message_id)
 
     @requires_login
     async def delete_page(self, message_id, page_id):
         await self.db_interface.delete_page(page_id)
+        return self.format_json({'event': 'page_deleted'}, reply_to_id=message_id)
 
     @requires_login
     async def delete_heading(self, message_id, heading_title, page_id):
         await self.db_interface.delete_heading(heading_title, page_id)
+        return self.format_json({'event': 'heading_deleted'}, reply_to_id=message_id)
 
     ###########################################################################
     #
@@ -509,6 +517,7 @@ class LAWProtocolDispatcher:
     @requires_login
     async def delete_link(self, message_id, link_id):
         await self.db_interface.delete_link(link_id)
+        return self.format_json({'event': 'link_deleted'}, reply_to_id=message_id)
 
     ###########################################################################
     #
@@ -523,5 +532,6 @@ class LAWProtocolDispatcher:
         return self.format_json({}, reply_to_id=message_id)
 
     @requires_login
-    async def delete_alias(self, alias_id):
+    async def delete_alias(self, message_id, alias_id):
         await self.db_interface.delete_alias(alias_id)
+        return self.format_json({'event': 'alias_deleted'}, reply_to_id=message_id)
