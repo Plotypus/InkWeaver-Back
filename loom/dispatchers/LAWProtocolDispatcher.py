@@ -279,15 +279,15 @@ class LAWProtocolDispatcher:
     @requires_login
     async def add_paragraph(self, message_id, section_id, text, index=None):
         # TODO: Decide whether or not to add more to response
-        await self.db_interface.add_paragraph(section_id, text, index)
-        return self.format_json({}, reply_to_id=message_id)
+        paragraph_id = await self.db_interface.add_paragraph(section_id, text, index)
+        return self.format_json({'paragraph_id': paragraph_id}, reply_to_id=message_id)
 
     @requires_login
-    async def edit_paragraph(self, message_id, section_id, update, index):
+    async def edit_paragraph(self, message_id, section_id, update, paragraph_id):
         # TODO: Decide whether or not to add more to response
-        if update['update_type'] == 'replace':
+        if update['update_type'] == 'set_text':
             text = update['text']
-            await self.db_interface.set_paragraph_text(section_id, index=index, text=text)
+            await self.db_interface.set_paragraph_text(section_id, paragraph_id=paragraph_id, text=text)
             return self.format_json({}, reply_to_id=message_id)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
