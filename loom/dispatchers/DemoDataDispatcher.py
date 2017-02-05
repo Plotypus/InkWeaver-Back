@@ -24,5 +24,8 @@ class DemoDataDispatcher(LAWProtocolDispatcher):
 
     async def add_text_to_section(self, message_id, text, section_id):
         paragraphs = text.split('\n\n')
+        paragraph_ids = {}
         for paragraph in paragraphs:
-            await super().add_paragraph(message_id, section_id, paragraph)
+            paragraph_id = (await super().add_paragraph(message_id, section_id, paragraph))['paragraph_id']
+            paragraph_ids[str(len(paragraph_ids))] = paragraph_id
+        return self.format_json({'paragraph_ids': paragraph_ids})

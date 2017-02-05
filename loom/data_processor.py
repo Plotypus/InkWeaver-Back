@@ -1,9 +1,10 @@
 from loom.database.interfaces import AbstractDBInterface
 from loom.dispatchers import DemoDataDispatcher
-from loom.serialize import decode_string_to_bson
+from loom.serialize import decode_string_to_bson, encode_bson_to_string
 
 import re
 
+from bson import ObjectId
 from typing import Dict
 
 JSON = Dict
@@ -39,19 +40,37 @@ class DataProcessor:
     id_regex = re.compile(r'\$\{([^}]+)\}')
 
     def replace_id(self, value):
+        if isinstance(value, dict):
+            revised = {k: self.replace_id(v) for k, v in value.items()}
+            return revised
         if not isinstance(value, str):
             return value
-        match = re.fullmatch(self.id_regex, value)
-        if match is None:
-            return value
-        else:
-            m_id, keys = match.group(1).split('.', 1)
+        string_parts = []
+        prev_end = 0
+        fullmatch = re.fullmatch(self.id_regex, value)
+        if fullmatch is not None:
+            m_id, keys = fullmatch.group(1).split('.', 1)
             m_id = int(m_id)
             keys = keys.split('.')
             response = self.responses[m_id]
             for key in keys:
                 response = response[key]
             return response
+        matches = re.finditer(self.id_regex, value)
+        for match in matches:
+            string_parts.append(value[prev_end:match.start()])
+            m_id, keys = match.group(1).split('.', 1)
+            m_id = int(m_id)
+            keys = keys.split('.')
+            response = self.responses[m_id]
+            for key in keys:
+                response = response[key]
+            if isinstance(response, ObjectId):
+                response = encode_bson_to_string(response)
+            prev_end = match.end()
+            string_parts.append(response)
+        string_parts.append(value[prev_end:])
+        return ''.join(string_parts)
 
     async def process_list(self, dispatch_list):
         for dispatch_item in dispatch_list:
