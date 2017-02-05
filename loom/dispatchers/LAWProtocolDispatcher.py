@@ -434,15 +434,21 @@ class LAWProtocolDispatcher:
 
     @requires_login
     async def get_wiki_hierarchy(self, message_id, wiki_id):
+        hierarchy = await self.db_interface.get_wiki_hierarchy(wiki_id)
+        links_table = hierarchy.pop('links')
         message = {
-            'hierarchy': await self.db_interface.get_wiki_hierarchy(wiki_id)
+            'hierarchy':   hierarchy,
+            'links_table': links_table,
         }
         return self.format_json(message, reply_to_id=message_id)
 
     @requires_login
     async def get_wiki_segment_hierarchy(self, message_id, segment_id):
+        hierarchy = await self.db_interface.get_segment_hierarchy(segment_id)
+        links_table = hierarchy.pop('links')
         message = {
-            'hierarchy': await self.db_interface.get_segment_hierarchy(segment_id)
+            'hierarchy':   hierarchy,
+            'links_table': links_table,
         }
         return self.format_json(message, reply_to_id=message_id)
 
