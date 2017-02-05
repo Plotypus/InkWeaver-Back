@@ -459,7 +459,7 @@ class TestDBInterface:
         assert hierarchy['segment_id'] == segment_id
         assert hierarchy['segments'] == list()
         assert hierarchy['pages'] == list()
-        assert hierarchy['links'] == dict()
+        assert hierarchy['links'] == list()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user,wiki', [
@@ -483,7 +483,7 @@ class TestDBInterface:
         segment_hierarchy = await self.interface.get_segment_hierarchy(segment_id)
         assert wiki_hierarchy == segment_hierarchy
         assert wiki_hierarchy['title'] == db_wiki['title']
-        assert wiki_hierarchy['links'] == dict()
+        assert wiki_hierarchy['links'] == list()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('user,wiki,segment_title', [
@@ -696,10 +696,11 @@ class TestDBInterface:
         hierarchy = await self.interface.get_wiki_hierarchy(wiki_id)
         assert len(hierarchy['links']) == 1
         link_info = {
+            'link_id': link_id,
             'name': link_name,
             'page_id': page_id,
         }
-        assert hierarchy['links'][link_id] == link_info
+        assert hierarchy['links'][0] == link_info
 
         # Test alias name change.
         await self.interface.change_alias_name(alias_id, new_link_name)
@@ -728,4 +729,4 @@ class TestDBInterface:
         link = await self.interface.get_link(link_id)
         assert link is None
         hierarchy = await self.interface.get_wiki_hierarchy(wiki_id)
-        assert hierarchy['links'] == {}
+        assert hierarchy['links'] == list()
