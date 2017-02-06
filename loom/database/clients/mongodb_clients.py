@@ -418,7 +418,7 @@ class MongoDBClient:
         self.assert_delete_one_was_successful(delete_result)
 
     async def delete_section(self, section_id: ObjectId):
-        parent_update_result: UpdateResult = await self.sections.update_one(
+        parent_update_result: UpdateResult = await self.sections.update_many(
             filter={},
             update={
                 '$pull': {
@@ -428,7 +428,7 @@ class MongoDBClient:
                 }
             }
         )
-        self.assert_update_one_was_successful(parent_update_result)
+        # self.assert_update_one_was_successful(parent_update_result)
         delete_result: DeleteResult = await self.sections.delete_one(
             filter={'_id': section_id}
         )
@@ -682,7 +682,7 @@ class MongoDBClient:
         self.assert_delete_one_was_successful(delete_result)
 
     async def delete_segment(self, segment_id: ObjectId):
-        parent_update_result: UpdateResult = await self.segments.update_one(
+        parent_update_result: UpdateResult = await self.segments.update_many(
             filter={},
             update={
                 '$pull': {
@@ -690,7 +690,7 @@ class MongoDBClient:
                 }
             }
         )
-        self.assert_update_one_was_successful(parent_update_result)
+        # self.assert_update_one_was_successful(parent_update_result)
         delete_result: DeleteResult = await self.segments.delete_one(
             filter={'_id': segment_id}
         )
@@ -710,7 +710,7 @@ class MongoDBClient:
         self.assert_update_one_was_successful(update_result)
 
     async def delete_page(self, page_id: ObjectId):
-        parent_update_result: UpdateResult = await self.segments.update_one(
+        parent_update_result: UpdateResult = await self.segments.update_many(
             filter={},
             update={
                 '$pull': {
@@ -718,7 +718,7 @@ class MongoDBClient:
                 }
             }
         )
-        self.assert_update_one_was_successful(parent_update_result)
+        # self.assert_update_one_was_successful(parent_update_result)
         delete_result: DeleteResult = await self.pages.delete_one(
             filter={'_id': page_id}
         )
