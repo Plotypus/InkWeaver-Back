@@ -26,13 +26,29 @@
             "message_id": 4,
             "action": "add_page",
             "title": "Ebenezer Scrooge",
-            "parent_id": "${2.segment_id}"
+            "parent_id": "${3.segment_id}"
+        },
+        {
+            "message_id": 100,
+            "action": "add_heading",
+            "page_id": "${4.page_id}",
+            "title": "Background"
+        },
+        {
+            "message_id": 99,
+            "action": "edit_heading",
+            "page_id": "${4.page_id}",
+            "heading_title": "Background",
+            "update": {
+                "update_type": "set_text",
+                "text": "<p>Scrooge is a miserly owner of a nineteenth century accounting firm. Scrooge's greedy, cold-hearted approach to life has made him very lonely.</p>"
+            }
         },
         {
             "message_id": 5,
             "action": "add_heading_with_text",
-            "title": "Background",
-            "text": "SCROOGE BACKGROUND TEXT",
+            "title": "Relationships",
+            "text": "<p>Bob Cratchit - Scrooge's clerk</p><p>Tiny Tim - Bob Cratchit's crippled son</p><p>Jacob Marley - Scrooge's deceased former partner</p>",
             "page_id": "${4.page_id}"
         },
         {
@@ -42,10 +58,26 @@
             "parent_id": "${3.segment_id}"
         },
         {
+            "message_id": 98,
+            "action": "add_template_heading",
+            "title": "Role",
+            "segment_id": "${6.segment_id}"
+        },
+        {
             "message_id": 7,
             "action": "add_page",
             "title": "Ghost of Christmas Past",
             "parent_id": "${6.segment_id}"
+        },
+        {
+            "message_id": 97,
+            "action": "edit_heading",
+            "page_id": "${7.page_id}",
+            "heading_title": "Role",
+            "update": {
+                "update_type": "set_text",
+                "text": "The Ghost of Christmas Past is the first to visit Scrooge. This spirit shows Scrooge his past Christmases to show how important it is for Scrooge to change his ways. For the reader, the spirit servers as a window to Scrooge's past."
+            }
         },
         {
             "message_id": 8,
@@ -54,10 +86,30 @@
             "parent_id": "${6.segment_id}"
         },
         {
+            "message_id": 97,
+            "action": "edit_heading",
+            "page_id": "${8.page_id}",
+            "heading_title": "Role",
+            "update": {
+                "update_type": "set_text",
+                "text": "The Ghost of Christmas Present shows Scrooge current Christmas festivities. The spirit brings Scrooge to Bob Cratchit's home to introduce Scrooge to Tiny Tim."
+            }
+        },
+        {
             "message_id": 9,
             "action": "add_page",
             "title": "Ghost of Christmas Yet to Come",
             "parent_id": "${6.segment_id}"
+        },
+        {
+            "message_id": 96,
+            "action": "edit_heading",
+            "page_id": "${9.page_id}",
+            "heading_title": "Role",
+            "update": {
+                "update_type": "set_text",
+                "text": "The Ghost of Christmas Yet to Come symbolizes and resembles Death. This spirit shows Scrooge the aftermath of his death, which ultimately pushes Scrooge to changing his ways."
+            }
         },
         {
             "message_id": 10,
@@ -69,31 +121,31 @@
         {
             "message_id": 11,
             "action": "add_inner_subsection",
-            "title": "STAVE ONE—MARLEY'S GHOST",
+            "title": "STAVE ONE--MARLEY'S GHOST",
             "parent_id": "${10.section_id}"
         },
         {
             "message_id": 12,
             "action": "add_inner_subsection",
-            "title": "STAVE TWO—THE FIRST OF THE THREE SPIRITS",
+            "title": "STAVE TWO--THE FIRST OF THE THREE SPIRITS",
             "parent_id": "${10.section_id}"
         },
         {
             "message_id": 13,
             "action": "add_inner_subsection",
-            "title": "STAVE THREE—THE SECOND OF THE THREE SPIRITS",
+            "title": "STAVE THREE--THE SECOND OF THE THREE SPIRITS",
             "parent_id": "${10.section_id}"
         },
         {
             "message_id": 14,
             "action": "add_inner_subsection",
-            "title": "STAVE FOUR—THE LAST OF THE SPIRITS",
+            "title": "STAVE FOUR--THE LAST OF THE SPIRITS",
             "parent_id": "${10.section_id}"
         },
         {
             "message_id": 15,
             "action": "add_inner_subsection",
-            "title": "STAVE FIVE—THE END OF IT",
+            "title": "STAVE FIVE--THE END OF IT",
             "parent_id": "${10.section_id}"
         },
         {
