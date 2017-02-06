@@ -277,9 +277,9 @@ class LAWProtocolDispatcher:
         return self.format_json(message, reply_to_id=message_id)
 
     @requires_login
-    async def add_paragraph(self, message_id, section_id, text, index=None):
+    async def add_paragraph(self, message_id, section_id, text, succeeding_paragraph_id=None):
         # TODO: Decide whether or not to add more to response
-        paragraph_id = await self.db_interface.add_paragraph(section_id, text, index)
+        paragraph_id = await self.db_interface.add_paragraph(section_id, text, succeeding_paragraph_id)
         return self.format_json({'paragraph_id': paragraph_id}, reply_to_id=message_id)
 
     @requires_login
