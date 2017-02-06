@@ -19,6 +19,9 @@ def generate_link_format_regex():
     o = ObjectId()
     inner_regex = r'([a-f\d]{24})'
     bson_string = encode_bson_to_string(o)
+    # TODO: Temporary fix.
+    # Strip the whitespace in the encoding and allow one or more spaces.
+    # Note: re.escape also escapes spaces, which is why the replace looks for '\\ '.
     pattern = re.escape(bson_string).replace(str(o), inner_regex).replace('\\ ', r'\s*')
     return re.compile(pattern)
 

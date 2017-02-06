@@ -66,7 +66,9 @@ class DataProcessor:
             for key in keys:
                 response = response[key]
             if isinstance(response, ObjectId):
-                response = encode_bson_to_string(response)
+                # TODO: Update this fix
+                # Remove the whitespace in the ObjectId's encoding.
+                response = encode_bson_to_string(response).replace(' ', '')
             prev_end = match.end()
             string_parts.append(response)
         string_parts.append(value[prev_end:])
