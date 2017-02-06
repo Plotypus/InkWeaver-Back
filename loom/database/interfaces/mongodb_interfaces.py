@@ -620,7 +620,8 @@ class MongoDBInterface(AbstractDBInterface):
         link = await self.get_link(link_id)
         context = link['context']
         text = await self.client.get_paragraph_text(context['section_id'], context['paragraph_id'])
-        serialized_link = encode_bson_to_string(link_id)
+        # TODO: Updated link encoding -> need to update here.
+        serialized_link = encode_bson_to_string(link_id).replace(' ', '')
         updated_text = text.replace(serialized_link, replacement_text)
         await self.set_paragraph_text(context['section_id'], updated_text, context['paragraph_id'])
         await self.delete_link(link_id)
