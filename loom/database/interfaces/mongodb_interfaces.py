@@ -18,7 +18,8 @@ nltk.data.path.insert(0, pathjoin(dirname(dirname(dirname(__file__))), 'nltk_dat
 def generate_link_format_regex():
     o = ObjectId()
     inner_regex = r'([a-f\d]{24})'
-    pattern = re.escape(encode_bson_to_string(o)).replace(str(o), inner_regex)
+    bson_string = encode_bson_to_string(o)
+    pattern = re.escape(bson_string).replace(str(o), inner_regex).replace('\\ ', r'\s*')
     return re.compile(pattern)
 
 
@@ -245,7 +246,7 @@ class MongoDBInterface(AbstractDBInterface):
                 link_id = link['_id']
                 context = link['context']
                 context['paragraph_id'] = paragraph_id
-                context['text'] = text
+                context['text'] = sentence
                 # Update context in link.
                 await self.client.set_link_context(link_id, context)
                 # Get page ID from link and add its context to `page_updates`.
