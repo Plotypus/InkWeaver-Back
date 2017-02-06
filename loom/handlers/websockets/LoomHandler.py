@@ -26,13 +26,13 @@ class LoomHandler(GenericHandler):
         self._dispatcher = LAWProtocolDispatcher(self.db_interface, None)
         self.startup()
 
-    def on_failure(self, reply_to=None, reason=None, **fields):
+    def on_failure(self, reply_to_id=None, reason=None, **fields):
         response = {
             'success': False,
             'reason':  reason,
         }
-        if reply_to is not None:
-            response['reply_to'] = reply_to
+        if reply_to_id is not None:
+            response['reply_to_id'] = reply_to_id
         response.update(fields)
         json = self.encode_json(response)
         self.write_message(json)
@@ -130,15 +130,15 @@ class LoomHandler(GenericHandler):
                 # Remove the `action` key/value. It's only needed for dispatch, so the dispatch methods don't use it.
                 action = message.pop('action')
             except KeyError:
-                self.on_failure(reply_to=message_id, reason="`action` field not supplied")
+                self.on_failure(reply_to_id=message_id, reason="`action` field not supplied")
             else:
                 try:
                     json_result = await self.dispatcher.dispatch(message, action, message_id)
                     self.write_json(json_result)
                 except LAWUnimplementedError:
                     err_message = "invalid `action`: {}".format(action)
-                    self.on_failure(reply_to=message_id, reason=err_message)
+                    self.on_failure(reply_to_id=message_id, reason=err_message)
                 except LAWBadArgumentsError as e:
-                    self.on_failure(reply_to=message_id, reason=e.message)
+                    self.on_failure(reply_to_id=message_id, reason=e.message)
             finally:
                 self.messages.task_done()
