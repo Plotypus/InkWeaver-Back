@@ -4,6 +4,30 @@ from bson.objectid import ObjectId
 from typing import List
 
 
+class LOMParagraph(LOMBase):
+    @property
+    def _id(self) -> ObjectId:
+        return self._body['_id']
+
+    @property
+    def text(self) -> str:
+        return self._body['text']
+
+    @property
+    def statistics(self):
+        return self._body['statistics']
+
+
+class LOMLinkInfo(LOMBase):
+    @property
+    def paragraph_id(self) -> ObjectId:
+        return self._body['paragraph_id']
+
+    @property
+    def links(self) -> List[ObjectId]:
+        return self._body['links']
+
+
 class LOMSection(LOMBase):
     def initialize(self):
         self._body['content'] = list(map(lambda p: LOMParagraph(p), self.content))
@@ -39,27 +63,3 @@ class LOMSection(LOMBase):
     @property
     def statistics(self):
         return self._body['statistics']
-
-
-class LOMParagraph(LOMBase):
-    @property
-    def _id(self) -> ObjectId:
-        return self._body['_id']
-
-    @property
-    def text(self) -> str:
-        return self._body['text']
-
-    @property
-    def statistics(self):
-        return self._body['statistics']
-
-
-class LOMLinkInfo(LOMBase):
-    @property
-    def paragraph_id(self) -> ObjectId:
-        return self._body['paragraph_id']
-
-    @property
-    def links(self) -> List[ObjectId]:
-        return self._body['links']
