@@ -5,7 +5,7 @@ from bson.objectid import ObjectId
 from typing import List
 
 
-class LOMStory(LOMBase):
+class LOMWiki(LOMBase):
     def initialize(self):
         self._body['users'] = list(map(lambda u: LOMUserDescription(u), self.users))
 
@@ -18,10 +18,6 @@ class LOMStory(LOMBase):
         return self._body['title']
 
     @property
-    def wiki_id(self) -> ObjectId:
-        return self._body['wiki_id']
-
-    @property
     def users(self) -> List[LOMUserDescription]:
         return self._body['users']
 
@@ -30,8 +26,8 @@ class LOMStory(LOMBase):
         return self._body['summary']
 
     @property
-    def section_id(self) -> ObjectId:
-        return self._body['section_id']
+    def segment_id(self) -> ObjectId:
+        return self._body['segment_id']
 
     @property
     def statistics(self):
