@@ -7,7 +7,7 @@ from typing import List
 
 class LOMStory(LOMBase):
     def initialize(self):
-        self._body['users'] = list(map(lambda u: LOMUserDescription(u), self.users))
+        self._body['users'] = list(map(lambda u: LOMUserDescription(u), self._body['users']))
 
     @property
     def _id(self) -> ObjectId:

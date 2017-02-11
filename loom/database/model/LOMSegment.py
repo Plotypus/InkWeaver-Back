@@ -7,7 +7,7 @@ from typing import List
 
 class LOMSegment(LOMBase):
     def initialize(self):
-        self._body['template_headings'] = list(map(lambda h: LOMHeading(h), self.template_headings))
+        self._body['template_headings'] = list(map(lambda h: LOMHeading(h), self._body['template_headings']))
 
     @property
     def _id(self) -> ObjectId:
