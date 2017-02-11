@@ -5,8 +5,7 @@ from typing import List
 
 
 class LOMSection(LOMBase):
-    def __init__(self, body):
-        super().__init__(body)
+    def initialize(self):
         self._body['content'] = list(map(lambda p: LOMParagraph(p), self.content))
 
     @property
