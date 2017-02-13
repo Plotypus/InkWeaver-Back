@@ -296,3 +296,112 @@ class GetWikiPage(Message):
 
     def dispatch(self):
         self._dispatcher.get_wiki_page(self.message_id, self.page_id)
+
+
+###########################################################################
+#
+# Delete Messages
+#
+###########################################################################
+class DeleteWiki(Message):
+    _required_fields = [
+        'message_id',
+        'wiki_id',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def wiki_id(self) -> ObjectId: pass
+
+    def dispatch(self):
+        self._dispatcher.delete_wiki(self.message_id, self.wiki_id)
+
+
+class DeleteSegment(Message):
+    _required_fields = [
+        'message_id',
+        'segment_id',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def segment_id(self) -> ObjectId: pass
+
+    def dispatch(self):
+        self._dispatcher.delete_segment(self.message_id, self.segment_id)
+
+
+class DeleteTemplateHeading(Message):
+    _required_fields = [
+        'message_id',
+        'segment_id',
+        'template_heading_title',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def segment_id(self) -> ObjectId: pass
+
+    @auto_getattr
+    def template_heading_title(self) -> str: pass
+
+    def dispatch(self):
+        self._dispatcher.delete_template_heading(self.message_id, self.segment_id, self.template_heading_title)
+
+
+class DeletePage(Message):
+    _required_fields = [
+        'message_id',
+        'page_id',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def page_id(self) -> ObjectId: pass
+
+    def dispatch(self):
+        self._dispatcher.delete_page(self.message_id, self.page_id)
+
+
+class DeleteHeading(Message):
+    _required_fields = [
+        'message_id',
+        'page_id',
+        'heading_title',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def page_id(self) -> ObjectId: pass
+
+    @auto_getattr
+    def heading_title(self) -> str: pass
+
+    def dispatch(self):
+        self._dispatcher.delete_heading(self.message_id, self.heading_title, self.page_id)
+
+
+class DeleteAlias(Message):
+    _required_fields = [
+        'message_id',
+        'alias_id',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def alias_id(self) -> ObjectId: pass
+
+    def dispatch(self):
+        self._dispatcher.delete_alias(self.message_id, self.alias_id)
