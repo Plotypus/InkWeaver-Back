@@ -6,7 +6,7 @@ from .message import Message, auto_getattr
 # Get Messages
 #
 ###########################################################################
-class GetUserPreferences(Message):
+class GetUserPreferencesMessage(Message):
     _required_fields = [
         'message_id',
     ]
@@ -18,7 +18,7 @@ class GetUserPreferences(Message):
         return self._dispatcher.get_user_preferences(self.message_id)
 
 
-class GetUserStories(Message):
+class GetUserStoriesMessage(Message):
     _required_fields = [
         'message_id',
     ]
@@ -30,7 +30,7 @@ class GetUserStories(Message):
         return self._dispatcher.get_user_stories(self.message_id)
 
 
-class GetUserWikis(Message):
+class GetUserWikisMessage(Message):
     _required_fields = [
         'message_id',
     ]
@@ -47,7 +47,7 @@ class GetUserWikis(Message):
 # Set Messages
 #
 ###########################################################################
-class SetUserName(Message):
+class SetUserNameMessage(Message):
     _required_fields = [
         'message_id',
         'name',
@@ -63,7 +63,7 @@ class SetUserName(Message):
         return self._dispatcher.set_user_name(self.message_id, self.name)
 
 
-class SetUserEmail(Message):
+class SetUserEmailMessage(Message):
     _required_fields = [
         'message_id',
         'email',
@@ -79,7 +79,7 @@ class SetUserEmail(Message):
         return self._dispatcher.set_user_email(self.message_id, self.email)
 
 
-class SetUserBio(Message):
+class SetUserBioMessage(Message):
     _required_fields = [
         'message_id',
         'bio',
@@ -100,7 +100,7 @@ class SetUserBio(Message):
 # Login Messages
 #
 ###########################################################################
-class UserLogin(Message):
+class UserLoginMessage(Message):
     _required_fields = [
         'message_id',
         'username',
