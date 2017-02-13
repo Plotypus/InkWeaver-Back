@@ -2,6 +2,7 @@ from ..LAWProtocolDispatcher import LAWProtocolDispatcher
 
 from abc import ABC, abstractmethod
 
+
 def auto_getattr(wrapped_function):
     def wrapper(self):
         return getattr(self, f'_{wrapped_function.__name__}')
