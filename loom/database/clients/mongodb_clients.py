@@ -369,6 +369,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_section_title(self, section_id: ObjectId, title: str):
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': section_id},
+            update={
+                '$set': {
+                    'title': title
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def set_paragraph_text(self, paragraph_id: ObjectId, text: str, in_section_id: ObjectId):
         update_result: UpdateResult = await self.sections.update_one(
             # For filtering documents in an array, we use the name of the array field
