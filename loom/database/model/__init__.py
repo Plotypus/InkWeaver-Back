@@ -12,6 +12,8 @@ from .LOMContext import LOMContext
 
 from .LOMAlias import LOMAlias
 
+from .LOMEncoder import LOMEncoder
+
 __all__ = [
     'LOMUser',
 
@@ -26,4 +28,6 @@ __all__ = [
     'LOMContext',
 
     'LOMAlias',
+
+    'LOMEncoder',
 ]
