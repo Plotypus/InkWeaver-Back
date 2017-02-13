@@ -2,6 +2,12 @@ from ..LAWProtocolDispatcher import LAWProtocolDispatcher
 
 from abc import ABC, abstractmethod
 
+def auto_getattr(wrapped_function):
+    def wrapper(self):
+        return getattr(self, f'_{wrapped_function.__name__}')
+    return property(wrapper)
+
+
 class Message(ABC):
     _required_fields = []
     _optional_fields = []
