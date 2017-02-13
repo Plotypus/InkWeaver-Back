@@ -174,3 +174,69 @@ class EditParagraph(Message):
     @property
     def paragraph_id(self) -> ObjectId:
         return self._paragraph_id
+
+
+###########################################################################
+#
+# Get Messages
+#
+###########################################################################
+class GetStoryInformation(Message):
+    _required_fields = [
+        'message_id',
+        'story_id',
+    ]
+
+    @property
+    def message_id(self) -> int:
+        return self._message_id
+
+    @property
+    def story_id(self) -> ObjectId:
+        return self._story_id
+
+
+class GetStoryHierarchy(Message):
+    _required_fields = [
+        'message_id',
+        'story_id',
+    ]
+
+    @property
+    def message_id(self) -> int:
+        return self._message_id
+
+    @property
+    def story_id(self) -> ObjectId:
+        return self._story_id
+
+
+class GetSectionHierarchy(Message):
+    _required_fields = [
+        'message_id',
+        'section_id',
+    ]
+
+    @property
+    def message_id(self) -> int:
+        return self._message_id
+
+    @property
+    def section_id(self) -> ObjectId:
+        return self._section_id
+
+
+class GetSectionContent(Message):
+    _required_fields = [
+        'message_id',
+        'section_id',
+    ]
+
+    @property
+    def message_id(self) -> int:
+        return self._message_id
+
+    @property
+    def section_id(self) -> ObjectId:
+        return self._section_id
+
