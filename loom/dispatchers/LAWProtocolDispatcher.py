@@ -25,6 +25,7 @@ APPROVED_METHODS = [
     'add_succeeding_subsection',
     'add_paragraph',
     'edit_paragraph',
+    'edit_section_title',
     'get_story_information',
     'get_story_hierarchy',
     'get_section_hierarchy',
@@ -291,6 +292,11 @@ class LAWProtocolDispatcher:
             return self.format_json({}, reply_to_id=message_id)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
+
+    @requires_login
+    async def edit_section_title(self, message_id, section_id, new_title):
+        await self.db_interface.set_section_title(section_id, new_title)
+        return self.format_json({}, reply_to_id=message_id)
 
     @requires_login
     async def get_story_information(self, message_id, story_id):
