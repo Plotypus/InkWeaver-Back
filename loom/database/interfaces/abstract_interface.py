@@ -120,6 +120,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_section_title(self, section_id, title):
+        pass
+
+    @abstractmethod
     async def set_paragraph_text(self, section_id, text, paragraph_id):
         pass
 

@@ -240,6 +240,9 @@ class MongoDBInterface(AbstractDBInterface):
         section = await self.client.get_section(section_id)
         return section['content']
 
+    async def set_section_title(self, section_id, title):
+        await self.client.set_section_title(section_id, title)
+
     async def set_paragraph_text(self, section_id, text, paragraph_id):
         sentences_and_links = await self.get_links_from_paragraph(text)
         page_updates = {}
