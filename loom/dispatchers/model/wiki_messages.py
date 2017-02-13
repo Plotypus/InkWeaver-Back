@@ -211,3 +211,88 @@ class EditHeading(Message):
 
     def dispatch(self):
         self._dispatcher.edit_heading(self.message_id, self.page_id, self.heading_title, self.update)
+
+
+###########################################################################
+#
+# Get Messages
+#
+###########################################################################
+class GetWikiInformation(Message):
+    _required_fields = [
+        'message_id',
+        'wiki_id',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def wiki_id(self) -> ObjectId: pass
+
+    def dispatch(self):
+        self._dispatcher.get_wiki_information(self.message_id, self.wiki_id)
+
+
+class GetWikiHierarchy(Message):
+    _required_fields = [
+        'message_id',
+        'wiki_id',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def wiki_id(self) -> ObjectId: pass
+
+    def dispatch(self):
+        self._dispatcher.get_wiki_hierarchy(self.message_id, self.wiki_id)
+
+
+class GetWikiSegmentHierarchy(Message):
+    _required_fields = [
+        'message_id',
+        'segment_id',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def segment_id(self) -> ObjectId: pass
+
+    def dispatch(self):
+        self._dispatcher.get_wiki_segment_hierarchy(self.message_id, self.segment_id)
+
+
+class GetWikiSegment(Message):
+    _required_fields = [
+        'message_id',
+        'segment_id',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def segment_id(self) -> ObjectId: pass
+
+    def dispatch(self):
+        self._dispatcher.get_wiki_segment(self.message_id, self.segment_id)
+
+
+class GetWikiPage(Message):
+    _required_fields = [
+        'message_id',
+        'page_id',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def page_id(self) -> ObjectId: pass
+
+    def dispatch(self):
+        self._dispatcher.get_wiki_page(self.message_id, self.page_id)
