@@ -3,20 +3,25 @@ from bson import ObjectId
 
 class AddSucceedingSubsection:
     _approved_fields = {
-        'message_id',
-        'title',
-        'parent_id',
-        'index'
+        'message_id': True,   # Required fields
+        'title':      True,
+        'parent_id':  True,
+        'index':      False,  # Optional fields
     }
 
     def __init__(self, message: dict):
-        # Needs to check if field is missing, with index being optional
+        missing_fields = [field for field, value in self._approved_fields.items()
+                          if field not in message and value is not False]
+        extra_fields = [field for field in message.keys() if field not in self._approved_fields.keys()]
+        if extra_fields:
+            raise ValueError(f"Unsupported fields: {extra_fields}")
+        if missing_fields:
+            raise ValueError(f"Missing fields: {missing_fields}")
+        # Initialize optional field
         self._index = None
+        # Set the rest of the fields
         for field, value in message.items():
-            if field in self._approved_fields:
-                setattr(self, f'_{field}', value)
-            else:
-                raise ValueError(f"Field not supported: {field}")
+            setattr(self, f'_{field}', value)
 
     @property
     def message_id(self) -> int:
