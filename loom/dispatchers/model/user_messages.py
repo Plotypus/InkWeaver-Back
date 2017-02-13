@@ -8,7 +8,7 @@ from bson import ObjectId
 # Get Messages
 #
 ###########################################################################
-class GetUserPreference(Message):
+class GetUserPreferences(Message):
     _required_fields = [
         'message_id',
     ]
@@ -95,3 +95,28 @@ class SetUserBio(Message):
 
     def dispatch(self):
         self._dispatcher.set_user_bio(self.message_id, self.bio)
+
+
+###########################################################################
+#
+# Login Messages
+#
+###########################################################################
+class UserLogin(Message):
+    _required_fields = [
+        'message_id',
+        'username',
+        'password',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def username(self) -> str: pass
+
+    @auto_getattr
+    def password(self) -> str: pass
+
+    def dispatch(self):
+        self._dispatcher.user_login(self.message_id, self.username, self.password)
