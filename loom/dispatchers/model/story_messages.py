@@ -117,3 +117,30 @@ class AddSucceedingSubsection(Message):
     @property
     def index(self) -> int:
         return self._index
+
+
+class AddParagraph(Message):
+    _required_fields = [
+        'message_id',
+        'section_id'
+        'text',
+    ]
+    _optional_fields = [
+        'succeeding_paragraph_id',
+    ]
+
+    @property
+    def message_id(self) -> int:
+        return self._message_id
+
+    @property
+    def section_id(self) -> ObjectId:
+        return self._section_id
+
+    @property
+    def text(self) -> str:
+        return self._text
+
+    @property
+    def succeeding_paragraph_id(self) -> ObjectId:
+        return self._succeeding_paragraph_id
