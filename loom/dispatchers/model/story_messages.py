@@ -1,4 +1,4 @@
-from .message import Message
+from .message import Message, auto_getattr
 
 from bson import ObjectId
 
@@ -16,21 +16,17 @@ class CreateStory(Message):
         'summary',
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def title(self) -> str:
-        return self._title
+    @auto_getattr
+    def title(self) -> str: pass
 
-    @property
-    def wiki_id(self) -> ObjectId:
-        return self._wiki_id
+    @auto_getattr
+    def wiki_id(self) -> ObjectId: pass
 
-    @property
-    def summary(self) -> str:
-        return self._summary
+    @auto_getattr
+    def summary(self) -> str: pass
 
 
 ###########################################################################
@@ -48,21 +44,17 @@ class AddPrecedingSubsection(Message):
         'index',
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def title(self) -> str:
-        return self._title
+    @auto_getattr
+    def title(self) -> str: pass
 
-    @property
-    def parent_id(self) -> ObjectId:
-        return self._parent_id
+    @auto_getattr
+    def parent_id(self) -> ObjectId: pass
 
-    @property
-    def index(self) -> int:
-        return self._index
+    @auto_getattr
+    def index(self) -> int: pass
 
 
 class AddInnerSubsection(Message):
@@ -75,21 +67,17 @@ class AddInnerSubsection(Message):
         'index',
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def title(self) -> str:
-        return self._title
+    @auto_getattr
+    def title(self) -> str: pass
 
-    @property
-    def parent_id(self) -> ObjectId:
-        return self._parent_id
+    @auto_getattr
+    def parent_id(self) -> ObjectId: pass
 
-    @property
-    def index(self) -> int:
-        return self._index
+    @auto_getattr
+    def index(self) -> int: pass
 
 
 class AddSucceedingSubsection(Message):
@@ -102,21 +90,17 @@ class AddSucceedingSubsection(Message):
         'index',
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def title(self) -> str:
-        return self._title
+    @auto_getattr
+    def title(self) -> str: pass
 
-    @property
-    def parent_id(self) -> ObjectId:
-        return self._parent_id
+    @auto_getattr
+    def parent_id(self) -> ObjectId: pass
 
-    @property
-    def index(self) -> int:
-        return self._index
+    @auto_getattr
+    def index(self) -> int: pass
 
     def dispatch(self):
         return self._dispatcher.add_succeeding_subsection(self.message_id, self.title, self.parent_id, self.index)
@@ -132,21 +116,17 @@ class AddParagraph(Message):
         'succeeding_paragraph_id',
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def section_id(self) -> ObjectId:
-        return self._section_id
+    @auto_getattr
+    def section_id(self) -> ObjectId: pass
 
-    @property
-    def text(self) -> str:
-        return self._text
+    @auto_getattr
+    def text(self) -> str: pass
 
-    @property
-    def succeeding_paragraph_id(self) -> ObjectId:
-        return self._succeeding_paragraph_id
+    @auto_getattr
+    def succeeding_paragraph_id(self) -> ObjectId: pass
 
 
 ###########################################################################
@@ -162,21 +142,17 @@ class EditParagraph(Message):
         'paragraph_id'
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def section_id(self) -> ObjectId:
-        return self._section_id
+    @auto_getattr
+    def section_id(self) -> ObjectId: pass
 
-    @property
-    def update(self) -> dict:
-        return self._update
+    @auto_getattr
+    def update(self) -> dict: pass
 
-    @property
-    def paragraph_id(self) -> ObjectId:
-        return self._paragraph_id
+    @auto_getattr
+    def paragraph_id(self) -> ObjectId: pass
 
 
 ###########################################################################
@@ -190,13 +166,11 @@ class GetStoryInformation(Message):
         'story_id',
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def story_id(self) -> ObjectId:
-        return self._story_id
+    @auto_getattr
+    def story_id(self) -> ObjectId: pass
 
 
 class GetStoryHierarchy(Message):
@@ -205,13 +179,11 @@ class GetStoryHierarchy(Message):
         'story_id',
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def story_id(self) -> ObjectId:
-        return self._story_id
+    @auto_getattr
+    def story_id(self) -> ObjectId: pass
 
 
 class GetSectionHierarchy(Message):
@@ -220,13 +192,11 @@ class GetSectionHierarchy(Message):
         'section_id',
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def section_id(self) -> ObjectId:
-        return self._section_id
+    @auto_getattr
+    def section_id(self) -> ObjectId: pass
 
 
 class GetSectionContent(Message):
@@ -235,13 +205,11 @@ class GetSectionContent(Message):
         'section_id',
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def section_id(self) -> ObjectId:
-        return self._section_id
+    @auto_getattr
+    def section_id(self) -> ObjectId: pass
 
 
 ###########################################################################
@@ -255,13 +223,11 @@ class DeleteStory(Message):
         'story_id',
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def story_id(self) -> ObjectId:
-        return self._story_id
+    @auto_getattr
+    def story_id(self) -> ObjectId: pass
 
 
 class DeleteSection(Message):
@@ -270,13 +236,11 @@ class DeleteSection(Message):
         'section_id',
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def section_id(self) -> ObjectId:
-        return self._section_id
+    @auto_getattr
+    def section_id(self) -> ObjectId: pass
 
 
 class DeleteParagraph(Message):
@@ -285,10 +249,8 @@ class DeleteParagraph(Message):
         'paragraph_id',
     ]
 
-    @property
-    def message_id(self) -> int:
-        return self._message_id
+    @auto_getattr
+    def message_id(self) -> int: pass
 
-    @property
-    def paragraph_id(self) -> ObjectId:
-        return self._paragraph_id
+    @auto_getattr
+    def paragraph_id(self) -> ObjectId: pass
