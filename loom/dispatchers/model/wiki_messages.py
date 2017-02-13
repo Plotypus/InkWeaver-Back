@@ -117,3 +117,97 @@ class AddHeading(Message):
 
     def dispatch(self):
         self._dispatcher.add_heading(self.message_id, self.title, self.page_id, self.index)
+
+
+###########################################################################
+#
+# Edit Messages
+#
+###########################################################################
+class EditSegment(Message):
+    _required_fields = [
+        'message_id',
+        'segment_id',
+        'update',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def segment_id(self) -> ObjectId: pass
+
+    @auto_getattr
+    def update(self) -> dict: pass
+
+    def dispatch(self):
+        self._dispatcher.edit_segment(self.message_id, self.segment_id, self.update)
+
+
+class EditTemplateHeading(Message):
+    _required_fields = [
+        'message_id',
+        'segment_id',
+        'template_heading_title'
+        'update',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def segment_id(self) -> ObjectId: pass
+
+    @auto_getattr
+    def template_heading_title(self) -> str: pass
+
+    @auto_getattr
+    def update(self) -> dict: pass
+
+    def dispatch(self):
+        self._dispatcher.edit_template_heading(self.message_id, self.segment_id, self.template_heading_title,
+                                               self.update)
+
+
+class EditPage(Message):
+    _required_fields = [
+        'message_id',
+        'page_id',
+        'update',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def page_id(self) -> ObjectId: pass
+
+    @auto_getattr
+    def update(self) -> dict: pass
+
+    def dispatch(self):
+        self._dispatcher.edit_page(self.message_id, self.page_id, self.update)
+
+
+class EditHeading(Message):
+    _required_fields = [
+        'message_id',
+        'page_id',
+        'heading_title',
+        'update',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def page_id(self) -> ObjectId: pass
+
+    @auto_getattr
+    def heading_title(self) -> str: pass
+
+    @auto_getattr
+    def update(self) -> dict: pass
+
+    def dispatch(self):
+        self._dispatcher.edit_heading(self.message_id, self.page_id, self.heading_title, self.update)
