@@ -25,7 +25,7 @@ class CreateWiki(Message):
     def summary(self) -> str: pass
 
     def dispatch(self):
-        self._dispatcher.create_wiki(self.message_id, self.title, self.summary)
+        return self._dispatcher.create_wiki(self.message_id, self.title, self.summary)
 
 
 ###########################################################################
@@ -50,7 +50,7 @@ class AddSegment(Message):
     def parent_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.add_segment(self.message_id, self.title, self.parent_id)
+        return self._dispatcher.add_segment(self.message_id, self.title, self.parent_id)
 
 
 class AddTemplateHeading(Message):
@@ -70,7 +70,7 @@ class AddTemplateHeading(Message):
     def segment_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.add_template_heading(self.message_id, self.title, self.segment_id)
+        return self._dispatcher.add_template_heading(self.message_id, self.title, self.segment_id)
 
 
 class AddPage(Message):
@@ -90,7 +90,7 @@ class AddPage(Message):
     def parent_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.add_page(self.message_id, self.title, self.parent_id)
+        return self._dispatcher.add_page(self.message_id, self.title, self.parent_id)
 
 
 class AddHeading(Message):
@@ -116,7 +116,7 @@ class AddHeading(Message):
     def index(self) -> int: pass
 
     def dispatch(self):
-        self._dispatcher.add_heading(self.message_id, self.title, self.page_id, self.index)
+        return self._dispatcher.add_heading(self.message_id, self.title, self.page_id, self.index)
 
 
 ###########################################################################
@@ -141,7 +141,7 @@ class EditSegment(Message):
     def update(self) -> dict: pass
 
     def dispatch(self):
-        self._dispatcher.edit_segment(self.message_id, self.segment_id, self.update)
+        return self._dispatcher.edit_segment(self.message_id, self.segment_id, self.update)
 
 
 class EditTemplateHeading(Message):
@@ -165,7 +165,7 @@ class EditTemplateHeading(Message):
     def update(self) -> dict: pass
 
     def dispatch(self):
-        self._dispatcher.edit_template_heading(self.message_id, self.segment_id, self.template_heading_title,
+        return self._dispatcher.edit_template_heading(self.message_id, self.segment_id, self.template_heading_title,
                                                self.update)
 
 
@@ -186,7 +186,7 @@ class EditPage(Message):
     def update(self) -> dict: pass
 
     def dispatch(self):
-        self._dispatcher.edit_page(self.message_id, self.page_id, self.update)
+        return self._dispatcher.edit_page(self.message_id, self.page_id, self.update)
 
 
 class EditHeading(Message):
@@ -210,7 +210,7 @@ class EditHeading(Message):
     def update(self) -> dict: pass
 
     def dispatch(self):
-        self._dispatcher.edit_heading(self.message_id, self.page_id, self.heading_title, self.update)
+        return self._dispatcher.edit_heading(self.message_id, self.page_id, self.heading_title, self.update)
 
 
 ###########################################################################
@@ -231,7 +231,7 @@ class GetWikiInformation(Message):
     def wiki_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.get_wiki_information(self.message_id, self.wiki_id)
+        return self._dispatcher.get_wiki_information(self.message_id, self.wiki_id)
 
 
 class GetWikiHierarchy(Message):
@@ -247,7 +247,7 @@ class GetWikiHierarchy(Message):
     def wiki_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.get_wiki_hierarchy(self.message_id, self.wiki_id)
+        return self._dispatcher.get_wiki_hierarchy(self.message_id, self.wiki_id)
 
 
 class GetWikiSegmentHierarchy(Message):
@@ -263,7 +263,7 @@ class GetWikiSegmentHierarchy(Message):
     def segment_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.get_wiki_segment_hierarchy(self.message_id, self.segment_id)
+        return self._dispatcher.get_wiki_segment_hierarchy(self.message_id, self.segment_id)
 
 
 class GetWikiSegment(Message):
@@ -279,7 +279,7 @@ class GetWikiSegment(Message):
     def segment_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.get_wiki_segment(self.message_id, self.segment_id)
+        return self._dispatcher.get_wiki_segment(self.message_id, self.segment_id)
 
 
 class GetWikiPage(Message):
@@ -295,7 +295,7 @@ class GetWikiPage(Message):
     def page_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.get_wiki_page(self.message_id, self.page_id)
+        return self._dispatcher.get_wiki_page(self.message_id, self.page_id)
 
 
 ###########################################################################
@@ -316,7 +316,7 @@ class DeleteWiki(Message):
     def wiki_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.delete_wiki(self.message_id, self.wiki_id)
+        return self._dispatcher.delete_wiki(self.message_id, self.wiki_id)
 
 
 class DeleteSegment(Message):
@@ -332,7 +332,7 @@ class DeleteSegment(Message):
     def segment_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.delete_segment(self.message_id, self.segment_id)
+        return self._dispatcher.delete_segment(self.message_id, self.segment_id)
 
 
 class DeleteTemplateHeading(Message):
@@ -352,7 +352,7 @@ class DeleteTemplateHeading(Message):
     def template_heading_title(self) -> str: pass
 
     def dispatch(self):
-        self._dispatcher.delete_template_heading(self.message_id, self.segment_id, self.template_heading_title)
+        return self._dispatcher.delete_template_heading(self.message_id, self.segment_id, self.template_heading_title)
 
 
 class DeletePage(Message):
@@ -368,7 +368,7 @@ class DeletePage(Message):
     def page_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.delete_page(self.message_id, self.page_id)
+        return self._dispatcher.delete_page(self.message_id, self.page_id)
 
 
 class DeleteHeading(Message):
@@ -388,7 +388,7 @@ class DeleteHeading(Message):
     def heading_title(self) -> str: pass
 
     def dispatch(self):
-        self._dispatcher.delete_heading(self.message_id, self.heading_title, self.page_id)
+        return self._dispatcher.delete_heading(self.message_id, self.heading_title, self.page_id)
 
 
 class DeleteAlias(Message):
@@ -404,4 +404,4 @@ class DeleteAlias(Message):
     def alias_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.delete_alias(self.message_id, self.alias_id)
+        return self._dispatcher.delete_alias(self.message_id, self.alias_id)

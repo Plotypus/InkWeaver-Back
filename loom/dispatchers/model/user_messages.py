@@ -1,7 +1,5 @@
 from .message import Message, auto_getattr
 
-from bson import ObjectId
-
 
 ###########################################################################
 #
@@ -17,7 +15,7 @@ class GetUserPreferences(Message):
     def message_id(self) -> int: pass
 
     def dispatch(self):
-        self._dispatcher.get_user_preferences(self.message_id)
+        return self._dispatcher.get_user_preferences(self.message_id)
 
 
 class GetUserStories(Message):
@@ -29,7 +27,7 @@ class GetUserStories(Message):
     def message_id(self) -> int: pass
 
     def dispatch(self):
-        self._dispatcher.get_user_stories(self.message_id)
+        return self._dispatcher.get_user_stories(self.message_id)
 
 
 class GetUserWikis(Message):
@@ -41,7 +39,7 @@ class GetUserWikis(Message):
     def message_id(self) -> int: pass
 
     def dispatch(self):
-        self._dispatcher.get_user_wikis(self.message_id)
+        return self._dispatcher.get_user_wikis(self.message_id)
 
 
 ###########################################################################
@@ -62,7 +60,7 @@ class SetUserName(Message):
     def name(self) -> str: pass
 
     def dispatch(self):
-        self._dispatcher.set_user_name(self.message_id, self.name)
+        return self._dispatcher.set_user_name(self.message_id, self.name)
 
 
 class SetUserEmail(Message):
@@ -78,7 +76,7 @@ class SetUserEmail(Message):
     def email(self) -> str: pass
 
     def dispatch(self):
-        self._dispatcher.set_user_email(self.message_id, self.email)
+        return self._dispatcher.set_user_email(self.message_id, self.email)
 
 
 class SetUserBio(Message):
@@ -94,7 +92,7 @@ class SetUserBio(Message):
     def bio(self) -> str: pass
 
     def dispatch(self):
-        self._dispatcher.set_user_bio(self.message_id, self.bio)
+        return self._dispatcher.set_user_bio(self.message_id, self.bio)
 
 
 ###########################################################################
@@ -119,4 +117,4 @@ class UserLogin(Message):
     def password(self) -> str: pass
 
     def dispatch(self):
-        self._dispatcher.user_login(self.message_id, self.username, self.password)
+        return self._dispatcher.user_login(self.message_id, self.username, self.password)

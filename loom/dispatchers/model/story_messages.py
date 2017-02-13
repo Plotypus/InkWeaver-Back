@@ -188,7 +188,7 @@ class GetStoryInformation(Message):
     def story_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.get_story_information(self.message_id, self.story_id)
+        return self._dispatcher.get_story_information(self.message_id, self.story_id)
 
 
 class GetStoryHierarchy(Message):
@@ -204,7 +204,7 @@ class GetStoryHierarchy(Message):
     def story_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.get_story_hierarchy(self.message_id, self.story_id)
+        return self._dispatcher.get_story_hierarchy(self.message_id, self.story_id)
 
 
 class GetSectionHierarchy(Message):
@@ -220,7 +220,7 @@ class GetSectionHierarchy(Message):
     def section_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.get_section_hierarchy(self.message_id, self.section_id)
+        return self._dispatcher.get_section_hierarchy(self.message_id, self.section_id)
 
 
 class GetSectionContent(Message):
@@ -236,7 +236,7 @@ class GetSectionContent(Message):
     def section_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.get_section_content(self.message_id, self.section_id)
+        return self._dispatcher.get_section_content(self.message_id, self.section_id)
 
 
 ###########################################################################
@@ -257,7 +257,7 @@ class DeleteStory(Message):
     def story_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.delete_story(self.message_id, self.story_id)
+        return self._dispatcher.delete_story(self.message_id, self.story_id)
 
 
 class DeleteSection(Message):
@@ -273,7 +273,7 @@ class DeleteSection(Message):
     def section_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.delete_section(self.message_id, self.section_id)
+        return self._dispatcher.delete_section(self.message_id, self.section_id)
 
 
 class DeleteParagraph(Message):
@@ -293,4 +293,4 @@ class DeleteParagraph(Message):
     def paragraph_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.delete_paragraph(self.message_id, self.section_id, self.paragraph_id)
+        return self._dispatcher.delete_paragraph(self.message_id, self.section_id, self.paragraph_id)

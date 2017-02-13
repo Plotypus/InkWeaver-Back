@@ -37,7 +37,7 @@ class CreateLinkMessage(Message):
     def page_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.create_link(self.message_id, self.story_id, self.section_id, self.paragraph_id, self.name,
+        return self._dispatcher.create_link(self.message_id, self.story_id, self.section_id, self.paragraph_id, self.name,
                                      self.page_id)
 
 
@@ -63,7 +63,7 @@ class ChangeAliasNameMessage(Message):
     def new_name(self) -> str: pass
 
     def dispatch(self):
-        self._dispatcher.change_alias_name(self.message_id, self.alias_id, self.new_name)
+        return self._dispatcher.change_alias_name(self.message_id, self.alias_id, self.new_name)
 
 
 ###########################################################################
@@ -84,4 +84,4 @@ class DeleteLinkMessage(Message):
     def link_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        self._dispatcher.delete_link(self.message_id, self.link_id)
+        return self._dispatcher.delete_link(self.message_id, self.link_id)
