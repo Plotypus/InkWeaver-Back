@@ -118,6 +118,9 @@ class AddSucceedingSubsection(Message):
     def index(self) -> int:
         return self._index
 
+    def dispatch(self):
+        return self._dispatcher.add_succeeding_subsection(self.message_id, self.title, self.parent_id, self.index)
+
 
 class AddParagraph(Message):
     _required_fields = [
