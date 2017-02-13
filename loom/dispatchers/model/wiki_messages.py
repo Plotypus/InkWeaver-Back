@@ -166,7 +166,7 @@ class EditTemplateHeadingMessage(Message):
 
     def dispatch(self):
         return self._dispatcher.edit_template_heading(self.message_id, self.segment_id, self.template_heading_title,
-                                               self.update)
+                                                      self.update)
 
 
 class EditPageMessage(Message):

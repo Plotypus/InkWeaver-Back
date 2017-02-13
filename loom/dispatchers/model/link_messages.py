@@ -37,8 +37,8 @@ class CreateLinkMessage(Message):
     def page_id(self) -> ObjectId: pass
 
     def dispatch(self):
-        return self._dispatcher.create_link(self.message_id, self.story_id, self.section_id, self.paragraph_id, self.name,
-                                     self.page_id)
+        return self._dispatcher.create_link(self.message_id, self.story_id, self.section_id, self.paragraph_id,
+                                            self.name, self.page_id)
 
 
 ###########################################################################
