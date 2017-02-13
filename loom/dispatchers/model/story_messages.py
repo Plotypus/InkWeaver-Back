@@ -28,6 +28,9 @@ class CreateStory(Message):
     @auto_getattr
     def summary(self) -> str: pass
 
+    def dispatch(self):
+        return self._dispatcher.create_story(self.message_id, self.title, self.wiki_id, self.summary)
+
 
 ###########################################################################
 #
@@ -56,6 +59,9 @@ class AddPrecedingSubsection(Message):
     @auto_getattr
     def index(self) -> int: pass
 
+    def dispatch(self):
+        return self._dispatcher.add_preceding_subsection(self.message_id, self.title, self.parent_id, self.index)
+
 
 class AddInnerSubsection(Message):
     _required_fields = [
@@ -78,6 +84,9 @@ class AddInnerSubsection(Message):
 
     @auto_getattr
     def index(self) -> int: pass
+
+    def dispatch(self):
+        return self._dispatcher.add_inner_subsection(self.message_id, self.title, self.parent_id, self.index)
 
 
 class AddSucceedingSubsection(Message):
@@ -128,6 +137,9 @@ class AddParagraph(Message):
     @auto_getattr
     def succeeding_paragraph_id(self) -> ObjectId: pass
 
+    def dispatch(self):
+        return self._dispatcher.add_paragraph(self.message_id, self.section_id, self.text, self.succeeding_paragraph_id)
+
 
 ###########################################################################
 #
@@ -154,6 +166,9 @@ class EditParagraph(Message):
     @auto_getattr
     def paragraph_id(self) -> ObjectId: pass
 
+    def dispatch(self):
+        return self._dispatcher.edit_paragraph(self.message_id, self.section_id, self.update, self.paragraph_id)
+
 
 ###########################################################################
 #
@@ -172,6 +187,9 @@ class GetStoryInformation(Message):
     @auto_getattr
     def story_id(self) -> ObjectId: pass
 
+    def dispatch(self):
+        self._dispatcher.get_story_information(self.message_id, self.story_id)
+
 
 class GetStoryHierarchy(Message):
     _required_fields = [
@@ -184,6 +202,9 @@ class GetStoryHierarchy(Message):
 
     @auto_getattr
     def story_id(self) -> ObjectId: pass
+
+    def dispatch(self):
+        self._dispatcher.get_story_hierarchy(self.message_id, self.story_id)
 
 
 class GetSectionHierarchy(Message):
@@ -198,6 +219,9 @@ class GetSectionHierarchy(Message):
     @auto_getattr
     def section_id(self) -> ObjectId: pass
 
+    def dispatch(self):
+        self._dispatcher.get_section_hierarchy(self.message_id, self.section_id)
+
 
 class GetSectionContent(Message):
     _required_fields = [
@@ -210,6 +234,9 @@ class GetSectionContent(Message):
 
     @auto_getattr
     def section_id(self) -> ObjectId: pass
+
+    def dispatch(self):
+        self._dispatcher.get_section_content(self.message_id, self.section_id)
 
 
 ###########################################################################
@@ -229,6 +256,9 @@ class DeleteStory(Message):
     @auto_getattr
     def story_id(self) -> ObjectId: pass
 
+    def dispatch(self):
+        self._dispatcher.delete_story(self.message_id, self.story_id)
+
 
 class DeleteSection(Message):
     _required_fields = [
@@ -242,10 +272,14 @@ class DeleteSection(Message):
     @auto_getattr
     def section_id(self) -> ObjectId: pass
 
+    def dispatch(self):
+        self._dispatcher.delete_section(self.message_id, self.section_id)
+
 
 class DeleteParagraph(Message):
     _required_fields = [
         'message_id',
+        'section_id',
         'paragraph_id',
     ]
 
@@ -253,4 +287,10 @@ class DeleteParagraph(Message):
     def message_id(self) -> int: pass
 
     @auto_getattr
+    def section_id(self) -> ObjectId: pass
+
+    @auto_getattr
     def paragraph_id(self) -> ObjectId: pass
+
+    def dispatch(self):
+        self._dispatcher.delete_paragraph(self.message_id, self.section_id, self.paragraph_id)
