@@ -246,11 +246,15 @@ class DeleteSection(Message):
 class DeleteParagraph(Message):
     _required_fields = [
         'message_id',
+        'section_id',
         'paragraph_id',
     ]
 
     @auto_getattr
     def message_id(self) -> int: pass
+
+    @auto_getattr
+    def section_id(self) -> ObjectId: pass
 
     @auto_getattr
     def paragraph_id(self) -> ObjectId: pass
