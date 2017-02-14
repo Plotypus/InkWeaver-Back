@@ -170,6 +170,25 @@ class EditParagraphMessage(Message):
         return self._dispatcher.edit_paragraph(self.message_id, self.section_id, self.update, self.paragraph_id)
 
 
+class EditSectionTitleMessage(Message):
+    _required_fields = [
+        'message_id',
+        'section_id',
+        'new_title',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def section_id(self) -> ObjectId: pass
+
+    @auto_getattr
+    def new_title(self) -> str: pass
+
+    def dispatch(self):
+        return self._dispatcher.edit_section_title(self.message_id, self.section_id, self.new_title)
+
 ###########################################################################
 #
 # Get Messages

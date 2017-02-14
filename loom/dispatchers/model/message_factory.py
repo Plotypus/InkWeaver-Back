@@ -20,6 +20,7 @@ APPROVED_MESSAGES = {
     'add_succeeding_subsection':  AddSucceedingSubsectionMessage,
     'add_paragraph':              AddParagraphMessage,
     'edit_paragraph':             EditParagraphMessage,
+    'edit_section_title':         EditSectionTitleMessage,
     'get_story_information':      GetStoryInformationMessage,
     'get_story_hierarchy':        GetStoryHierarchyMessage,
     'get_section_hierarchy':      GetSectionHierarchyMessage,
