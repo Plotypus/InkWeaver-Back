@@ -1,5 +1,5 @@
 from loom.database.interfaces import AbstractDBInterface
-from loom.dispatchers import DemoDataDispatcher
+from loom.dispatchers.demo import DemoDataDispatcher
 from loom.serialize import decode_string_to_bson, encode_bson_to_string
 
 import re

@@ -1,18 +1,12 @@
-from .LAWProtocolDispatcher import LAWProtocolDispatcher
+from .demo_message_factory import DemoMessageFactory
+
+from loom.dispatchers.LAWProtocolDispatcher import LAWProtocolDispatcher
 
 
 class DemoDataDispatcher(LAWProtocolDispatcher):
     def __init__(self, interface):
         super().__init__(interface)
-        self.approved += [
-            'create_user',
-            'add_heading_with_text',
-            'add_text_to_section',
-        ]
-
-    async def create_user(self, message_id, username, password, email):
-        user_id = await self.db_interface.create_user(username, password, email)
-        self.set_user_id(user_id)
+        self._message_factory = DemoMessageFactory()
 
     async def add_heading_with_text(self, message_id, title, text, page_id):
         await super().add_heading(message_id, title, page_id)
