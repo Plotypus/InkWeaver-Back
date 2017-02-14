@@ -143,8 +143,7 @@ class LAWProtocolDispatcher:
         if reply_to_id is not None:
             response['reply_to_id'] = reply_to_id
         response.update(fields)
-        json = self.encode_json(response)
-        return json
+        return response
 
     async def dispatch(self, message: JSON, action: str, message_id=None):
         if action not in self.approved:
