@@ -58,6 +58,7 @@ class LAWProtocolDispatcher:
     def __init__(self, interface: AbstractDBInterface, user_id=None):
         self._db_interface = interface
         self._user_id = user_id
+        self._message_factory = MessageFactory()
 
     @classmethod
     def encode_json(cls, data):
@@ -73,7 +74,11 @@ class LAWProtocolDispatcher:
 
     def set_user_id(self, new_user_id):
         self._user_id = new_user_id
-    
+
+    @property
+    def message_factory(self):
+        return self._message_factory
+
     def format_json(self, base_message, **kwargs):
         for key, value in kwargs.items():
             base_message[key] = value
@@ -91,7 +96,7 @@ class LAWProtocolDispatcher:
 
     async def dispatch(self, message: JSON, action: str, message_id=None):
         try:
-            message_object = MessageFactory.build_message(self, action, message)
+            message_object = self.message_factory.build_message(self, action, message)
         except ValueError:
             return self.format_failure_json(message_id, f"Action '{action}' not supported.")
         except TypeError as e:
