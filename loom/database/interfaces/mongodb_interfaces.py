@@ -517,6 +517,15 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             pass
 
+    async def set_page_title(self, new_title, page_id):
+        page = await self.client.get_page(page_id)
+        old_title = page['title']
+        alias_id = page['aliases'][old_title]
+        # It's important that we change the page title before renaming the alias
+        # Otherwise, we are going to keep creating new aliases
+        await self.client.set_page_title(new_title, page_id)
+        await self.change_alias_name(alias_id, new_title)
+
     async def set_heading_title(self, old_title, new_title, page_id):
         heading = await self.client.get_heading(new_title, page_id)
         # Heading already exists within the page

@@ -596,6 +596,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_page_title(self, new_title: str, page_id: ObjectId):
+        update_result: UpdateResult = await self.pages.update_one(
+            filter={'_id': page_id},
+            update={
+                '$set': {
+                    'title': new_title
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def set_heading_title(self, old_title: str, new_title: str, page_id: ObjectId):
         update_result: UpdateResult = await self.pages.update_one(
             # For filtering documents in an array, we use the name of the array field
