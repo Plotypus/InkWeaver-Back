@@ -1,4 +1,5 @@
-from .message import Message, auto_getattr
+from .incoming_message import IncomingMessage
+from ..message import auto_getattr
 
 from bson import ObjectId
 
@@ -8,7 +9,7 @@ from bson import ObjectId
 # Create Messages
 #
 ###########################################################################
-class CreateLinkMessage(Message):
+class CreateLinkIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'story_id',
@@ -46,7 +47,7 @@ class CreateLinkMessage(Message):
 # Edit Messages
 #
 ###########################################################################
-class ChangeAliasNameMessage(Message):
+class ChangeAliasNameIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'alias_id',
@@ -71,7 +72,7 @@ class ChangeAliasNameMessage(Message):
 # Delete Messages
 #
 ###########################################################################
-class DeleteLinkMessage(Message):
+class DeleteLinkIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'link_id',

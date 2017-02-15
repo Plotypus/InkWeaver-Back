@@ -1,4 +1,5 @@
-from .message import Message, auto_getattr
+from .incoming_message import IncomingMessage
+from ..message import auto_getattr
 
 from bson import ObjectId
 
@@ -8,7 +9,7 @@ from bson import ObjectId
 # Create Messages
 #
 ###########################################################################
-class CreateStoryMessage(Message):
+class CreateStoryIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'title',
@@ -37,7 +38,7 @@ class CreateStoryMessage(Message):
 # Add Messages
 #
 ###########################################################################
-class AddPrecedingSubsectionMessage(Message):
+class AddPrecedingSubsectionIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'title',
@@ -63,7 +64,7 @@ class AddPrecedingSubsectionMessage(Message):
         return self._dispatcher.add_preceding_subsection(self.message_id, self.title, self.parent_id, self.index)
 
 
-class AddInnerSubsectionMessage(Message):
+class AddInnerSubsectionIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'title',
@@ -89,7 +90,7 @@ class AddInnerSubsectionMessage(Message):
         return self._dispatcher.add_inner_subsection(self.message_id, self.title, self.parent_id, self.index)
 
 
-class AddSucceedingSubsectionMessage(Message):
+class AddSucceedingSubsectionIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'title',
@@ -115,7 +116,7 @@ class AddSucceedingSubsectionMessage(Message):
         return self._dispatcher.add_succeeding_subsection(self.message_id, self.title, self.parent_id, self.index)
 
 
-class AddParagraphMessage(Message):
+class AddParagraphIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'section_id'
@@ -146,7 +147,7 @@ class AddParagraphMessage(Message):
 # Edit Messages
 #
 ###########################################################################
-class EditParagraphMessage(Message):
+class EditParagraphIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'section_id',
@@ -170,7 +171,7 @@ class EditParagraphMessage(Message):
         return self._dispatcher.edit_paragraph(self.message_id, self.section_id, self.update, self.paragraph_id)
 
 
-class EditSectionTitleMessage(Message):
+class EditSectionTitleIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'section_id',
@@ -194,7 +195,7 @@ class EditSectionTitleMessage(Message):
 # Get Messages
 #
 ###########################################################################
-class GetStoryInformationMessage(Message):
+class GetStoryInformationIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'story_id',
@@ -210,7 +211,7 @@ class GetStoryInformationMessage(Message):
         return self._dispatcher.get_story_information(self.message_id, self.story_id)
 
 
-class GetStoryHierarchyMessage(Message):
+class GetStoryHierarchyIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'story_id',
@@ -226,7 +227,7 @@ class GetStoryHierarchyMessage(Message):
         return self._dispatcher.get_story_hierarchy(self.message_id, self.story_id)
 
 
-class GetSectionHierarchyMessage(Message):
+class GetSectionHierarchyIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'section_id',
@@ -242,7 +243,7 @@ class GetSectionHierarchyMessage(Message):
         return self._dispatcher.get_section_hierarchy(self.message_id, self.section_id)
 
 
-class GetSectionContentMessage(Message):
+class GetSectionContentIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'section_id',
@@ -263,7 +264,7 @@ class GetSectionContentMessage(Message):
 # Delete Messages
 #
 ###########################################################################
-class DeleteStoryMessage(Message):
+class DeleteStoryIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'story_id',
@@ -279,7 +280,7 @@ class DeleteStoryMessage(Message):
         return self._dispatcher.delete_story(self.message_id, self.story_id)
 
 
-class DeleteSectionMessage(Message):
+class DeleteSectionIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'section_id',
@@ -295,7 +296,7 @@ class DeleteSectionMessage(Message):
         return self._dispatcher.delete_section(self.message_id, self.section_id)
 
 
-class DeleteParagraphMessage(Message):
+class DeleteParagraphIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'section_id',

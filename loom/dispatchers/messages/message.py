@@ -1,13 +1,10 @@
-from abc import ABC, abstractmethod
-
-
 def auto_getattr(wrapped_function):
     def wrapper(self):
         return getattr(self, f'_{wrapped_function.__name__}')
     return property(wrapper)
 
 
-class Message(ABC):
+class Message:
     _required_fields = []
     _optional_fields = []
 
@@ -28,10 +25,3 @@ class Message(ABC):
     @property
     def all_fields(self):
         return self._required_fields + self._optional_fields
-
-    def set_dispatcher(self, dispatcher):
-        self._dispatcher = dispatcher
-
-    @abstractmethod
-    def dispatch(self):
-        pass

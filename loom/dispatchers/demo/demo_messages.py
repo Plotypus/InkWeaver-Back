@@ -1,9 +1,10 @@
-from loom.dispatchers.model.message import Message, auto_getattr
+from loom.dispatchers.messages.message import auto_getattr
+from loom.dispatchers.messages.incoming.incoming_message import IncomingMessage
 
 from bson import ObjectId
 
 
-class AddHeadingWithTextMessage(Message):
+class AddHeadingWithTextIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'title',
@@ -27,7 +28,7 @@ class AddHeadingWithTextMessage(Message):
         return self._dispatcher.add_heading_with_text(self.message_id, self.title, self.text, self.page_id)
 
 
-class AddTextToSectionMessage(Message):
+class AddTextToSectionIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'text',

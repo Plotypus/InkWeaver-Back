@@ -1,6 +1,6 @@
 import loom.serialize
 
-from .model import MessageFactory
+from .messages import IncomingMessageFactory
 from loom.database.interfaces import AbstractDBInterface
 
 from decorator import decorator
@@ -58,7 +58,7 @@ class LAWProtocolDispatcher:
     def __init__(self, interface: AbstractDBInterface, user_id=None):
         self._db_interface = interface
         self._user_id = user_id
-        self._message_factory = MessageFactory()
+        self._message_factory = IncomingMessageFactory()
 
     @classmethod
     def encode_json(cls, data):

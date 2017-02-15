@@ -1,4 +1,5 @@
-from .message import Message, auto_getattr
+from .incoming_message import IncomingMessage
+from ..message import auto_getattr
 
 from bson import ObjectId
 
@@ -8,7 +9,7 @@ from bson import ObjectId
 # Create Messages
 #
 ###########################################################################
-class CreateWikiMessage(Message):
+class CreateWikiIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'title',
@@ -33,7 +34,7 @@ class CreateWikiMessage(Message):
 # Add Messages
 #
 ###########################################################################
-class AddSegmentMessage(Message):
+class AddSegmentIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'title',
@@ -53,7 +54,7 @@ class AddSegmentMessage(Message):
         return self._dispatcher.add_segment(self.message_id, self.title, self.parent_id)
 
 
-class AddTemplateHeadingMessage(Message):
+class AddTemplateHeadingIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'title',
@@ -73,7 +74,7 @@ class AddTemplateHeadingMessage(Message):
         return self._dispatcher.add_template_heading(self.message_id, self.title, self.segment_id)
 
 
-class AddPageMessage(Message):
+class AddPageIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'title',
@@ -93,7 +94,7 @@ class AddPageMessage(Message):
         return self._dispatcher.add_page(self.message_id, self.title, self.parent_id)
 
 
-class AddHeadingMessage(Message):
+class AddHeadingIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'title',
@@ -124,7 +125,7 @@ class AddHeadingMessage(Message):
 # Edit Messages
 #
 ###########################################################################
-class EditSegmentMessage(Message):
+class EditSegmentIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'segment_id',
@@ -144,7 +145,7 @@ class EditSegmentMessage(Message):
         return self._dispatcher.edit_segment(self.message_id, self.segment_id, self.update)
 
 
-class EditTemplateHeadingMessage(Message):
+class EditTemplateHeadingIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'segment_id',
@@ -169,7 +170,7 @@ class EditTemplateHeadingMessage(Message):
                                                       self.update)
 
 
-class EditPageMessage(Message):
+class EditPageIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'page_id',
@@ -189,7 +190,7 @@ class EditPageMessage(Message):
         return self._dispatcher.edit_page(self.message_id, self.page_id, self.update)
 
 
-class EditHeadingMessage(Message):
+class EditHeadingIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'page_id',
@@ -218,7 +219,7 @@ class EditHeadingMessage(Message):
 # Get Messages
 #
 ###########################################################################
-class GetWikiInformationMessage(Message):
+class GetWikiInformationIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'wiki_id',
@@ -234,7 +235,7 @@ class GetWikiInformationMessage(Message):
         return self._dispatcher.get_wiki_information(self.message_id, self.wiki_id)
 
 
-class GetWikiHierarchyMessage(Message):
+class GetWikiHierarchyIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'wiki_id',
@@ -250,7 +251,7 @@ class GetWikiHierarchyMessage(Message):
         return self._dispatcher.get_wiki_hierarchy(self.message_id, self.wiki_id)
 
 
-class GetWikiSegmentHierarchyMessage(Message):
+class GetWikiSegmentHierarchyIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'segment_id',
@@ -266,7 +267,7 @@ class GetWikiSegmentHierarchyMessage(Message):
         return self._dispatcher.get_wiki_segment_hierarchy(self.message_id, self.segment_id)
 
 
-class GetWikiSegmentMessage(Message):
+class GetWikiSegmentIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'segment_id',
@@ -282,7 +283,7 @@ class GetWikiSegmentMessage(Message):
         return self._dispatcher.get_wiki_segment(self.message_id, self.segment_id)
 
 
-class GetWikiPageMessage(Message):
+class GetWikiPageIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'page_id',
@@ -303,7 +304,7 @@ class GetWikiPageMessage(Message):
 # Delete Messages
 #
 ###########################################################################
-class DeleteWikiMessage(Message):
+class DeleteWikiIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'wiki_id',
@@ -319,7 +320,7 @@ class DeleteWikiMessage(Message):
         return self._dispatcher.delete_wiki(self.message_id, self.wiki_id)
 
 
-class DeleteSegmentMessage(Message):
+class DeleteSegmentIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'segment_id',
@@ -335,7 +336,7 @@ class DeleteSegmentMessage(Message):
         return self._dispatcher.delete_segment(self.message_id, self.segment_id)
 
 
-class DeleteTemplateHeadingMessage(Message):
+class DeleteTemplateHeadingIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'segment_id',
@@ -355,7 +356,7 @@ class DeleteTemplateHeadingMessage(Message):
         return self._dispatcher.delete_template_heading(self.message_id, self.segment_id, self.template_heading_title)
 
 
-class DeletePageMessage(Message):
+class DeletePageIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'page_id',
@@ -371,7 +372,7 @@ class DeletePageMessage(Message):
         return self._dispatcher.delete_page(self.message_id, self.page_id)
 
 
-class DeleteHeadingMessage(Message):
+class DeleteHeadingIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'page_id',
@@ -391,7 +392,7 @@ class DeleteHeadingMessage(Message):
         return self._dispatcher.delete_heading(self.message_id, self.heading_title, self.page_id)
 
 
-class DeleteAliasMessage(Message):
+class DeleteAliasIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'alias_id',

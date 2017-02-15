@@ -1,14 +1,14 @@
 from .demo_messages import *
 
-from loom.dispatchers.model import MessageFactory
+from loom.dispatchers.messages import IncomingMessageFactory
 
 DEMO_MESSAGES = {
-    'add_heading_with_text': AddHeadingWithTextMessage,
-    'add_text_to_section':   AddTextToSectionMessage,
+    'add_heading_with_text': AddHeadingWithTextIncomingMessage,
+    'add_text_to_section':   AddTextToSectionIncomingMessage,
 }
 
 
-class DemoMessageFactory(MessageFactory):
+class DemoIncomingMessageFactory(IncomingMessageFactory):
     def __init__(self):
         super().__init__()
         self.approved_messages.update(DEMO_MESSAGES.copy())

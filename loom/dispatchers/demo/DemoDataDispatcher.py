@@ -1,4 +1,4 @@
-from .demo_message_factory import DemoMessageFactory
+from .demo_message_factory import DemoIncomingMessageFactory
 
 from loom.dispatchers.LAWProtocolDispatcher import LAWProtocolDispatcher
 
@@ -6,7 +6,7 @@ from loom.dispatchers.LAWProtocolDispatcher import LAWProtocolDispatcher
 class DemoDataDispatcher(LAWProtocolDispatcher):
     def __init__(self, interface):
         super().__init__(interface)
-        self._message_factory = DemoMessageFactory()
+        self._message_factory = DemoIncomingMessageFactory()
 
     async def add_heading_with_text(self, message_id, title, text, page_id):
         await super().add_heading(message_id, title, page_id)

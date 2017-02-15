@@ -1,4 +1,5 @@
-from .message import Message, auto_getattr
+from .incoming_message import IncomingMessage
+from ..message import auto_getattr
 
 
 ###########################################################################
@@ -6,7 +7,7 @@ from .message import Message, auto_getattr
 # Get Messages
 #
 ###########################################################################
-class GetUserPreferencesMessage(Message):
+class GetUserPreferencesIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
     ]
@@ -18,7 +19,7 @@ class GetUserPreferencesMessage(Message):
         return self._dispatcher.get_user_preferences(self.message_id)
 
 
-class GetUserStoriesMessage(Message):
+class GetUserStoriesIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
     ]
@@ -30,7 +31,7 @@ class GetUserStoriesMessage(Message):
         return self._dispatcher.get_user_stories(self.message_id)
 
 
-class GetUserWikisMessage(Message):
+class GetUserWikisIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
     ]
@@ -47,7 +48,7 @@ class GetUserWikisMessage(Message):
 # Set Messages
 #
 ###########################################################################
-class SetUserNameMessage(Message):
+class SetUserNameIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'name',
@@ -63,7 +64,7 @@ class SetUserNameMessage(Message):
         return self._dispatcher.set_user_name(self.message_id, self.name)
 
 
-class SetUserEmailMessage(Message):
+class SetUserEmailIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'email',
@@ -79,7 +80,7 @@ class SetUserEmailMessage(Message):
         return self._dispatcher.set_user_email(self.message_id, self.email)
 
 
-class SetUserBioMessage(Message):
+class SetUserBioIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'bio',
@@ -100,7 +101,7 @@ class SetUserBioMessage(Message):
 # Login Messages
 #
 ###########################################################################
-class UserLoginMessage(Message):
+class UserLoginIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'username',
