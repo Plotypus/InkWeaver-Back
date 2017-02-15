@@ -361,7 +361,6 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.append_page_to_parent_segment(page_id, in_parent_segment)
         except ClientError:
             await self.delete_page(page_id)
-            await self.delete_alias(alias_id)
         else:
             return page_id
 
@@ -592,7 +591,7 @@ class MongoDBInterface(AbstractDBInterface):
     async def delete_page(self, page_id):
         page = await self.client.get_page(page_id)
         for alias_id in page['aliases'].values():
-            await self.delete_alias(alias_id)
+            await self._delete_alias_no_replace(alias_id)
         await self.client.delete_page(page_id)
 
     async def delete_heading(self, heading_title: str, page_id: ObjectId):
@@ -665,16 +664,22 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def delete_alias(self, alias_id: ObjectId):
         alias = await self.get_alias(alias_id)
+        await self._delete_alias_no_replace(alias_id)
+        alias_name = alias['name']
+        page_id = alias['page_id']
+        page = await self.client.get_page(page_id)
+        # Alias with page title deleted, need to recreate primary alias
+        if page is not None and not await self._page_title_is_alias(page):
+            await self._create_alias(page_id, alias_name)
+
+    async def _delete_alias_no_replace(self, alias_id: ObjectId):
+        alias = await self.get_alias(alias_id)
         alias_name = alias['name']
         for link_id in alias['links']:
             await self.comprehensive_remove_link(link_id, alias_name)
         page_id = alias['page_id']
         await self.client.remove_alias_from_page(alias_name, page_id)
         await self.client.delete_alias(alias_id)
-        page = await self.client.get_page(page_id)
-        # Alias with page title deleted, need to recreate primary alias
-        if not await self._page_title_is_alias(page):
-            await self._create_alias(page_id, alias_name)
 
     async def _create_alias(self, page_id: ObjectId, name: str):
         alias_id = await self.client.create_alias(name, page_id)
