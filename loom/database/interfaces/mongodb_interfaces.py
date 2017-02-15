@@ -355,6 +355,8 @@ class MongoDBInterface(AbstractDBInterface):
         parent_segment = await self.get_segment(in_parent_segment)
         template_headings = parent_segment['template_headings']
         page_id = await self.client.create_page(title, template_headings)
+        # Create an alias for the page with the title as the alias name
+        alias_id = await self._create_alias(page_id, title)
         try:
             await self.client.append_page_to_parent_segment(page_id, in_parent_segment)
         except ClientError:
@@ -514,6 +516,15 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             pass
 
+    async def set_page_title(self, new_title, page_id):
+        page = await self.client.get_page(page_id)
+        old_title = page['title']
+        alias_id = page['aliases'][old_title]
+        # It's important that we change the page title before renaming the alias
+        # Otherwise, we are going to keep creating new aliases
+        await self.client.set_page_title(new_title, page_id)
+        await self.change_alias_name(alias_id, new_title)
+
     async def set_heading_title(self, old_title, new_title, page_id):
         heading = await self.client.get_heading(new_title, page_id)
         # Heading already exists within the page
@@ -580,7 +591,7 @@ class MongoDBInterface(AbstractDBInterface):
     async def delete_page(self, page_id):
         page = await self.client.get_page(page_id)
         for alias_id in page['aliases'].values():
-            await self.delete_alias(alias_id)
+            await self._delete_alias_no_replace(alias_id)
         await self.client.delete_page(page_id)
 
     async def delete_heading(self, heading_title: str, page_id: ObjectId):
@@ -598,8 +609,7 @@ class MongoDBInterface(AbstractDBInterface):
         alias_id = await self.client.find_alias_in_page(page_id, name)
         if alias_id is None:
             # Create a new alias and add it to the page.
-            alias_id = await self.client.create_alias(name, page_id)
-            await self.client.insert_alias_to_page(page_id, name, alias_id)
+            alias_id = await self._create_alias(page_id, name)
         # Now create a link with the alias.
         link_id = await self.client.create_link(alias_id, page_id, story_id, section_id, paragraph_id)
         await self.client.insert_link_to_alias(link_id, alias_id)
@@ -643,16 +653,42 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.set_alias_name(new_name, alias_id)
         # Update `aliases` in the appropriate page.
         await self.client.update_alias_name_in_page(page_id, old_name, new_name)
+        page = await self.client.get_page(page_id)
+        # Alias with page title renamed, need to recreate primary alias
+        if not await self._page_title_is_alias(page):
+            # TODO: Or do we rename the page here as well?
+            await self._create_alias(page_id, old_name)
 
     async def get_alias(self, alias_id: ObjectId):
         return await self.client.get_alias(alias_id)
 
     async def delete_alias(self, alias_id: ObjectId):
         alias = await self.get_alias(alias_id)
+        await self._delete_alias_no_replace(alias_id)
+        alias_name = alias['name']
+        page_id = alias['page_id']
+        page = await self.client.get_page(page_id)
+        # Alias with page title deleted, need to recreate primary alias
+        if page is not None and not await self._page_title_is_alias(page):
+            await self._create_alias(page_id, alias_name)
+
+    async def _delete_alias_no_replace(self, alias_id: ObjectId):
+        alias = await self.get_alias(alias_id)
+        alias_name = alias['name']
         for link_id in alias['links']:
-            await self.comprehensive_remove_link(link_id, alias['name'])
-        await self.client.remove_alias_from_page(alias['name'], alias['page_id'])
+            await self.comprehensive_remove_link(link_id, alias_name)
+        page_id = alias['page_id']
+        await self.client.remove_alias_from_page(alias_name, page_id)
         await self.client.delete_alias(alias_id)
+
+    async def _create_alias(self, page_id: ObjectId, name: str):
+        alias_id = await self.client.create_alias(name, page_id)
+        await self.client.insert_alias_to_page(page_id, name, alias_id)
+        return alias_id
+
+    async def _page_title_is_alias(self, page):
+        title = page['title']
+        return page['aliases'].get(title) is not None
 
 
 class MongoDBTornadoInterface(MongoDBInterface):
