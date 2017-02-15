@@ -214,6 +214,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_page_title(self, new_title, page_id):
+        pass
+
+    @abstractmethod
     async def set_heading_title(self, old_title, new_title, page_id):
         pass
 

@@ -338,8 +338,12 @@ class LAWProtocolDispatcher:
 
     @requires_login
     async def edit_page(self, message_id, page_id, update):
-        # TODO: Implement this.
-        pass
+        if update['update_type'] == 'set_title':
+            title = update['title']
+            await self.db_interface.set_page_title(title, page_id)
+            return self.format_json({}, reply_to_id=message_id)
+        else:
+            raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
     @requires_login
     async def edit_heading(self, message_id, page_id, heading_title, update):
