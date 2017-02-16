@@ -1,6 +1,5 @@
-from .demo_message_factory import DemoIncomingMessageFactory
-
 from loom.dispatchers.LAWProtocolDispatcher import LAWProtocolDispatcher
+from .messages.incoming.demo import DemoIncomingMessageFactory
 
 
 class DemoDataDispatcher(LAWProtocolDispatcher):
