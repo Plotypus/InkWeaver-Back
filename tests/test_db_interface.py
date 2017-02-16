@@ -691,7 +691,7 @@ class TestDBInterface:
         assert link_id in alias['links']
 
         page = await self.interface.get_page(page_id)
-        assert len(page['aliases']) == 1
+        assert len(page['aliases']) == 2
         assert page['aliases'][link_name] == alias_id
         hierarchy = await self.interface.get_wiki_hierarchy(wiki_id)
         assert len(hierarchy['links']) == 1

@@ -1,16 +1,16 @@
-from .LOMBase import LOMBase
-
-from bson import ObjectId
+from .outgoing_message import OutgoingMessage
 
 import json
 
+from bson import ObjectId
 
-class LOMEncoder(json.JSONEncoder):
+
+class OGMEncoder(json.JSONEncoder):
     def default(self, o):
-        print(f"In LOMEncoder with object: {o}")
-        if isinstance(o, LOMBase):
+        print(f"In OGMEncoder with object: {o}")
+        if isinstance(o, OutgoingMessage):
             # Recur on the body object
-            return self.default(o._body)
+            return self.default(vars(o))
         if isinstance(o, ObjectId):
             # Tentative ObjectId format
             return f'{{"$oid": "{str(o)}"}}'

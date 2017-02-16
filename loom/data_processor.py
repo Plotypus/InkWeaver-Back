@@ -52,7 +52,7 @@ class DataProcessor:
             m_id, keys = fullmatch.group(1).split('.', 1)
             m_id = int(m_id)
             keys = keys.split('.')
-            response = self.responses[m_id]
+            response = vars(self.responses[m_id])
             for key in keys:
                 response = response[key]
             return response
@@ -62,7 +62,7 @@ class DataProcessor:
             m_id, keys = match.group(1).split('.', 1)
             m_id = int(m_id)
             keys = keys.split('.')
-            response = self.responses[m_id]
+            response = vars(self.responses[m_id])
             for key in keys:
                 response = response[key]
             if isinstance(response, ObjectId):

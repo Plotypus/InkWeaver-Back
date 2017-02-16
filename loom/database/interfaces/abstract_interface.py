@@ -120,6 +120,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_section_title(self, section_id, title):
+        pass
+
+    @abstractmethod
     async def set_paragraph_text(self, section_id, text, paragraph_id):
         pass
 
@@ -207,6 +211,10 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def set_template_heading_text(self, title, text, segment_id):
+        pass
+
+    @abstractmethod
+    async def set_page_title(self, new_title, page_id):
         pass
 
     @abstractmethod
