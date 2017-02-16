@@ -1,5 +1,6 @@
 from loom.dispatchers.LAWProtocolDispatcher import LAWProtocolDispatcher
 from .messages.incoming.demo import DemoIncomingMessageFactory
+from .messages.outgoing.demo import AddTextToSectionOutgoingMessage
 
 
 class DemoDataDispatcher(LAWProtocolDispatcher):
@@ -19,6 +20,7 @@ class DemoDataDispatcher(LAWProtocolDispatcher):
         paragraphs = text.split('\n\n')
         paragraph_ids = {}
         for paragraph in paragraphs:
-            paragraph_id = (await super().add_paragraph(message_id, section_id, paragraph))['paragraph_id']
+            response = await super().add_paragraph(message_id, section_id, paragraph)
+            paragraph_id = response.paragraph_id
             paragraph_ids[str(len(paragraph_ids))] = paragraph_id
-        return self.format_json({'paragraph_ids': paragraph_ids})
+        return AddTextToSectionOutgoingMessage(paragraph_ids)
