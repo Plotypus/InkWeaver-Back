@@ -1,9 +1,3 @@
-def auto_getattr(wrapped_function):
-    def wrapper(self):
-        return getattr(self, f'_{wrapped_function.__name__}')
-    return property(wrapper)
-
-
 class Message:
     _required_fields = []
     _optional_fields = []
@@ -17,10 +11,10 @@ class Message:
             raise TypeError(f"Missing fields: {missing_fields}")
         # Initialize optional fields
         for field in self._optional_fields:
-            setattr(self, f'_{field}', None)
+            setattr(self, f'{field}', None)
         # Set the rest of the fields
         for field, value in message.items():
-            setattr(self, f'_{field}', value)
+            setattr(self, f'{field}', value)
 
     @property
     def all_fields(self):

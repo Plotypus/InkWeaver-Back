@@ -1,5 +1,4 @@
 from .incoming_message import IncomingMessage
-from ..message import auto_getattr
 
 from bson import ObjectId
 
@@ -16,18 +15,6 @@ class CreateStoryIncomingMessage(IncomingMessage):
         'wiki_id',
         'summary',
     ]
-
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def title(self) -> str: pass
-
-    @auto_getattr
-    def wiki_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def summary(self) -> str: pass
 
     def dispatch(self):
         return self._dispatcher.create_story(self.message_id, self.title, self.wiki_id, self.summary)
@@ -48,18 +35,6 @@ class AddPrecedingSubsectionIncomingMessage(IncomingMessage):
         'index',
     ]
 
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def title(self) -> str: pass
-
-    @auto_getattr
-    def parent_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def index(self) -> int: pass
-
     def dispatch(self):
         return self._dispatcher.add_preceding_subsection(self.message_id, self.title, self.parent_id, self.index)
 
@@ -73,18 +48,6 @@ class AddInnerSubsectionIncomingMessage(IncomingMessage):
     _optional_fields = [
         'index',
     ]
-
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def title(self) -> str: pass
-
-    @auto_getattr
-    def parent_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def index(self) -> int: pass
 
     def dispatch(self):
         return self._dispatcher.add_inner_subsection(self.message_id, self.title, self.parent_id, self.index)
@@ -100,18 +63,6 @@ class AddSucceedingSubsectionIncomingMessage(IncomingMessage):
         'index',
     ]
 
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def title(self) -> str: pass
-
-    @auto_getattr
-    def parent_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def index(self) -> int: pass
-
     def dispatch(self):
         return self._dispatcher.add_succeeding_subsection(self.message_id, self.title, self.parent_id, self.index)
 
@@ -125,18 +76,6 @@ class AddParagraphIncomingMessage(IncomingMessage):
     _optional_fields = [
         'succeeding_paragraph_id',
     ]
-
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def section_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def text(self) -> str: pass
-
-    @auto_getattr
-    def succeeding_paragraph_id(self) -> ObjectId: pass
 
     def dispatch(self):
         return self._dispatcher.add_paragraph(self.message_id, self.section_id, self.text, self.succeeding_paragraph_id)
@@ -155,18 +94,6 @@ class EditParagraphIncomingMessage(IncomingMessage):
         'paragraph_id'
     ]
 
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def section_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def update(self) -> dict: pass
-
-    @auto_getattr
-    def paragraph_id(self) -> ObjectId: pass
-
     def dispatch(self):
         return self._dispatcher.edit_paragraph(self.message_id, self.section_id, self.update, self.paragraph_id)
 
@@ -177,15 +104,6 @@ class EditSectionTitleIncomingMessage(IncomingMessage):
         'section_id',
         'new_title',
     ]
-
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def section_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def new_title(self) -> str: pass
 
     def dispatch(self):
         return self._dispatcher.edit_section_title(self.message_id, self.section_id, self.new_title)
@@ -201,12 +119,6 @@ class GetStoryInformationIncomingMessage(IncomingMessage):
         'story_id',
     ]
 
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def story_id(self) -> ObjectId: pass
-
     def dispatch(self):
         return self._dispatcher.get_story_information(self.message_id, self.story_id)
 
@@ -216,12 +128,6 @@ class GetStoryHierarchyIncomingMessage(IncomingMessage):
         'message_id',
         'story_id',
     ]
-
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def story_id(self) -> ObjectId: pass
 
     def dispatch(self):
         return self._dispatcher.get_story_hierarchy(self.message_id, self.story_id)
@@ -233,12 +139,6 @@ class GetSectionHierarchyIncomingMessage(IncomingMessage):
         'section_id',
     ]
 
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def section_id(self) -> ObjectId: pass
-
     def dispatch(self):
         return self._dispatcher.get_section_hierarchy(self.message_id, self.section_id)
 
@@ -248,12 +148,6 @@ class GetSectionContentIncomingMessage(IncomingMessage):
         'message_id',
         'section_id',
     ]
-
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def section_id(self) -> ObjectId: pass
 
     def dispatch(self):
         return self._dispatcher.get_section_content(self.message_id, self.section_id)
@@ -270,12 +164,6 @@ class DeleteStoryIncomingMessage(IncomingMessage):
         'story_id',
     ]
 
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def story_id(self) -> ObjectId: pass
-
     def dispatch(self):
         return self._dispatcher.delete_story(self.message_id, self.story_id)
 
@@ -285,12 +173,6 @@ class DeleteSectionIncomingMessage(IncomingMessage):
         'message_id',
         'section_id',
     ]
-
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def section_id(self) -> ObjectId: pass
 
     def dispatch(self):
         return self._dispatcher.delete_section(self.message_id, self.section_id)
@@ -302,15 +184,6 @@ class DeleteParagraphIncomingMessage(IncomingMessage):
         'section_id',
         'paragraph_id',
     ]
-
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def section_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def paragraph_id(self) -> ObjectId: pass
 
     def dispatch(self):
         return self._dispatcher.delete_paragraph(self.message_id, self.section_id, self.paragraph_id)

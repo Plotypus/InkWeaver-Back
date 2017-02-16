@@ -1,5 +1,4 @@
 from .outgoing_message import OutgoingMessage
-from ..message import auto_getattr
 
 
 ###########################################################################
