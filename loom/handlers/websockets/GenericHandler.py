@@ -1,4 +1,5 @@
 from loom import serialize
+from loom.dispatchers.messages.outgoing import OGMEncoder
 
 import tornado.websocket
 
@@ -11,7 +12,7 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
     """
     @classmethod
     def encode_json(cls, data):
-        return serialize.encode_bson_to_string(data)
+        return OGMEncoder.default(data)
 
     @classmethod
     def decode_json(cls, data):

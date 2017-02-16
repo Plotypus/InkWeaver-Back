@@ -37,9 +37,7 @@ class LoomHandler(GenericHandler):
         json = self.encode_json(response)
         self.write_message(json)
 
-    def write_json(self, data: Dict, with_reply_id=None):
-        if with_reply_id is not None:
-            data.update({'reply_to_id': with_reply_id})
+    def write_json(self, data):
         json_string = self.encode_json(data)
         self.write_message(json_string)
 
