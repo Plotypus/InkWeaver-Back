@@ -1,5 +1,2 @@
-from ..message import Message
-
-
-class OutgoingMessage(Message):
+class OutgoingMessage:
     pass

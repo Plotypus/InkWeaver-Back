@@ -10,36 +10,15 @@ from bson import ObjectId
 #
 ###########################################################################
 class CreateStoryOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'story_title',
-        'story_id',
-        'section_id',
-        'wiki_id',
-        'users',
-        'summary',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def story_title(self) -> str: pass
-
-    @auto_getattr
-    def story_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def section_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def wiki_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def users(self) -> list: pass
-
-    @auto_getattr
-    def summary(self) -> str: pass
+    def __init__(self, reply_to_id: int, story_title: str, story_id: ObjectId, section_id: ObjectId, wiki_id: ObjectId,
+                 users: list, summary: str):
+        self.reply_to_id = reply_to_id
+        self.story_title = story_title
+        self.story_id = story_id
+        self.section_id = section_id
+        self.wiki_id = wiki_id
+        self.users = users
+        self.summary = summary
 
 
 ###########################################################################
@@ -48,55 +27,27 @@ class CreateStoryOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class AddPrecedingSubsectionOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'section_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def section_id(self) -> ObjectId: pass
+    def __init__(self, reply_to_id: int, section_id: ObjectId):
+        self.reply_to_id = reply_to_id
+        self.section_id = section_id
 
 
 class AddInnerSubsectionOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'section_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def section_id(self) -> ObjectId: pass
+    def __init__(self, reply_to_id: int, section_id: ObjectId):
+        self.reply_to_id = reply_to_id
+        self.section_id = section_id
 
 
 class AddSucceedingSubsectionOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'section_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def section_id(self) -> ObjectId: pass
+    def __init__(self, reply_to_id: int, section_id: ObjectId):
+        self.reply_to_id = reply_to_id
+        self.section_id = section_id
 
 
 class AddParagraphOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'paragraph_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def paragraph_id(self) -> ObjectId: pass
+    def __init__(self, reply_to_id: int, paragraph_id: ObjectId):
+        self.reply_to_id = reply_to_id
+        self.paragraph_id = paragraph_id
 
 
 ###########################################################################
@@ -105,21 +56,13 @@ class AddParagraphOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class EditParagraphOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
 
 
 class EditSectionTitleOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
 
 
 ###########################################################################
@@ -128,71 +71,32 @@ class EditSectionTitleOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class GetStoryInformationOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'story_title',
-        'section_id',
-        'wiki_id',
-        'users',
-        'summary',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def story_title(self) -> str: pass
-
-    @auto_getattr
-    def section_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def wiki_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def users(self) -> list: pass
-
-    @auto_getattr
-    def summary(self) -> str: pass
+    def __init__(self, reply_to_id: int, story_title: str, section_id: ObjectId, wiki_id: ObjectId, users: list,
+                 summary: str):
+        self.reply_to_id = reply_to_id
+        self.story_title = story_title
+        self.section_id = section_id
+        self.wiki_id = wiki_id
+        self.users = users
+        self.summary = summary
 
 
 class GetStoryHierarchyOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'hierarchy',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def hierarchy(self) -> dict: pass
+    def __init__(self, reply_to_id: int, hierarchy: dict):
+        self.reply_to_id = reply_to_id
+        self.hierarchy = hierarchy
 
 
 class GetSectionHierarchyOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'hierarchy',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def hierarchy(self) -> dict: pass
+    def __init__(self, reply_to_id: int, hierarchy: dict):
+        self.reply_to_id = reply_to_id
+        self.hierarchy = hierarchy
 
 
 class GetSectionContentOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'content',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def content(self) -> list: pass
+    def __init__(self, reply_to_id: int, content: list):
+        self.reply_to_id = reply_to_id
+        self.content = content
 
 
 ###########################################################################
@@ -201,40 +105,19 @@ class GetSectionContentOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class DeleteStoryOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'event',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def event(self) -> str: pass
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event
 
 
 class DeleteSectionOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'event',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def event(self) -> str: pass
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event
 
 
 class DeleteParagraphOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'event',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def event(self) -> str: pass
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event
 

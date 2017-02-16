@@ -10,32 +10,14 @@ from bson import ObjectId
 #
 ###########################################################################
 class CreateWikiOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'wiki_title',
-        'wiki_id',
-        'segment_id',
-        'users',
-        'summary',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def wiki_title(self) -> str: pass
-
-    @auto_getattr
-    def wiki_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def segment_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def users(self) -> list: pass
-
-    @auto_getattr
-    def summary(self) -> str: pass
+    def __init__(self, reply_to_id: int, wiki_title: str, wiki_id: ObjectId, segment_id: ObjectId, users: list,
+                 summary: str):
+        self.reply_to_id = reply_to_id
+        self.wiki_title = wiki_title
+        self.wiki_id = wiki_id
+        self.segment_id = segment_id
+        self.users = users
+        self.summary = summary
 
     
 ###########################################################################
@@ -44,47 +26,25 @@ class CreateWikiOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class AddSegmentOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'segment_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def segment_id(self) -> ObjectId: pass
+    def __init__(self, reply_to_id: int, segment_id: ObjectId):
+        self.reply_to_id = reply_to_id
+        self.segment_id = segment_id
 
     
 class AddTemplateHeadingOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
 
     
 class AddPageOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'page_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def page_id(self) -> ObjectId: pass
+    def __init__(self, reply_to_id: int, page_id: ObjectId):
+        self.reply_to_id = reply_to_id
+        self.page_id = page_id
 
     
 class AddHeadingOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
 
     
 ###########################################################################
@@ -93,39 +53,23 @@ class AddHeadingOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class EditSegmentOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
 
     
 class EditTemplateHeadingOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
 
     
 class EditPageOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
 
     
 class EditHeadingOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
 
     
 ###########################################################################
@@ -134,112 +78,45 @@ class EditHeadingOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class GetWikiInformationOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'wiki_title',
-        'segment_id',
-        'users',
-        'summary',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def wiki_title(self) -> str: pass
-
-    @auto_getattr
-    def segment_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def users(self) -> list: pass
-
-    @auto_getattr
-    def summary(self) -> str: pass
+    def __init__(self, reply_to_id: int, wiki_title: str, segment_id: ObjectId, users: list,
+                 summary: str):
+        self.reply_to_id = reply_to_id
+        self.wiki_title = wiki_title
+        self.segment_id = segment_id
+        self.users = users
+        self.summary = summary
 
     
 class GetWikiHierarchyOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'hierarchy',
-        'link_table',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def hierarchy(self) -> dict: pass
-
-    @auto_getattr
-    def link_table(self) -> list: pass
+    def __init__(self, reply_to_id: int, hierarchy: dict, link_table: list):
+        self.reply_to_id = reply_to_id
+        self.hierarchy = hierarchy
+        self.link_table = link_table
 
     
 class GetWikiSegmentHierarchyOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'hierarchy',
-        'link_table',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def hierarchy(self) -> dict: pass
-
-    @auto_getattr
-    def link_table(self) -> list: pass
-
+    def __init__(self, reply_to_id: int, hierarchy: dict, link_table: list):
+        self.reply_to_id = reply_to_id
+        self.hierarchy = hierarchy
+        self.link_table = link_table
+    
     
 class GetWikiSegmentOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'title',
-        'segments',
-        'pages',
-        'template_headings',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def title(self) -> str: pass
-
-    @auto_getattr
-    def segments(self) -> list: pass
-
-    @auto_getattr
-    def pages(self) -> list: pass
-
-    @auto_getattr
-    def template_headings(self) -> list: pass
+    def __init__(self, reply_to_id: int, title: str, segments: list, pages: list, template_headings: list):
+        self.reply_to_id = reply_to_id
+        self.title = title
+        self.segments = segments
+        self.pages = pages
+        self.template_headings = template_headings
 
     
 class GetWikiPageOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'title',
-        'aliases',
-        'references',
-        'headings',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def title(self) -> str: pass
-
-    @auto_getattr
-    def aliases(self) -> dict: pass
-
-    @auto_getattr
-    def references(self) -> list: pass
-
-    @auto_getattr
-    def headings(self) -> list: pass
+    def __init__(self, reply_to_id: int, title: str, aliases: dict, references: list, headings: list):
+        self.reply_to_id = reply_to_id
+        self.title = title
+        self.aliases = aliases
+        self.references = references
+        self.headings = headings
 
     
 ###########################################################################
@@ -248,78 +125,36 @@ class GetWikiPageOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class DeleteWikiOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'event',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def event(self) -> str: pass
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event
 
     
 class DeleteSegmentOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'event',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def event(self) -> str: pass
-
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event
+    
     
 class DeleteTemplateHeadingOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'event',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def event(self) -> str: pass
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event
 
     
 class DeletePageOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'event',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def event(self) -> str: pass
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event
 
     
 class DeleteHeadingOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'event',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def event(self) -> str: pass
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event
 
     
 class DeleteAliasOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'event',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def event(self) -> str: pass
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event

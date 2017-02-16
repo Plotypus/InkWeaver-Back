@@ -8,58 +8,25 @@ from ..message import auto_getattr
 #
 ###########################################################################
 class GetUserPreferencesOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'username',
-        'name',
-        'email',
-        'bio',
-        'avatar',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def username(self) -> str: pass
-
-    @auto_getattr
-    def name(self) -> str: pass
-
-    @auto_getattr
-    def email(self) -> str: pass
-
-    @auto_getattr
-    def bio(self) -> str: pass
-
-    @auto_getattr
-    def avatar(self) -> str: pass
+    def __init__(self, reply_to_id: int, username: str, name: str, email: str, bio: str, avatar: str):
+        self.reply_to_id = reply_to_id
+        self.username = username
+        self.name = name
+        self.email = email
+        self.bio = bio
+        self.avatar = avatar
 
     
 class GetUserStoriesOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'stories',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def stories(self) -> list: pass
+    def __init__(self, reply_to_id: int, stories: list):
+        self.reply_to_id = reply_to_id
+        self.stories = stories
 
     
 class GetUserWikisOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'wikis',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def wikis(self) -> list: pass
+    def __init__(self, reply_to_id: int, wikis: list):
+        self.reply_to_id = reply_to_id
+        self.wikis = wikis
 
 
 ###########################################################################
@@ -68,13 +35,6 @@ class GetUserWikisOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class UserLoginOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'event',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def event(self) -> str: pass
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event

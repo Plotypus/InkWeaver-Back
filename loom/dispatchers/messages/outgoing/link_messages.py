@@ -10,16 +10,9 @@ from bson import ObjectId
 #
 ###########################################################################
 class CreateLinkOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'link_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def link_id(self) -> ObjectId: pass
+    def __init__(self, reply_to_id: int, link_id: ObjectId):
+        self.reply_to_id = reply_to_id
+        self.link_id = link_id
 
     
 ###########################################################################
@@ -28,12 +21,8 @@ class CreateLinkOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class ChangeAliasNameOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
 
     
 ###########################################################################
@@ -42,13 +31,6 @@ class ChangeAliasNameOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class DeleteLinkOutgoingMessage(OutgoingMessage):
-    _required_fields = [
-        'reply_to_id',
-        'event',
-    ]
-
-    @auto_getattr
-    def reply_to_id(self) -> int: pass
-
-    @auto_getattr
-    def event(self) -> str: pass
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event
