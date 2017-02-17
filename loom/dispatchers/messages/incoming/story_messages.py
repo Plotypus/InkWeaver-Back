@@ -70,7 +70,7 @@ class AddSucceedingSubsectionIncomingMessage(IncomingMessage):
 class AddParagraphIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
-        'section_id'
+        'section_id',
         'text',
     ]
     _optional_fields = [
