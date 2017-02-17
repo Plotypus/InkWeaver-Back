@@ -1,6 +1,7 @@
 from loom import serialize
 from loom.dispatchers.messages.outgoing import OGMEncoder
 
+import json
 import tornado.websocket
 
 from uuid import uuid4 as generate_uuid
@@ -12,7 +13,8 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
     """
     @classmethod
     def encode_json(cls, data):
-        return OGMEncoder.default(data)
+        # TODO: Temporary fix, should use in serialize.
+        return json.dumps(data, cls=OGMEncoder).replace("</", "<\\/")
 
     @classmethod
     def decode_json(cls, data):
