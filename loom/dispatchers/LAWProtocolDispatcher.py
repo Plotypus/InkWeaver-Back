@@ -61,10 +61,6 @@ class LAWProtocolDispatcher:
         self._user_id = user_id
         self._message_factory = IncomingMessageFactory()
 
-    @classmethod
-    def encode_json(cls, data):
-        return loom.serialize.encode_bson_to_string(data)
-
     @property
     def db_interface(self):
         return self._db_interface
@@ -79,11 +75,6 @@ class LAWProtocolDispatcher:
     @property
     def message_factory(self):
         return self._message_factory
-
-    def format_json(self, base_message, **kwargs):
-        for key, value in kwargs.items():
-            base_message[key] = value
-        return base_message
 
     def format_failure_json(self, reply_to_id=None, reason=None, **fields):
         response = {
