@@ -3,13 +3,13 @@
 from loom import routing, session_manager
 from loom.database import interfaces
 
+import sys
 import tornado.ioloop
 import tornado.web
 
 from tornado.options import define as define_option, options, parse_command_line as parse_options
 
 # Check requirements.
-import sys
 required_version = (3, 6)
 current_version = sys.version_info
 if current_version < required_version:
@@ -24,6 +24,8 @@ define_option('port', default=8080, help='run on the given port', type=int)
 define_option('db-name', default=DEFAULT_DB_NAME, help='name of the database in MongoDB', type=str)
 define_option('db-host', default=DEFAULT_DB_HOST, help='address of the MongoDB server', type=str)
 define_option('db-port', default=DEFAULT_DB_PORT, help='MongoDB connection port', type=int)
+define_option('db-user', default=None, help='user for MongoDB authentication', type=str)
+define_option('db-pass', default=None, help='password for MongoDB authentication', type=str)
 define_option('demo-db-host', default=None, help='the host for creating demonstration databases; defaults to --db-host',
               type=str)
 define_option('demo-db-port', default=None, help='the port for creating demonstration databases; defaults to --db-port',
@@ -69,7 +71,19 @@ def get_tornado_interface(db_name=DEFAULT_DB_NAME, db_host=DEFAULT_DB_HOST, db_p
 if __name__ == '__main__':
     parse_options()
 
+    # Ensure either both or neither of the authentication arguments are given.
+    if options.db_user and not options.db_pass:
+        print("Cannot authenticate without password.")
+        sys.exit(1)
+    if options.db_pass and not options.db_user:
+        print("Cannot authenticate without username.")
+        sys.exit(1)
+
     interface = get_tornado_interface(options.db_name, options.db_host, options.db_port)
+
+    # Authenticate if necessary.
+    if options.db_user and options.db_pass:
+        interface.authenticate_client(options.db_user, options.db_pass)
 
     session_manager = session_manager.SessionManager()
 
