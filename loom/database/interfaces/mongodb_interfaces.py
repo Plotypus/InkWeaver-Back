@@ -55,6 +55,9 @@ class MongoDBInterface(AbstractDBInterface):
     #
     ###########################################################################
 
+    async def authenticate_client(self, username, password):
+        await self.client.authenticate(username, password)
+
     async def drop_database(self):
         await self.client.drop_database()
 

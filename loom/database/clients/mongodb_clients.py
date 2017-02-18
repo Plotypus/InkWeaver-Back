@@ -87,6 +87,9 @@ class MongoDBClient:
     def aliases(self) -> AgnosticCollection:
         return self.database.aliases
 
+    async def authenticate(self, username, password):
+        await self.database.authenticate(username, password)
+
     async def drop_database(self):
         await self.client.drop_database(self.database)
 
