@@ -304,6 +304,15 @@ class LAWProtocolDispatcher:
         return AddHeadingOutgoingMessage(message_id)
 
     @requires_login
+    async def edit_wiki(self, message_id, wiki_id, update):
+        if update['update_type'] == 'set_title':
+            title = update['title']
+            await self.db_interface.set_wiki_title(title, wiki_id)
+            return EditWikiOutgoingMessage(message_id)
+        else:
+            raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
+
+    @requires_login
     async def edit_segment(self, message_id, segment_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
