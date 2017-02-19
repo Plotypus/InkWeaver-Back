@@ -1,7 +1,7 @@
 from bson.objectid import ObjectId
 from motor.core import AgnosticClient, AgnosticDatabase, AgnosticCollection
 from pymongo.results import DeleteResult, UpdateResult
-from tornado.escape import to_basestring
+from tornado.escape import url_escape
 from typing import Any, Dict, List
 
 
@@ -44,7 +44,7 @@ class MongoDBClient:
                 port=db_port,
                 db=db_name
             )
-            self._client = mongodb_client_class(to_basestring(uri))
+            self._client = mongodb_client_class(url_escape(uri))
         else:
             self._client = mongodb_client_class(db_host, db_port)
         self._host = db_host
