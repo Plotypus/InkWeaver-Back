@@ -65,8 +65,9 @@ def generate_cookie_secret(num_bytes=64):
     return base64.b64encode(urandom(num_bytes))
 
 
-def get_tornado_interface(db_name=DEFAULT_DB_NAME, db_host=DEFAULT_DB_HOST, db_port=DEFAULT_DB_PORT):
-    return interfaces.MongoDBTornadoInterface(db_name, db_host, db_port)
+def get_tornado_interface(db_name=DEFAULT_DB_NAME, db_host=DEFAULT_DB_HOST, db_port=DEFAULT_DB_PORT, db_user=None,
+                          db_pass=None):
+    return interfaces.MongoDBTornadoInterface(db_name, db_host, db_port, db_user, db_pass)
 
 
 if __name__ == '__main__':
@@ -89,14 +90,8 @@ if __name__ == '__main__':
         print("Cannot authenticate without username.")
         sys.exit(1)
 
-    interface = get_tornado_interface(options.db_name, options.db_host, options.db_port)
+    interface = get_tornado_interface(options.db_name, options.db_host, options.db_port, options.db_user,
+                                      options.db_pass)
 
-    start_partial = partial(start_server, interface, demo_db_host, demo_db_port, options.demo_db_prefix, options.port,
-                            routing.get_routes(), session_manager)
-
-    # Authenticate if necessary.
-    if options.db_user and options.db_pass:
-        future = interface.authenticate_client(options.db_user, options.db_pass)
-        tornado.ioloop.IOLoop.current().add_future(future, start_partial)
-    else:
-        start_partial()
+    start_server(interface, demo_db_host, demo_db_port, options.demo_db_prefix, options.port, routing.get_routes(),
+                 session_manager)
