@@ -27,10 +27,10 @@ def generate_link_format_regex():
 
 
 class MongoDBInterface(AbstractDBInterface):
-    def __init__(self, db_client_class: ClassVar, db_name, db_host, db_port):
+    def __init__(self, db_client_class: ClassVar, db_name, db_host, db_port, db_user=None, db_pass=None):
         if not issubclass(db_client_class, MongoDBClient):
             raise ValueError("invalid MongoDB client class: {}".format(db_client_class.__name__))  # pragma: no cover
-        self._client = db_client_class(db_name, db_host, db_port)
+        self._client = db_client_class(db_name, db_host, db_port, db_user, db_pass)
         self._link_format_regex = generate_link_format_regex()
 
     @property
@@ -55,8 +55,14 @@ class MongoDBInterface(AbstractDBInterface):
     #
     ###########################################################################
 
+    async def authenticate_client(self, username, password):
+        await self.client.authenticate(username, password)
+
     async def drop_database(self):
         await self.client.drop_database()
+
+    async def drop_all_collections(self):
+        await self.client.drop_all_collections()
 
     ###########################################################################
     #
@@ -692,10 +698,10 @@ class MongoDBInterface(AbstractDBInterface):
 
 
 class MongoDBTornadoInterface(MongoDBInterface):
-    def __init__(self, db_name, db_host, db_port):
-        super().__init__(MongoDBMotorTornadoClient, db_name, db_host, db_port)
+    def __init__(self, db_name, db_host, db_port, db_user=None, db_pass=None):
+        super().__init__(MongoDBMotorTornadoClient, db_name, db_host, db_port, db_user, db_pass)
 
 
 class MongoDBAsyncioInterface(MongoDBInterface):
-    def __init__(self, db_name, db_host, db_port):
-        super().__init__(MongoDBMotorAsyncioClient, db_name, db_host, db_port)
+    def __init__(self, db_name, db_host, db_port, db_user=None, db_pass=None):
+        super().__init__(MongoDBMotorAsyncioClient, db_name, db_host, db_port, db_user, db_pass)
