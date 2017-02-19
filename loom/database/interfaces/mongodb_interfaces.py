@@ -497,8 +497,10 @@ class MongoDBInterface(AbstractDBInterface):
         pass
 
     async def set_wiki_title(self, title, wiki_id):
+        wiki = await self.client.get_wiki(wiki_id)
         try:
             await self.client.set_wiki_title(title, wiki_id)
+            await self.client.set_segment_title(title, wiki['segment_id'])
         except ClientError:
             # TODO: Deal with this
             raise
