@@ -50,6 +50,8 @@ class MongoDBClient:
         self._host = db_host
         self._port = db_port
         self._database = getattr(self._client, db_name)
+        # Attempt to do something in the database to ensure connection was successful.
+        self.database.collection_names()
 
     @property
     def host(self) -> str:
