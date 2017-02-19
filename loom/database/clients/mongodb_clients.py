@@ -33,10 +33,21 @@ class ExtraUpdatesError(BadUpdateError):
 
 
 class MongoDBClient:
-    def __init__(self, mongodb_client_class, db_name='inkweaver', db_host='localhost', db_port=27017):
+    def __init__(self, mongodb_client_class, db_name='inkweaver', db_host='localhost', db_port=27017, db_user=None,
+                 db_pass=None):
+        if db_user and db_pass:
+            uri = 'mongodb://{username}:{password}@{hostname}:{port}/{db}'.format(
+                username=db_user,
+                password=db_pass,
+                hostname=db_host,
+                port=db_port,
+                db=db_name
+            )
+            self._client = mongodb_client_class(uri)
+        else:
+            self._client = mongodb_client_class(db_host, db_port)
         self._host = db_host
         self._port = db_port
-        self._client = mongodb_client_class(self.host, self.port)
         self._database = getattr(self._client, db_name)
 
     @property
@@ -1029,12 +1040,12 @@ class MongoDBClient:
 
 
 class MongoDBMotorTornadoClient(MongoDBClient):  # pragma: no cover
-    def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
+    def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017, db_user=None, db_pass=None):
         from motor.motor_tornado import MotorClient
-        super().__init__(MotorClient, db_name, db_host, db_port)
+        super().__init__(MotorClient, db_name, db_host, db_port, db_user, db_pass)
 
 
 class MongoDBMotorAsyncioClient(MongoDBClient):  # pragma: no cover
-    def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017):
+    def __init__(self, db_name='inkweaver', db_host='localhost', db_port=27017, db_user=None, db_pass=None):
         from motor.motor_asyncio import AsyncIOMotorClient
-        super().__init__(AsyncIOMotorClient, db_name, db_host, db_port)
+        super().__init__(AsyncIOMotorClient, db_name, db_host, db_port, db_user, db_pass)
