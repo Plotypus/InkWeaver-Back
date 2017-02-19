@@ -24,7 +24,7 @@ def main(jsonfile, db_name, db_user=None, db_pass=None, blind_override=False):
     if db_user and db_pass:
         interface.authenticate_client(db_user, db_pass)
     processor = DataProcessor(interface)
-    event_loop.run_until_complete(interface.client.drop_database())
+    event_loop.run_until_complete(interface.client.drop_all_collections())
     event_loop.run_until_complete(processor.load_file(jsonfile))
     event_loop.close()
 
