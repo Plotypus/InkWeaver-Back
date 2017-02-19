@@ -7,6 +7,7 @@ import sys
 import tornado.ioloop
 import tornado.web
 
+from functools import partial
 from tornado.options import define as define_option, options, parse_command_line as parse_options
 
 # Check requirements.
@@ -71,6 +72,15 @@ def get_tornado_interface(db_name=DEFAULT_DB_NAME, db_host=DEFAULT_DB_HOST, db_p
 if __name__ == '__main__':
     parse_options()
 
+    demo_db_host = options.demo_db_host if options.demo_db_host else options.db_host
+    demo_db_port = options.demo_db_port if options.demo_db_port else options.db_port
+    demo_db_data = options.demo_db_data
+
+    if demo_db_data is not None:
+        routing.install_demo_endpoint(demo_db_data)
+
+    session_manager = session_manager.SessionManager()
+
     # Ensure either both or neither of the authentication arguments are given.
     if options.db_user and not options.db_pass:
         print("Cannot authenticate without password.")
@@ -81,18 +91,12 @@ if __name__ == '__main__':
 
     interface = get_tornado_interface(options.db_name, options.db_host, options.db_port)
 
+    start_partial = partial(start_server, interface, demo_db_host, demo_db_port, options.demo_db_prefix, options.port,
+                            routing.get_routes(), session_manager)
+
     # Authenticate if necessary.
     if options.db_user and options.db_pass:
-        interface.authenticate_client(options.db_user, options.db_pass)
-
-    session_manager = session_manager.SessionManager()
-
-    demo_db_host = options.demo_db_host if options.demo_db_host else options.db_host
-    demo_db_port = options.demo_db_port if options.demo_db_port else options.db_port
-    demo_db_data = options.demo_db_data
-
-    if demo_db_data is not None:
-        routing.install_demo_endpoint(demo_db_data)
-
-    start_server(interface, demo_db_host, demo_db_port, options.demo_db_prefix, options.port, routing.get_routes(),
-                 session_manager)
+        future = interface.authenticate_client(options.db_user, options.db_pass)
+        tornado.ioloop.IOLoop.current().add_future(future, start_partial)
+    else:
+        start_partial()
