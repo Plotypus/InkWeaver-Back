@@ -56,6 +56,19 @@ class MongoDBClient:
         return self._database
 
     @property
+    def collections(self) -> List[AgnosticCollection]:
+        return [
+            self.users,
+            self.stories,
+            self.sections,
+            self.wikis,
+            self.segments,
+            self.pages,
+            self.links,
+            self.aliases,
+        ]
+
+    @property
     def users(self) -> AgnosticCollection:
         return self.database.users
 
@@ -92,6 +105,12 @@ class MongoDBClient:
 
     async def drop_database(self):
         await self.client.drop_database(self.database)
+
+    async def drop_collection(self, collection: AgnosticCollection):
+        await collection.drop()
+
+    async def drop_all_collections(self):
+        [await self.drop_collection(collection) for collection in self.collections]
 
     @staticmethod
     def assert_update_one_was_successful(update_result: UpdateResult):

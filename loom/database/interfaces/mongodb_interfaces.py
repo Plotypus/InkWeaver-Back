@@ -61,6 +61,9 @@ class MongoDBInterface(AbstractDBInterface):
     async def drop_database(self):
         await self.client.drop_database()
 
+    async def drop_all_collections(self):
+        await self.client.drop_all_collections()
+
     ###########################################################################
     #
     # User Methods
