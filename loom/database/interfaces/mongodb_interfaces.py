@@ -496,6 +496,18 @@ class MongoDBInterface(AbstractDBInterface):
         # TODO: Do this.
         pass
 
+    async def set_story_title(self, story_id, title):
+        story = await self.client.get_story(story_id)
+        try:
+            await self.client.set_story_title(story_id, title)
+            await self.client.set_section_title(story['section_id'], title)
+        except ClientError:
+            # TODO: Deal with this
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
+
     async def set_segment_title(self, title, segment_id):
         try:
             await self.client.set_segment_title(title, segment_id)
