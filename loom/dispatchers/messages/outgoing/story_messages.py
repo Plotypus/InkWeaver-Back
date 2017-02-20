@@ -55,6 +55,11 @@ class AddParagraphOutgoingMessage(OutgoingMessage):
 # Edit Messages
 #
 ###########################################################################
+class EditStoryOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
+
+
 class EditParagraphOutgoingMessage(OutgoingMessage):
     def __init__(self, reply_to_id: int):
         self.reply_to_id = reply_to_id

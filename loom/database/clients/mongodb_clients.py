@@ -405,6 +405,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_story_title(self, story_id: ObjectId, new_title: str):
+        update_result: UpdateResult = await self.stories.update_one(
+            filter={'_id': story_id},
+            update={
+                '$set': {
+                    'title': new_title
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def set_section_title(self, section_id: ObjectId, title: str):
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': section_id},
