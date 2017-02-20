@@ -83,15 +83,6 @@ class EditWikiIncomingMessage(IncomingMessage):
         'update',
     ]
 
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def wiki_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def update(self) -> dict: pass
-
     def dispatch(self):
         return self._dispatcher.edit_wiki(self.message_id, self.wiki_id, self.update)
 

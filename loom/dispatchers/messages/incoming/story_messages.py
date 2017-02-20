@@ -93,15 +93,6 @@ class EditStoryIncomingMessage(IncomingMessage):
         'update',
     ]
 
-    @auto_getattr
-    def message_id(self) -> int: pass
-
-    @auto_getattr
-    def story_id(self) -> ObjectId: pass
-
-    @auto_getattr
-    def update(self) -> dict: pass
-
     def dispatch(self):
         return self._dispatcher.edit_story(self.message_id, self.story_id, self.update)
 
