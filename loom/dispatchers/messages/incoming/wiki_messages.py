@@ -102,7 +102,7 @@ class EditTemplateHeadingIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'segment_id',
-        'template_heading_title'
+        'template_heading_title',
         'update',
     ]
 
