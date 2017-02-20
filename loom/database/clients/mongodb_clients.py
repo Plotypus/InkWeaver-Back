@@ -610,6 +610,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_wiki_title(self, new_title:str, wiki_id: ObjectId):
+        update_result: UpdateResult = await self.wikis.update_one(
+            filter={'_id': wiki_id},
+            update={
+                '$set': {
+                    'title': new_title
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def set_segment_title(self, title: str, segment_id: ObjectId):
         update_result: UpdateResult = await self.segments.update_one(
             filter={'_id': segment_id},

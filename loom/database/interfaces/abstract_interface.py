@@ -206,6 +206,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_wiki_title(self, title, wiki_id):
+        pass
+
+    @abstractmethod
     async def set_segment_title(self, title, segment_id):
         pass
 
