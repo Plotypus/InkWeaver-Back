@@ -160,6 +160,139 @@ class TestMessageFactory:
                 {'message_id': 987, 'section_id': ObjectId(), 'paragraph_id': ObjectId()},
                 DeleteParagraphIncomingMessage
         ),
+        (
+                'create_wiki',
+                {'message_id': 1, 'title': 'Wiki', 'summary': 'some wiki', 'extra': 'bbb'},
+                {'message_id': 1, 'title': 'Wiki', 'summary': 'some wiki'},
+                CreateWikiIncomingMessage
+        ),
+        (
+                'add_segment',
+                {'message_id': 88, 'title': 'Character', 'parent_id': ObjectId(), 'extra': {}},
+                {'message_id': 88, 'title': 'Character', 'parent_id': ObjectId()},
+                AddSegmentIncomingMessage
+        ),
+        (
+                'add_template_heading',
+                {'message_id': 88, 'title': 'Background', 'segment_id': ObjectId(), 'extra': []},
+                {'message_id': 88, 'title': 'Background', 'segment_id': ObjectId()},
+                AddTemplateHeadingIncomingMessage
+        ),
+        (
+                'add_page',
+                {'message_id': 88, 'title': 'John', 'parent_id': ObjectId(), 'extra': None},
+                {'message_id': 88, 'title': 'Mary', 'parent_id': ObjectId()},
+                AddPageIncomingMessage
+        ),
+        (
+                'add_heading',
+                {'message_id': 88, 'title': 'Family', 'page_id': ObjectId(), 'index': 0, 'extra': 123},
+                {'message_id': 88, 'title': 'Family', 'page_id': ObjectId(), 'index': 0},
+                AddHeadingIncomingMessage
+        ),
+        (
+                'edit_wiki',
+                {'message_id': 23, 'wiki_id': ObjectId(), 'update': {'update_type': 'set_title', 'title': 'WIKI'},
+                 'extra': 'yeah'},
+                {'message_id': 23, 'wiki_id': ObjectId(), 'update': {'update_type': 'set_title', 'title': 'WIKI'}},
+                EditWikiIncomingMessage
+        ),
+        (
+                'edit_segment',
+                {'message_id': 23, 'segment_id': ObjectId(), 'update': {'update_type': 'set_title', 'title': 'Chars'},
+                 'extra': 21},
+                {'message_id': 23, 'segment_id': ObjectId(), 'update': {'update_type': 'set_title', 'title': 'Chars'}},
+                EditSegmentIncomingMessage
+        ),
+        (
+                'edit_template_heading',
+                {'message_id': 23, 'segment_id': ObjectId(), 'template_heading_title': 'Background',
+                 'update': {'update_type': 'set_title', 'title': 'History'}, 'extra': 1},
+                {'message_id': 23, 'segment_id': ObjectId(), 'template_heading_title': 'Background',
+                 'update': {'update_type': 'set_title', 'title': 'History'}},
+                EditTemplateHeadingIncomingMessage
+        ),
+        (
+                'edit_page',
+                {'message_id': 23, 'page_id': ObjectId(), 'update': {'update_type': 'set_title', 'title': 'Frank'},
+                 'extra': 'Joe'},
+                {'message_id': 23, 'page_id': ObjectId(), 'update': {'update_type': 'set_title', 'title': 'Frank'}},
+                EditPageIncomingMessage
+        ),
+        (
+                'edit_heading',
+                {'message_id': 23, 'page_id': ObjectId(), 'heading_title': 'Background',
+                 'update': {'update_type': 'set_text', 'text': 'ye'}, 'a': 1},
+                {'message_id': 23, 'page_id': ObjectId(), 'heading_title': 'Background',
+                 'update': {'update_type': 'set_text', 'text': 'ye'}},
+                EditHeadingIncomingMessage
+        ),
+        (
+                'get_wiki_information',
+                {'message_id': 13, 'wiki_id': ObjectId(), 'abc': 1, 'def': 2},
+                {'message_id': 13, 'wiki_id': ObjectId()},
+                GetWikiInformationIncomingMessage
+        ),
+        (
+                'get_wiki_hierarchy',
+                {'message_id': 13, 'wiki_id': ObjectId(), 'abc': 1, 'def': 2},
+                {'message_id': 13, 'wiki_id': ObjectId()},
+                GetWikiHierarchyIncomingMessage
+        ),
+        (
+                'get_wiki_segment_hierarchy',
+                {'message_id': 13, 'segment_id': ObjectId(), 'abc': 1, 'def': 2},
+                {'message_id': 13, 'segment_id': ObjectId()},
+                GetWikiSegmentHierarchyIncomingMessage
+        ),
+        (
+                'get_wiki_segment',
+                {'message_id': 13, 'segment_id': ObjectId(), 'abc': 1, 'def': 2},
+                {'message_id': 13, 'segment_id': ObjectId()},
+                GetWikiSegmentIncomingMessage
+        ),
+        (
+                'get_wiki_page',
+                {'message_id': 13, 'page_id': ObjectId(), 'abc': 1, 'def': 2},
+                {'message_id': 13, 'page_id': ObjectId()},
+                GetWikiPageIncomingMessage
+        ),
+        (
+                'delete_wiki',
+                {'message_id': 13, 'wiki_id': ObjectId(), 'abc': 1, 'def': 2},
+                {'message_id': 13, 'wiki_id': ObjectId()},
+                DeleteWikiIncomingMessage
+        ),
+        (
+                'delete_segment',
+                {'message_id': 13, 'segment_id': ObjectId(), 'abc': 1, 'def': 2},
+                {'message_id': 13, 'segment_id': ObjectId()},
+                DeleteSegmentIncomingMessage
+        ),
+        (
+                'delete_template_heading',
+                {'message_id': 13, 'segment_id': ObjectId(), 'template_heading_title': 'Background', 'abc': 1, 'def': 2},
+                {'message_id': 13, 'segment_id': ObjectId(), 'template_heading_title': 'Background'},
+                DeleteTemplateHeadingIncomingMessage
+        ),
+        (
+                'delete_page',
+                {'message_id': 13, 'page_id': ObjectId(), 'abc': 1, 'def': 2},
+                {'message_id': 13, 'page_id': ObjectId()},
+                DeletePageIncomingMessage
+        ),
+        (
+                'delete_heading',
+                {'message_id': 13, 'page_id': ObjectId(), 'heading_title': 'Family', 'abc': 1, 'def': 2},
+                {'message_id': 13, 'page_id': ObjectId(), 'heading_title': 'Family'},
+                DeleteHeadingIncomingMessage
+        ),
+        (
+                'delete_alias',
+                {'message_id': 13, 'alias_id': ObjectId(), 'abc': 1, 'def': 2},
+                {'message_id': 13, 'alias_id': ObjectId()},
+                DeleteAliasIncomingMessage
+        ),
     ])
     def test_message_fields(self, message_factory, dispatcher, action, msg_extra, msg_good, expected):
         with pytest.raises(TypeError) as errinfo:
@@ -177,11 +310,11 @@ class TestMessageFactory:
     @pytest.mark.parametrize('action, msg', [
         (
                 'add_preceding_subsection',
-                {'message_id': 23, 'title': 'prologue', 'parent_id': ObjectId()},
+                {'message_id': 23, 'title': 'prologue', 'parent_id': ObjectId()}
         ),
         (
                 'add_inner_subsection',
-                {'message_id': 23, 'title': 'chapter 1', 'parent_id': ObjectId()},
+                {'message_id': 23, 'title': 'chapter 1', 'parent_id': ObjectId()}
         ),
         (
                 'add_succeeding_subsection',
@@ -189,8 +322,12 @@ class TestMessageFactory:
         ),
         (
                 'add_paragraph',
-                {'message_id': 32, 'section_id': ObjectId(), 'text': ''},
+                {'message_id': 32, 'section_id': ObjectId(), 'text': ''}
         ),
+        (
+                'add_heading',
+                {'message_id': 88, 'title': 'Family', 'page_id': ObjectId()}
+        )
     ])
     def test_optional_fields(self, message_factory, dispatcher, action, msg):
         msg_object = message_factory.build_message(dispatcher, action, msg)
