@@ -293,6 +293,26 @@ class TestMessageFactory:
                 {'message_id': 13, 'alias_id': ObjectId()},
                 DeleteAliasIncomingMessage
         ),
+        (
+                'create_link',
+                {'message_id': 100, 'story_id': ObjectId(), 'section_id': ObjectId(), 'paragraph_id': ObjectId(),
+                 'name': 'John', 'page_id': ObjectId(), 'extra': 1},
+                {'message_id': 100, 'story_id': ObjectId(), 'section_id': ObjectId(), 'paragraph_id': ObjectId(),
+                 'name': 'John', 'page_id': ObjectId()},
+                CreateLinkIncomingMessage
+        ),
+        (
+                'change_alias_name',
+                {'message_id': 100, 'alias_id': ObjectId(), 'new_name': 'Bruce', 'extra': 'Kent'},
+                {'message_id': 100, 'alias_id': ObjectId(), 'new_name': 'Bruce'},
+                ChangeAliasNameIncomingMessage
+        ),
+        (
+                'delete_link',
+                {'message_id': 100, 'link_id': ObjectId(), 'Clark': 'Wayne'},
+                {'message_id': 100, 'link_id': ObjectId()},
+                DeleteLinkIncomingMessage
+        ),
     ])
     def test_message_fields(self, message_factory, dispatcher, action, msg_extra, msg_good, expected):
         with pytest.raises(TypeError) as errinfo:
