@@ -71,3 +71,110 @@ class TestLAWDispatcher:
         assert result.email == TEST_USER['email']
         assert result.bio is None
         assert result.avatar is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('get_user_stories', {'message_id': 12})
+    ])
+    async def test_get_user_stories(self, action, msg):
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, GetUserStoriesOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.stories == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('get_user_wikis', {'message_id': 12})
+    ])
+    async def test_get_user_wikis(self, action, msg):
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, GetUserWikisOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.wikis == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('set_user_name', {'message_id': 87, 'name': 'name-test'})
+    ])
+    async def test_set_user_name(self, action, msg):
+        result = await self.dispatcher.dispatch(msg, action)
+        assert result is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('set_user_email', {'message_id': 23, 'email': 'abc@def.ghi'})
+    ])
+    async def test_set_user_email(self, action, msg):
+        result = await self.dispatcher.dispatch(msg, action)
+        assert result is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('set_user_bio', {'message_id': 23, 'bio': 'test-bio'})
+    ])
+    async def test_set_user_bio(self, action, msg):
+        result = await self.dispatcher.dispatch(msg, action)
+        assert result is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('user_login', {'message_id': 182, 'username': TEST_USER['username'], 'password': 'bad-pass'})
+    ])
+    async def test_user_login(self, action, msg):
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert error_json['reason'] == "Already logged in."
+        # Reset user_id
+        self.dispatcher.set_user_id(None)
+        # Use bad password
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, UserLoginOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.event == 'denied'
+        # Right password
+        msg['password'] = TEST_USER['password']
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, UserLoginOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.event == 'logged_in'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('create_story', {'message_id': 8, 'title': 'test-story', 'wiki_id': ObjectId(), 'summary': 'test-summary'})
+    ])
+    async def test_create_story(self, action, msg):
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, CreateStoryOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.story_id is not None
+        assert isinstance(result.story_id, ObjectId)
+        assert result.section_id is not None
+        assert isinstance(result.section_id, ObjectId)
+        assert result.wiki_id == msg['wiki_id']
+        user_info = {
+            'user_id':      self.user_id,
+            'name':         TEST_USER['name'],
+            'access_level': 'owner',
+        }
+        assert user_info in result.users
+        assert result.summary == msg['summary']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('create_wiki', {'message_id': 9, 'title': 'test-wiki', 'summary': 'Blah blah test-wiki'})
+    ])
+    async def test_create_wiki(self, action, msg):
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, CreateWikiOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.wiki_title == msg['title']
+        assert result.wiki_id is not None
+        assert isinstance(result.wiki_id, ObjectId)
+        assert result.segment_id is not None
+        assert isinstance(result.segment_id, ObjectId)
+        user_info = {
+            'user_id':      self.user_id,
+            'name':         TEST_USER['name'],
+            'access_level': 'owner',
+        }
+        assert user_info in result.users
+        assert result.summary == msg['summary']
