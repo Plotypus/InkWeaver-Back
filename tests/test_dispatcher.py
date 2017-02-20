@@ -16,6 +16,11 @@ TEST_USER = {
     'email':    'test-email',
 }
 
+TEST_STORY = {
+    'title':   'test-title',
+    'wiki_id': ObjectId(),
+    'summary': 'test-summary'
+}
 
 class TestLAWDispatcher:
     def setup(self):
@@ -27,6 +32,15 @@ class TestLAWDispatcher:
     def teardown(self):
         self.event_loop.run_until_complete(self.interface.drop_database())
         self.event_loop.close()
+
+    async def create_test_story(self):
+        story_id = await self.interface.create_story(self.user_id, **TEST_STORY)
+        story = await self.interface.get_story(story_id)
+        return story_id, story['section_id']
+
+    async def create_test_paragraph(self, section_id):
+        paragraph_id = await self.interface.add_paragraph(section_id, 'test-text', None)
+        return paragraph_id
 
     @pytest.mark.asyncio
     async def test_requires_login(self):
@@ -157,6 +171,164 @@ class TestLAWDispatcher:
         }
         assert user_info in result.users
         assert result.summary == msg['summary']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('add_preceding_subsection', {'message_id': 9, 'title': 'test-pre', 'parent_id': None, 'index': 0})
+    ])
+    async def test_add_preceding_subsection(self, action, msg):
+        _, section_id = await self.create_test_story()
+        msg['parent_id'] = section_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, AddPrecedingSubsectionOutgoingMessage)
+        assert result.section_id is not None
+        assert isinstance(result.section_id, ObjectId)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('add_inner_subsection', {'message_id': 9, 'title': 'test-inner', 'parent_id': None, 'index': 0})
+    ])
+    async def test_add_inner_subsection(self, action, msg):
+        _, section_id = await self.create_test_story()
+        msg['parent_id'] = section_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, AddInnerSubsectionOutgoingMessage)
+        assert result.section_id is not None
+        assert isinstance(result.section_id, ObjectId)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('add_succeeding_subsection', {'message_id': 9, 'title': 'test-suc', 'parent_id': None, 'index': 0})
+    ])
+    async def test_add_succeeding_subsection(self, action, msg):
+        _, section_id = await self.create_test_story()
+        msg['parent_id'] = section_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, AddSucceedingSubsectionOutgoingMessage)
+        assert result.section_id is not None
+        assert isinstance(result.section_id, ObjectId)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('add_paragraph', {'message_id': 21, 'section_id': None, 'text': 'test-text', 'succeeding_paragraph_id': None})
+    ])
+    async def test_add_paragraph(self, action, msg):
+        _, section_id = await self.create_test_story()
+        msg['section_id'] = section_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, AddParagraphOutgoingMessage)
+        assert result.paragraph_id is not None
+        assert isinstance(result.paragraph_id, ObjectId)
+        # Try again with succeeding_paragraph_id set
+        msg['succeeding_paragraph_id'] = result.paragraph_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, AddParagraphOutgoingMessage)
+        assert result.paragraph_id is not None
+        assert isinstance(result.paragraph_id, ObjectId)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg, wrong_type, wrong_key, correct', [
+        (
+                'edit_story',
+                {'message_id': 32, 'story_id': None, 'update': None},
+                {'update_type': 'test-wrong-type'},
+                {'update_type': 'set_title', 'test-wrong-key': ''},
+                {'update_type': 'set_title', 'title': 'test-title-change'}
+        )
+    ])
+    async def test_edit_story(self, action, msg, wrong_type, wrong_key, correct):
+        story_id, _ = await self.create_test_story()
+        msg['story_id'] = story_id
+        # Test response to using the wrong `update_type`
+        msg['update'] = wrong_type
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert f'invalid `update_type`: {wrong_type["update_type"]}' in error_json['reason']
+        # Test response to wrong key in `update`
+        msg['update'] = wrong_key
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert 'KeyError' in error_json['reason']
+        # Test valid case
+        msg['update'] = correct
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, EditStoryOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg, wrong_type, wrong_key, correct', [
+        (
+                'edit_paragraph',
+                {'message_id': 32, 'section_id': None, 'paragraph_id': None, 'update': None},
+                {'update_type': 'test-wrong-type'},
+                {'update_type': 'set_text', 'test-wrong-key': ''},
+                {'update_type': 'set_text', 'text': 'test-text-change'}
+        )
+    ])
+    async def test_edit_paragraph(self, action, msg, wrong_type, wrong_key, correct):
+        _, section_id = await self.create_test_story()
+        paragraph_id = await self.create_test_paragraph(section_id)
+        msg['section_id'] = section_id
+        msg['paragraph_id'] = paragraph_id
+        # Test response to using the wrong `update_type`
+        msg['update'] = wrong_type
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert f'invalid `update_type`: {wrong_type["update_type"]}' in error_json['reason']
+        # Test response to wrong key in `update`
+        msg['update'] = wrong_key
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert 'KeyError' in error_json['reason']
+        # Test valid case
+        msg['update'] = correct
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, EditParagraphOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('edit_section_title', {'message_id': 32, 'section_id': None, 'new_title': 'test-title-change'})
+    ])
+    async def test_edit_section_title(self, action, msg):
+        _, section_id = await self.create_test_story()
+        msg['section_id'] = section_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, EditSectionTitleOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('get_story_information', {'message_id': 65, 'story_id': None})
+    ])
+    async def test_get_story_information(self, action, msg):
+        story_id, section_id =  await self.create_test_story()
+        msg['story_id'] = story_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, GetStoryInformationOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.story_title == TEST_STORY['title']
+        assert result.section_id == section_id
+        assert result.wiki_id == TEST_STORY['wiki_id']
+        user_info = {
+            'user_id':       self.user_id,
+            'name': TEST_USER['name'],
+            'access_level':  'owner',
+        }
+        assert user_info in result.users
+        assert result.summary == TEST_STORY['summary']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('get_story_hierarchy', {'message_id': 44, 'story_id': None})
+    ])
+    async def test_get_story_hierarchy(self, action, msg):
+        story_id, section_id = await self.create_test_story()
+        msg['story_id'] = story_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, GetStoryHierarchyOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.hierarchy['title'] == TEST_STORY['title']
+        assert result.hierarchy['section_id'] == section_id
+        assert result.hierarchy['preceding_subsections'] == list()
+        assert result.hierarchy['inner_subsections'] == list()
+        assert result.hierarchy['succeeding_subsections'] == list()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [
