@@ -332,6 +332,72 @@ class TestLAWDispatcher:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [
+        ('get_section_hierarchy', {'message_id': 72, 'section_id': None})
+    ])
+    async def test_get_section_hierarchy(self, action, msg):
+        _, section_id = await self.create_test_story()
+        msg['section_id'] = section_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, GetSectionHierarchyOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.hierarchy['title'] == TEST_STORY['title']
+        assert result.hierarchy['section_id'] == section_id
+        assert result.hierarchy['preceding_subsections'] == list()
+        assert result.hierarchy['inner_subsections'] == list()
+        assert result.hierarchy['succeeding_subsections'] == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('get_section_content', {'message_id': 1, 'section_id': None})
+    ])
+    async def test_get_section_content(self, action, msg):
+        _, section_id = await self.create_test_story()
+        msg['section_id'] = section_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, GetSectionContentOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.content == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('delete_story', {'message_id': 2, 'story_id': None})
+    ])
+    async def test_delete_story(self, action, msg):
+        story_id, _ = await self.create_test_story()
+        msg['story_id'] = story_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, DeleteStoryOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.event == "story_deleted"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('delete_section', {'message_id': 2, 'section_id': None})
+    ])
+    async def test_delete_section(self, action, msg):
+        _, section_id = await self.create_test_story()
+        msg['section_id'] = section_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, DeleteSectionOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.event == 'section_deleted'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('delete_paragraph', {'message_id': 2, 'section_id': None, 'paragraph_id': None})
+    ])
+    async def test_delete_paragraph(self, action, msg):
+        _, section_id = await self.create_test_story()
+        paragraph_id = await self.create_test_paragraph(section_id)
+        msg['section_id'] = section_id
+        msg['paragraph_id'] = paragraph_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, DeleteParagraphOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.event == "paragraph_deleted"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
         ('create_wiki', {'message_id': 9, 'title': 'test-wiki', 'summary': 'Blah blah test-wiki'})
     ])
     async def test_create_wiki(self, action, msg):
