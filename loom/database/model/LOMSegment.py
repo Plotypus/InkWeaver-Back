@@ -10,7 +10,7 @@ class LOMSegment(LOMBase):
         self._body['template_headings'] = list(map(lambda h: LOMHeading(h), self._body['template_headings']))
 
     @property
-    def _id(self) -> ObjectId:
+    def id(self) -> ObjectId:
         return self._body['_id']
 
     @property

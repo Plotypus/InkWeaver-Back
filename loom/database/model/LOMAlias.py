@@ -6,7 +6,7 @@ from typing import List
 
 class LOMAlias(LOMBase):
     @property
-    def _id(self) -> ObjectId:
+    def id(self) -> ObjectId:
         return self._body['_id']
 
     @property

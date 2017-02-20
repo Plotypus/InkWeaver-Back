@@ -10,7 +10,7 @@ class LOMStory(LOMBase):
         self._body['users'] = list(map(lambda u: LOMUserDescription(u), self._body['users']))
 
     @property
-    def _id(self) -> ObjectId:
+    def id(self) -> ObjectId:
         return self._body['_id']
 
     @property

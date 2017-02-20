@@ -6,7 +6,7 @@ from typing import List
 
 class LOMParagraph(LOMBase):
     @property
-    def _id(self) -> ObjectId:
+    def id(self) -> ObjectId:
         return self._body['_id']
 
     @property
@@ -33,7 +33,7 @@ class LOMSection(LOMBase):
         self._body['content'] = list(map(lambda p: LOMParagraph(p), self.content))
 
     @property
-    def _id(self) -> ObjectId:
+    def id(self) -> ObjectId:
         return self._body['_id']
     
     @property

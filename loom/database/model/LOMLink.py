@@ -6,7 +6,7 @@ from bson.objectid import ObjectId
 
 class LOMLink(LOMBase):
     @property
-    def _id(self) -> ObjectId:
+    def id(self) -> ObjectId:
         return self._body['_id']
 
     @property

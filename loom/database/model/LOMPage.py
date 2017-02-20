@@ -25,7 +25,7 @@ class LOMPage(LOMBase):
         self._body['references'] = list(map(lambda r: LOMReference(r), self._body['references']))
 
     @property
-    def _id(self) -> ObjectId:
+    def id(self) -> ObjectId:
         return self._body['_id']
 
     @property
