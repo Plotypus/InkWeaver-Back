@@ -355,7 +355,7 @@ class LAWProtocolDispatcher:
             await self.db_interface.set_heading_text(heading_title, text, page_id)
             return EditHeadingOutgoingMessage(message_id)
         else:
-            raise LAWUnimplementedError("invalid `update_type`: {}".format(update('update_type')))
+            raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
     @requires_login
     async def get_wiki_information(self, message_id, wiki_id):
