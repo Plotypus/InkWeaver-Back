@@ -383,7 +383,13 @@ class LAWProtocolDispatcher:
     @requires_login
     async def get_wiki_segment(self, message_id, segment_id):
         segment = await self.db_interface.get_segment(segment_id)
-        return GetWikiSegmentOutgoingMessage(message_id, **segment)
+        message = {
+            'title': segment['title'],
+            'segments': segment['segments'],
+            'pages': segment['pages'],
+            'template_headings': segment['template_headings'],
+        }
+        return GetWikiSegmentOutgoingMessage(message_id, **message)
 
     @requires_login
     async def get_wiki_page(self, message_id, page_id):
