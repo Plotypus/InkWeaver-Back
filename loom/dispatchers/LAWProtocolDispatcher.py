@@ -199,6 +199,15 @@ class LAWProtocolDispatcher:
         return AddParagraphOutgoingMessage(message_id, paragraph_id)
 
     @requires_login
+    async def edit_story(self, message_id, story_id, update):
+        if update['update_type'] == 'set_title':
+            title = update['title']
+            await self.db_interface.set_story_title(story_id, title)
+            return EditStoryOutgoingMessage(message_id)
+        else:
+            raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
+
+    @requires_login
     async def edit_paragraph(self, message_id, section_id, update, paragraph_id):
         if update['update_type'] == 'set_text':
             text = update['text']
@@ -293,6 +302,15 @@ class LAWProtocolDispatcher:
     async def add_heading(self, message_id, title, page_id, index=None):
         await self.db_interface.add_heading(title, page_id, index)
         return AddHeadingOutgoingMessage(message_id)
+
+    @requires_login
+    async def edit_wiki(self, message_id, wiki_id, update):
+        if update['update_type'] == 'set_title':
+            title = update['title']
+            await self.db_interface.set_wiki_title(title, wiki_id)
+            return EditWikiOutgoingMessage(message_id)
+        else:
+            raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
     @requires_login
     async def edit_segment(self, message_id, segment_id, update):

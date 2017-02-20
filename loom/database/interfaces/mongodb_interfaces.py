@@ -27,10 +27,10 @@ def generate_link_format_regex():
 
 
 class MongoDBInterface(AbstractDBInterface):
-    def __init__(self, db_client_class: ClassVar, db_name, db_host, db_port):
+    def __init__(self, db_client_class: ClassVar, db_name, db_host, db_port, db_user=None, db_pass=None):
         if not issubclass(db_client_class, MongoDBClient):
             raise ValueError("invalid MongoDB client class: {}".format(db_client_class.__name__))  # pragma: no cover
-        self._client = db_client_class(db_name, db_host, db_port)
+        self._client = db_client_class(db_name, db_host, db_port, db_user, db_pass)
         self._link_format_regex = generate_link_format_regex()
 
     @property
@@ -55,8 +55,14 @@ class MongoDBInterface(AbstractDBInterface):
     #
     ###########################################################################
 
+    async def authenticate_client(self, username, password):
+        await self.client.authenticate(username, password)
+
     async def drop_database(self):
         await self.client.drop_database()
+
+    async def drop_all_collections(self):
+        await self.client.drop_all_collections()
 
     ###########################################################################
     #
@@ -239,6 +245,18 @@ class MongoDBInterface(AbstractDBInterface):
     async def get_section_content(self, section_id):
         section = await self.client.get_section(section_id)
         return section['content']
+
+    async def set_story_title(self, story_id, title):
+        story = await self.client.get_story(story_id)
+        try:
+            await self.client.set_story_title(story_id, title)
+            await self.client.set_section_title(story['section_id'], title)
+        except ClientError:
+            # TODO: Deal with this
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
 
     async def set_section_title(self, section_id, title):
         await self.client.set_section_title(section_id, title)
@@ -490,6 +508,18 @@ class MongoDBInterface(AbstractDBInterface):
         # TODO: Do this.
         pass
 
+    async def set_wiki_title(self, title, wiki_id):
+        wiki = await self.client.get_wiki(wiki_id)
+        try:
+            await self.client.set_wiki_title(title, wiki_id)
+            await self.client.set_segment_title(title, wiki['segment_id'])
+        except ClientError:
+            # TODO: Deal with this
+            raise
+        else:
+            # TODO: Should this return something?
+            pass
+
     async def set_segment_title(self, title, segment_id):
         try:
             await self.client.set_segment_title(title, segment_id)
@@ -692,10 +722,10 @@ class MongoDBInterface(AbstractDBInterface):
 
 
 class MongoDBTornadoInterface(MongoDBInterface):
-    def __init__(self, db_name, db_host, db_port):
-        super().__init__(MongoDBMotorTornadoClient, db_name, db_host, db_port)
+    def __init__(self, db_name, db_host, db_port, db_user=None, db_pass=None):
+        super().__init__(MongoDBMotorTornadoClient, db_name, db_host, db_port, db_user, db_pass)
 
 
 class MongoDBAsyncioInterface(MongoDBInterface):
-    def __init__(self, db_name, db_host, db_port):
-        super().__init__(MongoDBMotorAsyncioClient, db_name, db_host, db_port)
+    def __init__(self, db_name, db_host, db_port, db_user=None, db_pass=None):
+        super().__init__(MongoDBMotorAsyncioClient, db_name, db_host, db_port, db_user, db_pass)

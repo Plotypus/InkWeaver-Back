@@ -120,6 +120,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_story_title(self, story_id, title):
+        pass
+
+    @abstractmethod
     async def set_section_title(self, section_id, title):
         pass
 
@@ -199,6 +203,10 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def get_heading(self, heading_id):
+        pass
+
+    @abstractmethod
+    async def set_wiki_title(self, title, wiki_id):
         pass
 
     @abstractmethod
