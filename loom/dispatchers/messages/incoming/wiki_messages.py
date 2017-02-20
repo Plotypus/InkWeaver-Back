@@ -125,6 +125,26 @@ class AddHeadingIncomingMessage(IncomingMessage):
 # Edit Messages
 #
 ###########################################################################
+class EditWikiIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'wiki_id',
+        'update',
+    ]
+
+    @auto_getattr
+    def message_id(self) -> int: pass
+
+    @auto_getattr
+    def wiki_id(self) -> ObjectId: pass
+
+    @auto_getattr
+    def update(self) -> dict: pass
+
+    def dispatch(self):
+        return self._dispatcher.edit_wiki(self.message_id, self.wiki_id, self.update)
+
+
 class EditSegmentIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
