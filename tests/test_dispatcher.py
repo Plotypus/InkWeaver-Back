@@ -66,6 +66,10 @@ class TestLAWDispatcher:
         page = await self.interface.get_page(page_id)
         return page
 
+    async def create_test_link(self, story_id, section_id, paragraph_id, name, page_id):
+        link_id = await self.interface.create_link(story_id, section_id, paragraph_id, name, page_id)
+        return link_id
+
     @pytest.mark.asyncio
     async def test_requires_login(self):
         self.dispatcher.set_user_id(None)
@@ -810,3 +814,53 @@ class TestLAWDispatcher:
         assert isinstance(result, DeleteAliasOutgoingMessage)
         assert result.reply_to_id == msg['message_id']
         assert result.event == "alias_deleted"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('create_link', {'message_id': 3, 'story_id': None, 'section_id': None, 'paragraph_id': None, 'name': 'John',
+                         'page_id': None})
+    ])
+    async def test_create_link(self, action, msg):
+        story_id, section_id = await self.create_test_story()
+        wiki_id, segment_id = await self.create_test_wiki()
+        paragraph_id = await self.create_test_paragraph(section_id)
+        page_id = await self.create_test_page(segment_id)
+        msg['story_id'] = story_id
+        msg['section_id'] = section_id
+        msg['paragraph_id'] = paragraph_id
+        msg['page_id'] = page_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, CreateLinkOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.link_id is not None
+        assert isinstance(result.link_id, ObjectId)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('change_alias_name', {'message_id': 6, 'alias_id': None, 'new_name': 'test-name'})
+    ])
+    async def test_change_alias_name(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        page_id = await self.create_test_page(segment_id)
+        page = await self.get_test_page(page_id)
+        alias_id = page['aliases']['test-title']
+        msg['alias_id'] = alias_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, ChangeAliasNameOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('delete_link', {'message_id': 84, 'link_id': None})
+    ])
+    async def test_delete_link(self, action, msg):
+        story_id, section_id = await self.create_test_story()
+        wiki_id, segment_id = await self.create_test_wiki()
+        paragraph_id = await self.create_test_paragraph(section_id)
+        page_id = await self.create_test_page(segment_id)
+        link_id = await self.create_test_link(story_id, section_id, paragraph_id, 'test-name', page_id)
+        msg['link_id'] = link_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, DeleteLinkOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.event == "link_deleted"
