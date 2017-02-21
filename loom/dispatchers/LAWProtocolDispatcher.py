@@ -61,10 +61,6 @@ class LAWProtocolDispatcher:
         self._user_id = user_id
         self._message_factory = IncomingMessageFactory()
 
-    @classmethod
-    def encode_json(cls, data):
-        return loom.serialize.encode_bson_to_string(data)
-
     @property
     def db_interface(self):
         return self._db_interface
@@ -79,11 +75,6 @@ class LAWProtocolDispatcher:
     @property
     def message_factory(self):
         return self._message_factory
-
-    def format_json(self, base_message, **kwargs):
-        for key, value in kwargs.items():
-            base_message[key] = value
-        return base_message
 
     def format_failure_json(self, reply_to_id=None, reason=None, **fields):
         response = {
@@ -364,7 +355,7 @@ class LAWProtocolDispatcher:
             await self.db_interface.set_heading_text(heading_title, text, page_id)
             return EditHeadingOutgoingMessage(message_id)
         else:
-            raise LAWUnimplementedError("invalid `update_type`: {}".format(update('update_type')))
+            raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
     @requires_login
     async def get_wiki_information(self, message_id, wiki_id):
@@ -392,12 +383,24 @@ class LAWProtocolDispatcher:
     @requires_login
     async def get_wiki_segment(self, message_id, segment_id):
         segment = await self.db_interface.get_segment(segment_id)
-        return GetWikiSegmentOutgoingMessage(message_id, **segment)
+        message = {
+            'title':                segment['title'],
+            'segments':             segment['segments'],
+            'pages':                segment['pages'],
+            'template_headings':    segment['template_headings'],
+        }
+        return GetWikiSegmentOutgoingMessage(message_id, **message)
 
     @requires_login
     async def get_wiki_page(self, message_id, page_id):
         page = await self.db_interface.get_page(page_id)
-        return GetWikiPageOutgoingMessage(message_id, **page)
+        message = {
+            'title':        page['title'],
+            'aliases':      page['aliases'],
+            'references':   page['references'],
+            'headings':     page['headings'],
+        }
+        return GetWikiPageOutgoingMessage(message_id, **message)
 
     @requires_login
     async def delete_wiki(self, message_id, wiki_id):
