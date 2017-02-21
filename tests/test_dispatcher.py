@@ -198,7 +198,6 @@ class TestLAWDispatcher:
             'access_level': 'owner',
         }
         assert user_info in result.users
-        assert result.summary == msg['summary']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [
@@ -340,7 +339,6 @@ class TestLAWDispatcher:
             'access_level':  'owner',
         }
         assert user_info in result.users
-        assert result.summary == TEST_STORY['summary']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [
@@ -384,7 +382,10 @@ class TestLAWDispatcher:
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, GetSectionContentOutgoingMessage)
         assert result.reply_to_id == msg['message_id']
-        assert result.content == list()
+        assert isinstance(result.content, list)
+        assert isinstance(result.content[0], dict)
+        assert isinstance(result.content[0]['paragraph_id'], ObjectId)
+        assert result.content[0]['text'] == TEST_STORY['summary']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [

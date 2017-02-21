@@ -299,7 +299,6 @@ class MongoDBClient:
                            title: str,
                            wiki_id: ObjectId,
                            user_description,  # TODO: Decide what this is.
-                           summary: str,
                            section_id: ObjectId,
                            _id=None) -> ObjectId:
         # TODO: Implement statistics and settings.
@@ -307,7 +306,6 @@ class MongoDBClient:
             'title':      title,
             'wiki_id':    wiki_id,
             'users':      [user_description],
-            'summary':    summary,
             'section_id': section_id,
             'statistics': None,
             'settings':   None,

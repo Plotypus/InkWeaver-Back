@@ -166,7 +166,8 @@ class MongoDBInterface(AbstractDBInterface):
             'access_level': 'owner',
         }
         section_id = await self.create_section(title)
-        inserted_id = await self.client.create_story(title, wiki_id, user_description, summary, section_id)
+        await self.add_paragraph(section_id, summary)
+        inserted_id = await self.client.create_story(title, wiki_id, user_description, section_id)
         await self.client.add_story_to_user(user_id, inserted_id)
         return inserted_id
 
