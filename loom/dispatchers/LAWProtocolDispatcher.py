@@ -174,7 +174,6 @@ class LAWProtocolDispatcher:
             'section_id':   story['section_id'],
             'wiki_id':      story['wiki_id'],
             'users':        story['users'],
-            'summary':      story['summary'],
         }
         return CreateStoryOutgoingMessage(message_id, **message)
 
@@ -229,7 +228,6 @@ class LAWProtocolDispatcher:
             'section_id':   story['section_id'],
             'wiki_id':      story['wiki_id'],
             'users':        story['users'],
-            'summary':      story['summary'],
         }
         return GetStoryInformationOutgoingMessage(message_id, **message)
 

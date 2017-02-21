@@ -10,14 +10,13 @@ from bson import ObjectId
 ###########################################################################
 class CreateStoryOutgoingMessage(OutgoingMessage):
     def __init__(self, reply_to_id: int, story_title: str, story_id: ObjectId, section_id: ObjectId, wiki_id: ObjectId,
-                 users: list, summary: str):
+                 users: list):
         self.reply_to_id = reply_to_id
         self.story_title = story_title
         self.story_id = story_id
         self.section_id = section_id
         self.wiki_id = wiki_id
         self.users = users
-        self.summary = summary
 
 
 ###########################################################################
@@ -75,14 +74,12 @@ class EditSectionTitleOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class GetStoryInformationOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, story_title: str, section_id: ObjectId, wiki_id: ObjectId, users: list,
-                 summary: str):
+    def __init__(self, reply_to_id: int, story_title: str, section_id: ObjectId, wiki_id: ObjectId, users: list):
         self.reply_to_id = reply_to_id
         self.story_title = story_title
         self.section_id = section_id
         self.wiki_id = wiki_id
         self.users = users
-        self.summary = summary
 
 
 class GetStoryHierarchyOutgoingMessage(OutgoingMessage):

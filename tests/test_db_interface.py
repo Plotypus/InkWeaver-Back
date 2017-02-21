@@ -112,7 +112,6 @@ class TestDBInterface:
         assert story_summary in story_ids
         db_story = await self.interface.get_story(story_id)
         assert db_story['title'] == story['title']
-        assert db_story['summary'] == story['summary']
         assert db_story['wiki_id'] == story['wiki_id']
         user_description = {
             'user_id': user_id,
