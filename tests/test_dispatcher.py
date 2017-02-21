@@ -22,6 +22,11 @@ TEST_STORY = {
     'summary': 'test-summary'
 }
 
+TEST_WIKI = {
+    'title':   'test-wiki',
+    'summary': 'test-summary'
+}
+
 class TestLAWDispatcher:
     def setup(self):
         self.interface = MongoDBAsyncioInterface(TEST_DB_NAME, TEST_DB_HOST, TEST_DB_PORT)
@@ -41,6 +46,25 @@ class TestLAWDispatcher:
     async def create_test_paragraph(self, section_id):
         paragraph_id = await self.interface.add_paragraph(section_id, 'test-text', None)
         return paragraph_id
+
+    async def create_test_wiki(self):
+        wiki_id = await self.interface.create_wiki(self.user_id, **TEST_WIKI)
+        wiki = await self.interface.get_wiki(wiki_id)
+        return wiki_id, wiki['segment_id']
+
+    async def create_test_page(self, segment_id):
+        page_id = await self.interface.create_page('test-title', segment_id)
+        return page_id
+
+    async def add_test_template_heading(self, segment_id, title):
+        await self.interface.add_template_heading(title, segment_id)
+
+    async def add_test_heading(self, page_id, title):
+        await self.interface.add_heading(title, page_id, None)
+
+    async def get_test_page(self, page_id):
+        page = await self.interface.get_page(page_id)
+        return page
 
     @pytest.mark.asyncio
     async def test_requires_login(self):
@@ -416,3 +440,373 @@ class TestLAWDispatcher:
         }
         assert user_info in result.users
         assert result.summary == msg['summary']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('add_segment', {'message_id': 54, 'title': 'test-title', 'parent_id': None})
+    ])
+    async def test_add_segment(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        msg['parent_id'] = segment_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, AddSegmentOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.segment_id is not None
+        assert isinstance(result.segment_id, ObjectId)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('add_template_heading', {'message_id': 77, 'title': 'test-title', 'segment_id': None})
+    ])
+    async def test_add_template_heading(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        msg['segment_id'] = segment_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, AddTemplateHeadingOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('add_page', {'message_id': 3, 'title': 'test-title', 'parent_id': None})
+    ])
+    async def test_add_page(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        msg['parent_id'] = segment_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, AddPageOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.page_id is not None
+        assert isinstance(result.page_id, ObjectId)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('add_heading', {'message_id': 7, 'title': 'test-title', 'page_id': None, 'index': 0})
+    ])
+    async def test_add_heading(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        page_id = await self.create_test_page(segment_id)
+        msg['page_id'] = page_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, AddHeadingOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg, wrong_type, wrong_key, correct', [
+        (
+                'edit_wiki',
+                {'message_id': 32, 'wiki_id': None, 'update': None},
+                {'update_type': 'test-wrong-type'},
+                {'update_type': 'set_title', 'test-wrong-key': ''},
+                {'update_type': 'set_title', 'title': 'test-title-change'}
+        )
+    ])
+    async def test_edit_wiki(self, action, msg, wrong_type, wrong_key, correct):
+        wiki_id, _ = await self.create_test_wiki()
+        msg['wiki_id'] = wiki_id
+        # Test response to using the wrong `update_type`
+        msg['update'] = wrong_type
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert f'invalid `update_type`: {wrong_type["update_type"]}' in error_json['reason']
+        # Test response to wrong key in `update`
+        msg['update'] = wrong_key
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert 'KeyError' in error_json['reason']
+        # Test valid case
+        msg['update'] = correct
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, EditWikiOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg, wrong_type, wrong_key, correct', [
+        (
+                'edit_segment',
+                {'message_id': 32, 'segment_id': None, 'update': None},
+                {'update_type': 'test-wrong-type'},
+                {'update_type': 'set_title', 'test-wrong-key': ''},
+                {'update_type': 'set_title', 'title': 'test-title-change'}
+        )
+    ])
+    async def test_edit_segment(self, action, msg, wrong_type, wrong_key, correct):
+        _, segment_id = await self.create_test_wiki()
+        msg['segment_id'] = segment_id
+        # Test response to using the wrong `update_type`
+        msg['update'] = wrong_type
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert f'invalid `update_type`: {wrong_type["update_type"]}' in error_json['reason']
+        # Test response to wrong key in `update`
+        msg['update'] = wrong_key
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert 'KeyError' in error_json['reason']
+        # Test valid case
+        msg['update'] = correct
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, EditSegmentOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg, wrong_type, title_wrong_key, text_wrong_key, title_msg, text_msg', [
+        (
+                'edit_template_heading',
+                {'message_id': 32, 'segment_id': None, 'template_heading_title': 'test-title', 'update': None},
+                {'update_type': 'test-wrong-type'},
+                {'update_type': 'set_title', 'set-text': ''},
+                {'update_type': 'set_text', 'set-title': ''},
+                {'update_type': 'set_title', 'title': 'test-title-change'},
+                {'update_type': 'set_text', 'text': 'test-text-change'}
+        )
+    ])
+    async def test_edit_template_heading(self, action, msg, wrong_type, title_wrong_key, text_wrong_key, title_msg,
+                                         text_msg):
+        _, segment_id = await self.create_test_wiki()
+        await self.add_test_template_heading(segment_id, msg['template_heading_title'])
+        msg['segment_id'] = segment_id
+        # Test response to using the wrong `update_type`
+        msg['update'] = wrong_type
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert f'invalid `update_type`: {wrong_type["update_type"]}' in error_json['reason']
+        # Test response to wrong key in `update`
+        msg['update'] = title_wrong_key
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert 'KeyError' in error_json['reason']
+        msg['update'] = text_wrong_key
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert 'KeyError' in error_json['reason']
+        # Test valid case
+        msg['update'] = text_msg
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, EditTemplateHeadingOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        msg['update'] = title_msg
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, EditTemplateHeadingOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg, wrong_type, wrong_key, correct', [
+        (
+                'edit_page',
+                {'message_id': 32, 'page_id': None, 'update': None},
+                {'update_type': 'test-wrong-type'},
+                {'update_type': 'set_title', 'test-wrong-key': ''},
+                {'update_type': 'set_title', 'title': 'test-title-change'}
+        )
+    ])
+    async def test_edit_page(self, action, msg, wrong_type, wrong_key, correct):
+        _, segment_id = await self.create_test_wiki()
+        page_id = await self.create_test_page(segment_id)
+        msg['page_id'] = page_id
+        # Test response to using the wrong `update_type`
+        msg['update'] = wrong_type
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert f'invalid `update_type`: {wrong_type["update_type"]}' in error_json['reason']
+        # Test response to wrong key in `update`
+        msg['update'] = wrong_key
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert 'KeyError' in error_json['reason']
+        # Test valid case
+        msg['update'] = correct
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, EditPageOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg, wrong_type, title_wrong_key, text_wrong_key, title_msg, text_msg', [
+        (
+                'edit_heading',
+                {'message_id': 32, 'page_id': None, 'heading_title': 'test-title', 'update': None},
+                {'update_type': 'test-wrong-type'},
+                {'update_type': 'set_title', 'set-text': ''},
+                {'update_type': 'set_text', 'set-title': ''},
+                {'update_type': 'set_title', 'title': 'test-title-change'},
+                {'update_type': 'set_text', 'text': 'test-text-change'}
+        )
+    ])
+    async def test_edit_heading(self, action, msg, wrong_type, title_wrong_key, text_wrong_key, title_msg, text_msg):
+        _, segment_id = await self.create_test_wiki()
+        page_id = await self.create_test_page(segment_id)
+        await self.add_test_heading(page_id, msg['heading_title'])
+        msg['page_id'] = page_id
+        # Test response to using the wrong `update_type`
+        msg['update'] = wrong_type
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert f'invalid `update_type`: {wrong_type["update_type"]}' in error_json['reason']
+        # Test response to wrong key in `update`
+        msg['update'] = title_wrong_key
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert 'KeyError' in error_json['reason']
+        msg['update'] = text_wrong_key
+        error_json = await self.dispatcher.dispatch(msg, action)
+        assert 'KeyError' in error_json['reason']
+        # Test valid case
+        msg['update'] = text_msg
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, EditHeadingOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        msg['update'] = title_msg
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, EditHeadingOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('get_wiki_information', {'message_id': 23, 'wiki_id': None})
+    ])
+    async def test_get_wiki_information(self, action, msg):
+        wiki_id, segment_id = await self.create_test_wiki()
+        msg['wiki_id'] = wiki_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, GetWikiInformationOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.wiki_title == TEST_WIKI['title']
+        assert result.segment_id == segment_id
+        user_info = {
+            'user_id':       self.user_id,
+            'name': TEST_USER['name'],
+            'access_level':  'owner',
+        }
+        assert user_info in result.users
+        assert result.summary == TEST_WIKI['summary']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('get_wiki_hierarchy', {'message_id': 72, 'wiki_id': None})
+    ])
+    async def test_get_wiki_hierarchy(self, action, msg):
+        wiki_id, segment_id = await self.create_test_wiki()
+        msg['wiki_id'] = wiki_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, GetWikiHierarchyOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.hierarchy['title'] == TEST_WIKI['title']
+        assert result.hierarchy['segment_id'] == segment_id
+        assert result.hierarchy['segments'] == list()
+        assert result.hierarchy['pages'] == list()
+        assert result.link_table == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('get_wiki_segment_hierarchy', {'message_id': 44, 'segment_id': None})
+    ])
+    async def test_get_wiki_segment_hierarchy(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        msg['segment_id'] = segment_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, GetWikiSegmentHierarchyOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.hierarchy['title'] == TEST_WIKI['title']
+        assert result.hierarchy['segment_id'] == segment_id
+        assert result.hierarchy['segments'] == list()
+        assert result.hierarchy['pages'] == list()
+        assert result.link_table == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('get_wiki_segment', {'message_id': 91, 'segment_id': None})
+    ])
+    async def test_get_wiki_segment(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        msg['segment_id'] = segment_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, GetWikiSegmentOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.title == TEST_WIKI['title']
+        assert result.segments == list()
+        assert result.pages == list()
+        assert result.template_headings == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('get_wiki_page', {'message_id': 54, 'page_id': None})
+    ])
+    async def test_get_wiki_page(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        page_id = await self.create_test_page(segment_id)
+        msg['page_id'] = page_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, GetWikiPageOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.title == 'test-title'
+        assert isinstance(result.aliases, dict)
+        assert isinstance(result.aliases['test-title'], ObjectId)
+        assert result.references == list()
+        assert result.headings == list()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('delete_wiki', {'message_id': 2, 'wiki_id': None})
+    ])
+    async def test_delete_wiki(self, action, msg):
+        wiki_id, _ = await self.create_test_wiki()
+        msg['wiki_id'] = wiki_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, DeleteWikiOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.event == "wiki_deleted"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('delete_segment', {'message_id': 2, 'segment_id': None})
+    ])
+    async def test_delete_segment(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        msg['segment_id'] = segment_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, DeleteSegmentOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.event == "segment_deleted"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('delete_template_heading', {'message_id': 37, 'segment_id': None, 'template_heading_title': 'test-title'})
+    ])
+    async def test_delete_template_heading(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        await self.add_test_template_heading(segment_id, msg['template_heading_title'])
+        msg['segment_id'] = segment_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, DeleteTemplateHeadingOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.event == "template_heading_deleted"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('delete_page', {'message_id': 87, 'page_id': None})
+    ])
+    async def test_delete_page(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        page_id = await self.create_test_page(segment_id)
+        msg['page_id'] = page_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, DeletePageOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.event == "page_deleted"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('delete_heading', {'message_id': 87, 'page_id': None, 'heading_title': 'test-title'})
+    ])
+    async def test_delete_heading(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        page_id = await self.create_test_page(segment_id)
+        await self.add_test_heading(page_id, msg['heading_title'])
+        msg['page_id'] = page_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, DeleteHeadingOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.event == "heading_deleted"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('action, msg', [
+        ('delete_alias', {'message_id': 87, 'alias_id': None})
+    ])
+    async def test_delete_alias(self, action, msg):
+        _, segment_id = await self.create_test_wiki()
+        page_id = await self.create_test_page(segment_id)
+        page = await self.get_test_page(page_id)
+        alias_id = page['aliases']['test-title']
+        msg['alias_id'] = alias_id
+        result = await self.dispatcher.dispatch(msg, action)
+        assert isinstance(result, DeleteAliasOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
+        assert result.event == "alias_deleted"
