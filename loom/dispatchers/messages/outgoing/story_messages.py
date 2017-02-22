@@ -48,6 +48,11 @@ class AddParagraphOutgoingMessage(OutgoingMessage):
         self.paragraph_id = paragraph_id
 
 
+class AddBookmarkOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
+
+
 ###########################################################################
 #
 # Edit Messages

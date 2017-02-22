@@ -202,6 +202,10 @@ class LAWProtocolDispatcher:
         return AddParagraphOutgoingMessage(message_id, paragraph_id)
 
     @requires_login
+    async def add_bookmark(self, message_id, name, story_id, section_id, paragraph_id):
+        pass
+
+    @requires_login
     async def edit_story(self, message_id, story_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']

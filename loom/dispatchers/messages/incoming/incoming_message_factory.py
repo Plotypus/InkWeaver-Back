@@ -20,6 +20,7 @@ APPROVED_MESSAGES = {
     'add_inner_subsection':            AddInnerSubsectionIncomingMessage,
     'add_succeeding_subsection':       AddSucceedingSubsectionIncomingMessage,
     'add_paragraph':                   AddParagraphIncomingMessage,
+    'add_bookmark':                    AddBookmarkIncomingMessage,
     'edit_story':                      EditStoryIncomingMessage,
     'edit_paragraph':                  EditParagraphIncomingMessage,
     'edit_section_title':              EditSectionTitleIncomingMessage,

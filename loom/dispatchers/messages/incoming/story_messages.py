@@ -81,6 +81,20 @@ class AddParagraphIncomingMessage(IncomingMessage):
         return self._dispatcher.add_paragraph(self.message_id, self.section_id, self.text, self.succeeding_paragraph_id)
 
 
+class AddBookmarkIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'name',
+        'story_id',
+        'section_id',
+        'paragraph_id',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.add_bookmark(self.message_id, self.name, self.story_id, self.section_id,
+                                             self.paragraph_id)
+
+
 ###########################################################################
 #
 # Edit Messages
