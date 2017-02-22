@@ -73,6 +73,10 @@ class AbstractDBInterface(ABC):
     async def set_user_avatar(self, user_id, avatar):
         pass
 
+    @abstractmethod
+    async def set_story_position_context(self, user_id, story_id, position_context):
+        pass
+
     ###########################################################################
     #
     # Story Methods

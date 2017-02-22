@@ -201,7 +201,10 @@ class MongoDBClient:
             filter={'_id': user_id},
             update={
                 '$push': {
-                    'stories': story_id
+                    'stories': {
+                        'story_id': story_id,
+                        'position_context': None,
+                    }
                 }
             }
         )
@@ -244,6 +247,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_user_story_position_context(self, user_id, story_id, position_context):
+        update_result: UpdateResult = await self.users.update_one(
+            filter={'_id': user_id, 'stories.story_id': story_id},
+            update={
+                '$set': {
+                    'stories.$.position_context': position_context,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def get_user_preferences(self, user_id: ObjectId) -> Dict:
         result = await self.users.find_one(
             filter={'_id': user_id},
@@ -258,7 +272,7 @@ class MongoDBClient:
         )
         return result
 
-    async def get_user_story_ids(self, user_id: ObjectId) -> List[ObjectId]:
+    async def get_user_stories(self, user_id: ObjectId) -> List[Dict]:
         result = await self.users.find_one(
             filter={'_id': user_id},
             projection={

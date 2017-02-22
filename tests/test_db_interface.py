@@ -108,6 +108,7 @@ class TestDBInterface:
             'story_id': story_id,
             'title': story['title'],
             'access_level': 'owner',
+            'position_context': None,
         }
         assert story_summary in story_ids
         db_story = await self.interface.get_story(story_id)
