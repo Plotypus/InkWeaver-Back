@@ -14,13 +14,6 @@ class LoginHandler(GenericHandler):
         self.finish()
 
     async def post(self):
-        cookie = self._get_secure_session_cookie()
-        if cookie is not None:
-            session_id = cookie.decode('UTF-8')
-            print(f"SESSION_ID: {session_id}")
-        else:
-            print(f"SESSION COOKIE WAS NOT SET")
-
         data = self.decode_json(self.request.body)
         username = data.get('username')
         password = data.get('password')
@@ -35,15 +28,6 @@ class LoginHandler(GenericHandler):
                 self.send_error(401)
         else:
             self.send_error(422)
-
-    def _get_secure_session_cookie(self):
-        cookie_name = self.settings['session_cookie_name']
-        # Make sure users cannot use cookies for more than their session
-        cookie = self.get_secure_cookie(cookie_name, max_age_days=0.5)
-        # Cookies are retrieved as a byte-string, we need to decode it.
-        return cookie
-        # decoded_cookie = cookie.decode('UTF-8')
-        # return decoded_cookie
 
     async def _get_user_id_for_username(self, username):
         db_interface: AbstractDBInterface = self.settings['db_interface']
