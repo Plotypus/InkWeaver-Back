@@ -133,6 +133,7 @@ class EditSectionTitleIncomingMessage(IncomingMessage):
     def dispatch(self):
         return self._dispatcher.edit_section_title(self.message_id, self.section_id, self.new_title)
 
+
 ###########################################################################
 #
 # Get Messages
@@ -146,6 +147,16 @@ class GetStoryInformationIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.get_story_information(self.message_id, self.story_id)
+
+
+class GetStoryBookmarksIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'story_id',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.get_story_bookmarks(self.message_id, self.story_id)
 
 
 class GetStoryHierarchyIncomingMessage(IncomingMessage):

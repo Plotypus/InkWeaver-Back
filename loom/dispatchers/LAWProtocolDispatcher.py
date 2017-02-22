@@ -245,10 +245,14 @@ class LAWProtocolDispatcher:
         return GetStoryInformationOutgoingMessage(message_id, **message)
 
     @requires_login
+    async def get_story_bookmarks(self, message_id, story_id):
+        bookmarks = await self.db_interface.get_story_bookmarks(story_id)
+        return GetStoryBookmarksOutgoingMessage(message_id, bookmarks)
+
+    @requires_login
     async def get_story_hierarchy(self, message_id, story_id):
         hierarchy = await self.db_interface.get_story_hierarchy(story_id)
-        bookmarks = await self.db_interface.get_story_bookmarks(story_id)
-        return GetStoryHierarchyOutgoingMessage(message_id, hierarchy, bookmarks)
+        return GetStoryHierarchyOutgoingMessage(message_id, hierarchy)
 
     @requires_login
     async def get_section_hierarchy(self, message_id, section_id):

@@ -87,11 +87,16 @@ class GetStoryInformationOutgoingMessage(OutgoingMessage):
         self.users = users
 
 
+class GetStoryBookmarksOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int, bookmarks: list):
+        self.reply_to_id = reply_to_id
+        self.bookmarks = bookmarks
+
+
 class GetStoryHierarchyOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, hierarchy: dict, bookmarks: list):
+    def __init__(self, reply_to_id: int, hierarchy: dict):
         self.reply_to_id = reply_to_id
         self.hierarchy = hierarchy
-        self.bookmarks = bookmarks
 
 
 class GetSectionHierarchyOutgoingMessage(OutgoingMessage):

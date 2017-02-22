@@ -25,6 +25,7 @@ APPROVED_MESSAGES = {
     'edit_paragraph':                  EditParagraphIncomingMessage,
     'edit_section_title':              EditSectionTitleIncomingMessage,
     'get_story_information':           GetStoryInformationIncomingMessage,
+    'get_story_bookmarks':             GetStoryBookmarksIncomingMessage,
     'get_story_hierarchy':             GetStoryHierarchyIncomingMessage,
     'get_section_hierarchy':           GetSectionHierarchyIncomingMessage,
     'get_section_content':             GetSectionContentIncomingMessage,
