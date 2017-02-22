@@ -38,13 +38,13 @@ class MongoDBClient:
                  db_pass=None):
         if db_user and db_pass:
             uri = 'mongodb://{username}:{password}@{hostname}:{port}/{db}'.format(
-                username=db_user,
-                password=db_pass,
-                hostname=db_host,
+                username=url_escape(db_user),
+                password=url_escape(db_pass),
+                hostname=url_escape(db_host),
                 port=db_port,
-                db=db_name
+                db=url_escape(db_name)
             )
-            self._client = mongodb_client_class(url_escape(uri))
+            self._client = mongodb_client_class(uri)
         else:
             self._client = mongodb_client_class(db_host, db_port)
         self._host = db_host
