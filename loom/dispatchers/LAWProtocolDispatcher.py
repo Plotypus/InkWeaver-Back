@@ -147,6 +147,10 @@ class LAWProtocolDispatcher:
     # TODO: Implement this.
     # async def set_user_avatar(self, message_id, avatar):
     #     await self.db_interface.set_user_avatar(self.user_id, avatar)
+
+    @requires_login
+    async def set_user_story_position(self, story_id, position_context):
+        await self.db_interface.set_story_position(self.user_id, story_id, position_context)
     
     async def user_login(self, message_id, username, password):
         if self.user_id is not None:
