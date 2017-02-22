@@ -4,9 +4,10 @@ from loom.database.interfaces import AbstractDBInterface
 
 class LoginHandler(GenericHandler):
     def set_default_headers(self):
-        self.set_header('Access-Control-Allow-Origin', 'https://localhost:3000')
+        self.set_header('Access-Control-Allow-Origin', 'https://inkweaver.plotypus.net')
         self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
         self.set_header('Access-Control-Allow-Credentials', 'true')
+        self.set_header('Access-Control-Allow-Headers', 'content-type')
 
     async def options(self):
         self.set_status(204)
