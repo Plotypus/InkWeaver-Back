@@ -159,6 +159,9 @@ class MongoDBInterface(AbstractDBInterface):
     async def set_user_avatar(self, user_id, avatar):
         await self.client.set_user_avatar(user_id, avatar)
 
+    async def set_story_position(self, user_id, story_id, position):
+        await self.client.set_user_story_position(user_id, story_id, position)
+
     ###########################################################################
     #
     # Story Methods
