@@ -247,6 +247,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_user_story_position(self, user_id, story_id, last_position):
+        update_result: UpdateResult = await self.users.update_one(
+            filter={'_id': user_id, 'stories.story_id': story_id},
+            update={
+                '$set': {
+                    'stories.$.last_position': last_position,
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def get_user_preferences(self, user_id: ObjectId) -> Dict:
         result = await self.users.find_one(
             filter={'_id': user_id},
