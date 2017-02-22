@@ -415,7 +415,7 @@ class MongoDBClient:
         update_result: UpdateResult = await self.stories.update_one(
             filter={'_id': story_id},
             update={
-                'set': {
+                '$set': {
                     f'bookmarks.{name}': context
                 }
             }
