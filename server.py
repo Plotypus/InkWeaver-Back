@@ -3,11 +3,13 @@
 from loom import routing, session_manager
 from loom.database import interfaces
 
+import ssl
 import sys
 import tornado.ioloop
 import tornado.web
 
 from functools import partial
+from tornado.httpserver import HTTPServer
 from tornado.options import define as define_option, options, parse_command_line as parse_options
 
 # Check requirements.
@@ -33,9 +35,12 @@ define_option('demo-db-port', default=None, help='the port for creating demonstr
               type=int)
 define_option('demo-db-prefix', default='demo-db', help='the prefix for all databases created for the demo', type=str)
 define_option('demo-db-data', default=None, help='the data file to load demo data from', type=str)
+define_option('ssl-crt', default=None, help='the ssl cert file', type=str)
+define_option('ssl-key', default=None, help='the ssl key file', type=str)
 
 
-def start_server(db_interface, demo_db_host, demo_db_port, demo_db_prefix, port, routes, session_manager):
+def start_server(db_interface, demo_db_host, demo_db_port, demo_db_prefix, port, routes, session_manager,
+                 ssl_crt, ssl_key):
     settings = {
         'db_interface':        db_interface,
         'demo_db_host':        demo_db_host,
@@ -46,7 +51,13 @@ def start_server(db_interface, demo_db_host, demo_db_port, demo_db_prefix, port,
         'session_manager':     session_manager,
     }
     app = tornado.web.Application(routes, **settings)
-    app.listen(port)
+    if ssl_crt and ssl_key:
+        ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        ssl_ctx.load_cert_chain(ssl_crt, ssl_key)
+        server = HTTPServer(app, ssl_options=ssl_ctx)
+    else:
+        server = HTTPServer(app)
+    server.listen(port)
     print("Starting server at {}:{}".format('localhost', port))
     print("Using database at {}:{}".format(app.settings['db_interface'].client.host,
                                            app.settings['db_interface'].client.port))
@@ -94,4 +105,4 @@ if __name__ == '__main__':
                                       options.db_pass)
 
     start_server(interface, demo_db_host, demo_db_port, options.demo_db_prefix, options.port, routing.get_routes(),
-                 session_manager)
+                 session_manager, options.ssl_crt, options.ssl_key)

@@ -23,7 +23,17 @@ class LoomHandler(GenericHandler):
         self.ready = False
         super().open()
         self.set_nodelay(True)
-        self._dispatcher = LAWProtocolDispatcher(self.db_interface, None)
+        session_id = self._get_secure_session_cookie()
+        if session_id is None:
+            self.on_failure(reason="No session ID cookie set.")
+            self.close()
+            return
+        user_id = self._get_user_id_for_session_id(session_id)
+        if user_id is None:
+            self.on_failure(reason="Could not successfully open connection.")
+            self.close()
+            return
+        self._dispatcher = LAWProtocolDispatcher(self.db_interface, user_id)
         self.startup()
 
     def on_failure(self, reply_to_id=None, reason=None, **fields):
@@ -66,15 +76,11 @@ class LoomHandler(GenericHandler):
     def messages(self) -> Queue:
         return self._messages
 
-    @property
-    def user_id(self) -> ObjectId:
-        return self._user_id
-
     def _get_user_id_for_session_id(self, session_id):
         session_manager = self.settings['session_manager']
         user_id = session_manager.get_user_id_for_session_id(session_id)
         if user_id is None:
-            raise ValueError("Session id is not valid")
+            raise ValueError("Session ID is not valid")
         return user_id
 
     def _get_secure_session_cookie(self):
@@ -82,7 +88,10 @@ class LoomHandler(GenericHandler):
         # Make sure users cannot use cookies for more than their session
         cookie = self.get_secure_cookie(cookie_name, max_age_days=0.5)
         # Cookies are retrieved as a byte-string, we need to decode it.
-        decoded_cookie = cookie.decode('UTF-8')
+        if cookie is not None:
+            decoded_cookie = cookie.decode('UTF-8')
+        else:
+            decoded_cookie = None
         return decoded_cookie
 
     ############################################################
