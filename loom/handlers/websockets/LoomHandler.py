@@ -24,8 +24,11 @@ class LoomHandler(GenericHandler):
         super().open()
         self.set_nodelay(True)
         session_id = self._get_secure_session_cookie()
+        if session_id is None:
+            self.on_failure(reason="No session ID cookie set.")
+            self.close()
         user_id = self._get_user_id_for_session_id(session_id)
-        if user_id is None or session_id is None:
+        if user_id is None:
             self.on_failure(reason="Could not successfully open connection.")
             self.close()
         self._dispatcher = LAWProtocolDispatcher(self.db_interface, user_id)
