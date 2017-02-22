@@ -203,7 +203,12 @@ class LAWProtocolDispatcher:
 
     @requires_login
     async def add_bookmark(self, message_id, name, story_id, section_id, paragraph_id):
-        pass
+        try:
+            await self.db_interface.add_bookmark(name, story_id, section_id, paragraph_id)
+        except ValueError:
+            return self.format_failure_json(message_id, "Bookmark name already exists.")
+        else:
+            return AddBookmarkOutgoingMessage(message_id)
 
     @requires_login
     async def edit_story(self, message_id, story_id, update):
@@ -242,7 +247,8 @@ class LAWProtocolDispatcher:
     @requires_login
     async def get_story_hierarchy(self, message_id, story_id):
         hierarchy = await self.db_interface.get_story_hierarchy(story_id)
-        return GetStoryHierarchyOutgoingMessage(message_id, hierarchy)
+        bookmarks = await self.db_interface.get_story_bookmarks(story_id)
+        return GetStoryHierarchyOutgoingMessage(message_id, hierarchy, bookmarks)
 
     @requires_login
     async def get_section_hierarchy(self, message_id, section_id):

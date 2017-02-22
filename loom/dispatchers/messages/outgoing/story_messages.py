@@ -88,9 +88,10 @@ class GetStoryInformationOutgoingMessage(OutgoingMessage):
 
 
 class GetStoryHierarchyOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, hierarchy: dict):
+    def __init__(self, reply_to_id: int, hierarchy: dict, bookmarks: list):
         self.reply_to_id = reply_to_id
         self.hierarchy = hierarchy
+        self.bookmarks = bookmarks
 
 
 class GetSectionHierarchyOutgoingMessage(OutgoingMessage):
