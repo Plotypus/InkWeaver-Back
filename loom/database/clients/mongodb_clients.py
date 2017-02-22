@@ -321,6 +321,7 @@ class MongoDBClient:
             'wiki_id':    wiki_id,
             'users':      [user_description],
             'section_id': section_id,
+            'bookmarks':  dict(),
             'statistics': None,
             'settings':   None,
         }
@@ -401,6 +402,21 @@ class MongoDBClient:
             update={
                 '$push': {
                     'content': inner_parameters
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def set_bookmark(self, name, story_id, section_id, paragraph_id):
+        context = {
+            'section_id':   section_id,
+            'paragraph_id': paragraph_id,
+        }
+        update_result: UpdateResult = await self.stories.update_one(
+            filter={'_id': story_id},
+            update={
+                'set': {
+                    f'bookmarks.{name}': context
                 }
             }
         )
