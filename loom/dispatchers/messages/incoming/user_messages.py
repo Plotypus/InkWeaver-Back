@@ -68,7 +68,7 @@ class SetUserBioIncomingMessage(IncomingMessage):
         return self._dispatcher.set_user_bio(self.message_id, self.bio)
 
 
-class SetUserStoryPositionIncomingMessage(IncomingMessage):
+class SetUserStoryPositionContextIncomingMessage(IncomingMessage):
     _required_fields = [
         'message_id',
         'story_id',
@@ -76,7 +76,7 @@ class SetUserStoryPositionIncomingMessage(IncomingMessage):
     ]
 
     def dispatch(self):
-        return self._dispatcher.set_user_story_position(self.story_id, self.position_context)
+        return self._dispatcher.set_user_story_position_context(self.story_id, self.position_context)
 
 
 ###########################################################################

@@ -104,11 +104,11 @@ class MongoDBInterface(AbstractDBInterface):
         story_id_map = {}
         for story in stories:
             story_id = story['story_id']
-            last_pos = story['last_position']
+            last_pos = story['position_context']
             story_id_map[story_id] = last_pos
         story_summaries = await self._get_stories_or_wikis_by_ids(user_id, story_id_map.keys(), 'story')
         for story_summary in story_summaries:
-            story_summary['last_position'] = story_id_map[story_summary['story_id']]
+            story_summary['position_context'] = story_id_map[story_summary['story_id']]
         return story_summaries
 
     async def get_user_wikis(self, user_id):
@@ -159,8 +159,8 @@ class MongoDBInterface(AbstractDBInterface):
     async def set_user_avatar(self, user_id, avatar):
         await self.client.set_user_avatar(user_id, avatar)
 
-    async def set_story_position(self, user_id, story_id, position):
-        await self.client.set_user_story_position(user_id, story_id, position)
+    async def set_story_position_context(self, user_id, story_id, position_context):
+        await self.client.set_user_story_position_context(user_id, story_id, position_context)
 
     ###########################################################################
     #
