@@ -201,7 +201,10 @@ class MongoDBClient:
             filter={'_id': user_id},
             update={
                 '$push': {
-                    'stories': story_id
+                    'stories': {
+                        'story_id': story_id,
+                        'last_position': None,
+                    }
                 }
             }
         )
@@ -258,7 +261,7 @@ class MongoDBClient:
         )
         return result
 
-    async def get_user_story_ids(self, user_id: ObjectId) -> List[ObjectId]:
+    async def get_user_stories(self, user_id: ObjectId) -> List[Dict]:
         result = await self.users.find_one(
             filter={'_id': user_id},
             projection={

@@ -100,9 +100,16 @@ class MongoDBInterface(AbstractDBInterface):
         return preferences
 
     async def get_user_stories(self, user_id):
-        story_ids = await self.client.get_user_story_ids(user_id)
-        stories = await self._get_stories_or_wikis_by_ids(user_id, story_ids, 'story')
-        return stories
+        stories = await self.client.get_user_stories(user_id)
+        story_id_map = {}
+        for story in stories:
+            story_id = story['story_id']
+            last_pos = story['last_position']
+            story_id_map[story_id] = last_pos
+        story_summaries = await self._get_stories_or_wikis_by_ids(user_id, story_id_map.keys(), 'story')
+        for story_summary in story_summaries:
+            story_summary['last_position'] = story_id_map[story_summary['story_id']]
+        return story_summaries
 
     async def get_user_wikis(self, user_id):
         wiki_ids = await self.client.get_user_wiki_ids(user_id)
