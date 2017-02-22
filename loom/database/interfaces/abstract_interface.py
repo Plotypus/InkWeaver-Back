@@ -108,7 +108,15 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def add_bookmark(self, name, story_id, section_id, paragraph_id):
+        pass
+
+    @abstractmethod
     async def get_story(self, story_id):
+        pass
+
+    @abstractmethod
+    async def get_story_bookmarks(self, story_id):
         pass
 
     @abstractmethod
