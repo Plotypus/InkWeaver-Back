@@ -11,6 +11,7 @@ APPROVED_MESSAGES = {
     'set_user_name':              SetUserNameIncomingMessage,
     'set_user_email':             SetUserEmailIncomingMessage,
     'set_user_bio':               SetUserBioIncomingMessage,
+    'set_user_story_position':    SetUserStoryPositionIncomingMessage,
     'user_login':                 UserLoginIncomingMessage,
 
     # Stories

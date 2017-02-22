@@ -68,6 +68,17 @@ class SetUserBioIncomingMessage(IncomingMessage):
         return self._dispatcher.set_user_bio(self.message_id, self.bio)
 
 
+class SetUserStoryPositionIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'story_id',
+        'position_context',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.set_user_story_position(self.story_id, self.position_context)
+
+
 ###########################################################################
 #
 # Login Messages
