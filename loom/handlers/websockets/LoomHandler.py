@@ -23,7 +23,12 @@ class LoomHandler(GenericHandler):
         self.ready = False
         super().open()
         self.set_nodelay(True)
-        self._dispatcher = LAWProtocolDispatcher(self.db_interface, None)
+        session_id = self._get_secure_session_cookie()
+        user_id = self._get_user_id_for_session_id(session_id)
+        if user_id is None:
+            self.on_failure(reason="Something went wrong.")
+            self.close()
+        self._dispatcher = LAWProtocolDispatcher(self.db_interface, user_id)
         self.startup()
 
     def on_failure(self, reply_to_id=None, reason=None, **fields):
