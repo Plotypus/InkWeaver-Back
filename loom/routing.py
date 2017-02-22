@@ -3,6 +3,7 @@ from . import handlers
 ROUTES = [
     (r'/ws',        handlers.websockets.LoomHandler),
     (r'/api/login', handlers.rest.LoginHandler),
+    (r'/echo',      handlers.rest.EchoHandler),
 ]
 
 
