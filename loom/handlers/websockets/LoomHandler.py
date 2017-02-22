@@ -27,10 +27,12 @@ class LoomHandler(GenericHandler):
         if session_id is None:
             self.on_failure(reason="No session ID cookie set.")
             self.close()
+            return
         user_id = self._get_user_id_for_session_id(session_id)
         if user_id is None:
             self.on_failure(reason="Could not successfully open connection.")
             self.close()
+            return
         self._dispatcher = LAWProtocolDispatcher(self.db_interface, user_id)
         self.startup()
 
