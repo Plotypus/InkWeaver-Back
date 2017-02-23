@@ -339,6 +339,7 @@ class MongoDBClient:
             'succeeding_subsections': list(),
             'statistics':             None,
             'links':                  list(),  # links is a list of lists of links (runs parallel to paragraphs)
+            'notes':                  list(),
         }
         if _id is not None:
             section['_id'] = _id
@@ -401,6 +402,21 @@ class MongoDBClient:
             update={
                 '$push': {
                     'content': inner_parameters
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def insert_note_for_paragraph(self, paragraph_id: ObjectId, note: str, in_section_id, at_index=None):
+        inner_parameters = self._insertion_parameters({
+            'paragraph_id': paragraph_id,
+            'note': note,
+        }, at_index)
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': in_section_id},
+            update={
+                '$push': {
+                    'notes': inner_parameters
                 }
             }
         )
@@ -513,6 +529,9 @@ class MongoDBClient:
                         '_id': paragraph_id,
                     },
                     'links': {
+                        'paragraph_id': paragraph_id,
+                    },
+                    'notes': {
                         'paragraph_id': paragraph_id,
                     }
                 }
