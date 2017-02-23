@@ -226,6 +226,7 @@ class MongoDBInterface(AbstractDBInterface):
             paragraph_id = ObjectId()
             await self.client.insert_paragraph(paragraph_id, '', to_section_id=section_id, at_index=index)
             await self.client.insert_links_for_paragraph(paragraph_id, list(), in_section_id=section_id, at_index=index)
+            await self.client.insert_note_for_paragraph(paragraph_id, '', in_section_id=section_id, at_index=index)
             if text is not None:
                 await self.set_paragraph_text(section_id, text, paragraph_id)
             return paragraph_id
@@ -255,7 +256,13 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def get_section_content(self, section_id):
         section = await self.client.get_section(section_id)
-        return section['content']
+        notes = section['notes']
+        paragraphs = section['content']
+        for index in range(len(paragraphs)):
+            note = notes[index]['note']
+            if note != '':
+                paragraphs[index]['note'] = note
+        return paragraphs
 
     async def set_story_title(self, story_id, title):
         story = await self.client.get_story(story_id)

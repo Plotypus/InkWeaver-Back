@@ -253,7 +253,13 @@ class LAWProtocolDispatcher:
     @requires_login
     async def get_section_content(self, message_id, section_id):
         paragraphs = await self.db_interface.get_section_content(section_id)
-        content = [{'text': paragraph['text'], 'paragraph_id': paragraph['_id']} for paragraph in paragraphs]
+        content = []
+        for db_paragraph in paragraphs:
+            paragraph = {'text': db_paragraph['text'], 'paragraph_id': db_paragraph['_id']}
+            note = db_paragraph.get('note')
+            if note is not None:
+                paragraph['note'] = note
+            content.append(paragraph)
         return GetSectionContentOutgoingMessage(message_id, content)
 
     @requires_login
