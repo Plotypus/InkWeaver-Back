@@ -256,6 +256,7 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def get_section_content(self, section_id):
         section = await self.client.get_section(section_id)
+        # Empty-string notes are considered un-set (or has not been added, or has been deleted).
         notes = section['notes']
         paragraphs = section['content']
         for index in range(len(paragraphs)):
@@ -366,6 +367,10 @@ class MongoDBInterface(AbstractDBInterface):
         for link_id in link_ids:
             await self.delete_link(link_id)
         await self.client.delete_paragraph(section_id, paragraph_id)
+
+    async def delete_note(self, section_id, paragraph_id):
+        # To delete a note, we simply set it as an empty-string.
+        await self.client.set_note(section_id, paragraph_id, '')
 
     ###########################################################################
     #

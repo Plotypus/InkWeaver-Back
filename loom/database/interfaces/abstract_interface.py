@@ -151,6 +151,10 @@ class AbstractDBInterface(ABC):
     async def delete_paragraph(self, section_id, paragraph_id):
         pass
 
+    @abstractmethod
+    async def delete_note(self, section_id, paragraph_id):
+        pass
+
     ###########################################################################
     #
     # Wiki Methods

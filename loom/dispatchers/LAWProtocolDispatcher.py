@@ -277,6 +277,11 @@ class LAWProtocolDispatcher:
         await self.db_interface.delete_paragraph(section_id, paragraph_id)
         return DeleteParagraphOutgoingMessage(message_id, "paragraph_deleted")
 
+    @requires_login
+    async def delete_note(self, message_id, section_id, paragraph_id):
+        await self.db_interface.delete_note(section_id, paragraph_id)
+        return DeleteNoteOutgoingMessage(message_id, "note_deleted")
+
     ###########################################################################
     #
     # Wiki Methods

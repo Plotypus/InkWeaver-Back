@@ -31,6 +31,7 @@ APPROVED_MESSAGES = {
     'delete_story':                    DeleteStoryIncomingMessage,
     'delete_section':                  DeleteSectionIncomingMessage,
     'delete_paragraph':                DeleteParagraphIncomingMessage,
+    'delete_note':                     DeleteNoteIncomingMessage,
 
     # Wikis
     'create_wiki':                     CreateWikiIncomingMessage,
