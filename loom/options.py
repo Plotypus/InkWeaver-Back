@@ -9,23 +9,40 @@ class OptionParser:
         'login_origin': 'https://localhost:3000',
     }
 
+    _TYPES = {
+        'port':         int,
+        'db_port':      int,
+        'demo_db_port': int,
+    }
+
+    _ARGUMENTS = [
+        ('--config',            'a config file to load default options from'),
+        ('--port',              'run on the given port'),
+        ('--db-name',           'name of the database in MongoDB'),
+        ('--db-host',           'address of the MongoDB server'),
+        ('--db-port',           'MongoDB connection port'),
+        ('--db-user',           'user for MongoDB authentication'),
+        ('--db-pass',           'password for MongoDB authentication'),
+        ('--demo-db-host',      'the host for creating demonstration databases; defaults to --db-host'),
+        ('--demo-db-port',      'the port for creating demonstration databases; defaults to --db-port'),
+        ('--demo-db-prefix',    'the prefix for all databases created for the demo'),
+        ('--demo-db-data',      'the data file to load demo data from'),
+        ('--ssl-cert',          'the SSL cert file'),
+        ('--ssl-key',           'the SSL key file'),
+        ('--login-origin',      'hostname to configure CORS during login'),
+    ]
+
+    def _fix_option_name(self, name):
+        return name.strip().replace('-', '_')
+
+    def _get_option_type(self, name):
+        return self._TYPES.get(self._fix_option_name(name), str)
+
     def __init__(self):
         self._options = {}
         self._parser = argparse.ArgumentParser()
-        self._parser.add_argument('--config',           help='a config file to load default options from')
-        self._parser.add_argument('--port',             help='run on the given port', type=int)
-        self._parser.add_argument('--db-name',          help='name of the database in MongoDB')
-        self._parser.add_argument('--db-host',          help='address of the MongoDB server')
-        self._parser.add_argument('--db-port',          help='MongoDB connection port', type=int)
-        self._parser.add_argument('--db-user',          help='user for MongoDB authentication')
-        self._parser.add_argument('--db-pass',          help='password for MongoDB authentication')
-        self._parser.add_argument('--demo-db-host',     help='the host for creating demonstration databases; defaults to --db-host')
-        self._parser.add_argument('--demo-db-port',     help='the port for creating demonstration databases; defaults to --db-port', type=int)
-        self._parser.add_argument('--demo-db-prefix',   help='the prefix for all databases created for the demo')
-        self._parser.add_argument('--demo-db-data',     help='the data file to load demo data from')
-        self._parser.add_argument('--ssl-cert',         help='the SSL cert file')
-        self._parser.add_argument('--ssl-key',          help='the SSL key file')
-        self._parser.add_argument('--login-origin',     help='hostname to configure CORS during login')
+        for argument in self._ARGUMENTS:
+            self._parser.add_argument(argument[0], help=argument[1], type=self._get_option_type(argument[0]))
 
     def __getattr__(self, item):
         try:
@@ -39,11 +56,10 @@ class OptionParser:
             for line in cf:
                 if line:
                     left, right = line.split(':', 1)
-                    key = left.strip().replace('-', '_')
-                    val = right.strip()
-                    # Port values should be cast to integers.
-                    if key.endswith('port'):  # TODO: This should probably be more rigorous.
-                        val = int(val)
+                    key = self._fix_option_name(left)
+                    # Cast value to appropriate type.
+                    val_type = self._get_option_type(key)
+                    val = val_type(right.strip())
                     file_options[key] = val
         return file_options
 
