@@ -3,10 +3,12 @@ import argparse
 
 class OptionParser:
     _DEFAULTS = {
-        'db_name':      'inkweaver',
-        'db_host':      'localhost',
-        'db_port':      27017,
-        'login_origin': 'https://localhost:3000',
+        'port':           8080,
+        'db_name':        'inkweaver',
+        'db_host':        'localhost',
+        'db_port':        27017,
+        'demo_db_prefix': 'demo-db',
+        'login_origin':   'https://localhost:3000',
     }
 
     _TYPES = {
