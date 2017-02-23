@@ -2,105 +2,30 @@ import argparse
 
 
 class OptionParser:
-    _DEFAULT_DB_NAME = 'inkweaver'
-    _DEFAULT_DB_HOST = 'localhost'
-    _DEFAULT_DB_PORT = 27017
-    _DEFAULT_LOGIN_ORIGIN = 'https://localhost:3000'
-
-    _OPTIONS = [
-        {
-            'name':    'config',
-            'default': None,
-            'help':    'a config file to load options from',
-            'type':    str,
-        },
-        {
-            'name':    'port',
-            'default': 8080,
-            'help':    'run on the given port',
-            'type':    int,
-        },
-        {
-            'name':    'db-name',
-            'default': _DEFAULT_DB_NAME,
-            'help':    'name of the database in MongoDB',
-            'type':    str,
-        },
-        {
-            'name':    'db-host',
-            'default': _DEFAULT_DB_HOST,
-            'help':    'address of the MongoDB server',
-            'type':    str,
-        },
-        {
-            'name':    'db-port',
-            'default': _DEFAULT_DB_PORT,
-            'help':    'MongoDB connection port',
-            'type':    int,
-        },
-        {
-            'name':    'db-user',
-            'default': None,
-            'help':    'user for MongoDB authentication',
-            'type':    str,
-        },
-        {
-            'name':    'db-pass',
-            'default': None,
-            'help':    'password for MongoDB authentication',
-            'type':    str,
-        },
-        {
-            'name':    'demo-db-host',
-            'default': None,
-            'help':    'the host for creating demonstration databases; defaults to --db-host',
-            'type':    str,
-        },
-        {
-            'name':    'demo-db-port',
-            'default': None,
-            'help':    'the port for creating demonstration databases; defaults to --db-port',
-            'type':    int,
-        },
-        {
-            'name':    'demo-db-prefix',
-            'default': 'demo-db',
-            'help':    'the prefix for all databases created for the demo',
-            'type':    str,
-        },
-        {
-            'name':    'demo-db-data',
-            'default': None,
-            'help':    'the data file to load demo data from',
-            'type':    str,
-        },
-        {
-            'name':    'ssl-crt',
-            'default': None,
-            'help':    'the ssl cert file',
-            'type':    str,
-        },
-        {
-            'name':    'ssl-key',
-            'default': None,
-            'help':    'the ssl key file',
-            'type':    str,
-        },
-        {
-            'name':    'login-origin',
-            'default': _DEFAULT_LOGIN_ORIGIN,
-            'help':    'hostname to configure CORS during login',
-            'type':    str,
-        },
-    ]
+    _DEFAULTS = {
+        'db_name':      'inkweaver',
+        'db_host':      'localhost',
+        'db_port':      27017,
+        'login_origin': 'https://localhost:3000',
+    }
 
     def __init__(self):
         self._options = {}
         self._parser = argparse.ArgumentParser()
-        for option in self._OPTIONS:
-            # Pull the names out of the option.
-            name = f"--{option.pop('name')}"  # Add '--' to the front of the name.
-            self._parser.add_argument(name, **option)
+        self._parser.add_argument('--config',           help='a config file to load default options from')
+        self._parser.add_argument('--port',             help='run on the given port')
+        self._parser.add_argument('--db-name',          help='name of the database in MongoDB')
+        self._parser.add_argument('--db-host',          help='address of the MongoDB server')
+        self._parser.add_argument('--db-port',          help='MongoDB connection port')
+        self._parser.add_argument('--db-user',          help='user for MongoDB authentication')
+        self._parser.add_argument('--db-pass',          help='password for MongoDB authentication')
+        self._parser.add_argument('--demo-db-host',     help='the host for creating demonstration databases; defaults to --db-host')
+        self._parser.add_argument('--demo-db-port',     help='the port for creating demonstration databases; defaults to --db-port')
+        self._parser.add_argument('--demo-db-prefix',   help='the prefix for all databases created for the demo')
+        self._parser.add_argument('--demo-db-data',     help='the data file to load demo data from')
+        self._parser.add_argument('--ssl-cert',         help='the SSL cert file')
+        self._parser.add_argument('--ssl-key',          help='the SSL key file')
+        self._parser.add_argument('--login-origin',     help='hostname to configure CORS during login')
 
     def __getattr__(self, item):
         try:
@@ -128,6 +53,9 @@ class OptionParser:
         if parsed_args.config is not None:
             self.parse_config_file(parsed_args.config)
         self._options.update(vars(parsed_args))
+        for default_arg, default_val in self._DEFAULTS:
+            if getattr(self, default_arg) is None:
+                self._options[default_arg] = default_val
 
 
 # Provide a default, global OptionParser.
