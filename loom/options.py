@@ -41,6 +41,9 @@ class OptionParser:
                     left, right = line.split(':', 1)
                     key = left.strip()
                     val = right.strip()
+                    # Port values should be cast to integers.
+                    if key.endswith('port'):  # TODO: This should probably be more rigorous.
+                        val = int(val)
                     file_options[key] = val
         self._options.update(file_options)
 
