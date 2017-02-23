@@ -39,7 +39,7 @@ class OptionParser:
             for line in cf:
                 if line:
                     left, right = line.split(':', 1)
-                    key = left.strip()
+                    key = left.strip().replace('-', '_')
                     val = right.strip()
                     # Port values should be cast to integers.
                     if key.endswith('port'):  # TODO: This should probably be more rigorous.
