@@ -98,14 +98,15 @@ class OptionParser:
         self._options = {}
         self._parser = argparse.ArgumentParser()
         for option in self._OPTIONS:
-            option['name'] = f"--{option['name']}"  # Add '--' to the front of the name.
-            self._parser.add_argument(**option)
+            # Pull the names out of the option.
+            name = f"--{option.pop('name')}"  # Add '--' to the front of the name.
+            self._parser.add_argument(name, **option)
 
     def __getattr__(self, item):
         try:
             return self._options[item]
         except KeyError:
-            raise AttributeError
+            return None
 
     def parse_config_file(self, config_file: str):
         file_options = {}
@@ -129,4 +130,5 @@ class OptionParser:
         self._options.update(vars(parsed_args))
 
 
+# Provide a default, global OptionParser.
 parser = OptionParser()
