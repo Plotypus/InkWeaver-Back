@@ -70,6 +70,16 @@ class EditSectionTitleOutgoingMessage(OutgoingMessage):
 
 ###########################################################################
 #
+# Set Messages
+#
+###########################################################################
+class SetNoteOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
+
+
+###########################################################################
+#
 # Get Messages
 #
 ###########################################################################

@@ -225,6 +225,11 @@ class LAWProtocolDispatcher:
         return EditSectionTitleOutgoingMessage(message_id)
 
     @requires_login
+    async def set_note(self, message_id, section_id, paragraph_id, note):
+        # TODO: Implement this.
+        return SetNoteOutgoingMessage(message_id)
+
+    @requires_login
     async def get_story_information(self, message_id, story_id):
         story = await self.db_interface.get_story(story_id)
         message = {

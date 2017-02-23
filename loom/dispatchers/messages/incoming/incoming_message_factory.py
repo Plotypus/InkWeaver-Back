@@ -23,6 +23,7 @@ APPROVED_MESSAGES = {
     'edit_story':                      EditStoryIncomingMessage,
     'edit_paragraph':                  EditParagraphIncomingMessage,
     'edit_section_title':              EditSectionTitleIncomingMessage,
+    'set_note':                        SetNoteIncomingMessage,
     'get_story_information':           GetStoryInformationIncomingMessage,
     'get_story_hierarchy':             GetStoryHierarchyIncomingMessage,
     'get_section_hierarchy':           GetSectionHierarchyIncomingMessage,
