@@ -41,7 +41,7 @@ main_server.start_server(
     demo_db_port=demo_db_port,
     demo_db_prefix=parser.demo_db_prefix,
     port=parser.port,
-    ssl_crt=parser.ssl_crt,
+    ssl_cert=parser.ssl_cert,
     ssl_key=parser.ssl_key,
     login_origin=parser.login_origin
 )

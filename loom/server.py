@@ -22,7 +22,7 @@ class LoomServer:
     def install_demo_endpoint(self, demo_db_data_file):
         routing.install_demo_endpoint(demo_db_data_file)
 
-    def start_server(self, demo_db_host, demo_db_port, demo_db_prefix, port, ssl_crt, ssl_key, login_origin):
+    def start_server(self, demo_db_host, demo_db_port, demo_db_prefix, port, ssl_cert, ssl_key, login_origin):
         if self._interface is None:
             raise RuntimeError("cannot start server without creating a database interface")
         session_manager = self._session_manager if self._session_manager is not None else SessionManager()
@@ -38,10 +38,10 @@ class LoomServer:
             'login_origin':        login_origin,
         }
         app = tornado.web.Application(routes, **settings)
-        if ssl_crt and ssl_key:
-            ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            ssl_ctx.load_cert_chain(ssl_crt, ssl_key)
-            server = HTTPServer(app, ssl_options=ssl_ctx)
+        if ssl_cert and ssl_key:
+            ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            ssl_context.load_cert_chain(ssl_cert, ssl_key)
+            server = HTTPServer(app, ssl_options=ssl_context)
         else:
             server = HTTPServer(app)
         server.listen(port)
