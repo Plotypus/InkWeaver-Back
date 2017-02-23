@@ -53,7 +53,7 @@ class OptionParser:
         if parsed_args.config is not None:
             self.parse_config_file(parsed_args.config)
         self._options.update(vars(parsed_args))
-        for default_arg, default_val in self._DEFAULTS:
+        for default_arg, default_val in self._DEFAULTS.items():
             if getattr(self, default_arg) is None:
                 self._options[default_arg] = default_val
 
