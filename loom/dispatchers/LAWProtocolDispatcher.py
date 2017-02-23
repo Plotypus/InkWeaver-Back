@@ -226,7 +226,7 @@ class LAWProtocolDispatcher:
 
     @requires_login
     async def set_note(self, message_id, section_id, paragraph_id, note):
-        # TODO: Implement this.
+        await self.db_interface.set_note(section_id, paragraph_id, note)
         return SetNoteOutgoingMessage(message_id)
 
     @requires_login

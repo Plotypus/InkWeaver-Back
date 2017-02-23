@@ -136,6 +136,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_note(self, section_id, paragraph_id, text):
+        pass
+
+    @abstractmethod
     async def delete_story(self, story_id):
         pass
 

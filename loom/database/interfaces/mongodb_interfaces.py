@@ -318,6 +318,9 @@ class MongoDBInterface(AbstractDBInterface):
                 reference['context'] = context
                 break
 
+    async def set_note(self, section_id, paragraph_id, text):
+        await self.client.set_note(section_id, paragraph_id, text)
+
     async def get_links_from_paragraph(self, paragraph_text):
         # TODO: Support languages other than English.
         sentences = nltk.sent_tokenize(paragraph_text)

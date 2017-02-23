@@ -471,6 +471,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_note(self, section_id: ObjectId, paragraph_id: ObjectId, text: str):
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': section_id, 'notes.paragraph_id': paragraph_id},
+            update={
+                '$set': {
+                    'notes.$.note': text
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def get_story(self, story_id: ObjectId) -> Dict:
         result = await self.stories.find_one({'_id': story_id})
         return result
