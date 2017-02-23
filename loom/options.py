@@ -33,7 +33,7 @@ class OptionParser:
         except KeyError:
             return None
 
-    def parse_config_file(self, config_file: str):
+    def _parse_config_file(self, config_file: str):
         file_options = {}
         with open(config_file) as cf:
             for line in cf:
@@ -45,17 +45,21 @@ class OptionParser:
                     if key.endswith('port'):  # TODO: This should probably be more rigorous.
                         val = int(val)
                     file_options[key] = val
-        self._options.update(file_options)
+        return file_options
 
     def parse_options(self, args=None):
+        self._options = {}
         if args is None:
             import sys
             args = sys.argv[1:]  # Disregard the first item, which is just the name of the program.
         parsed_args = self._parser.parse_args(args)
         # Check if the user specified a config file. If they did, read that first so CLI arguments take precedence.
         if parsed_args.config is not None:
-            self.parse_config_file(parsed_args.config)
-        self._options.update(vars(parsed_args))
+            config_args = self._parse_config_file(parsed_args.config)
+            self._options.update(config_args)
+        for key, val in vars(parsed_args).items():
+            if key not in self._options or val is not None:
+                self._options[key] = val
         for default_arg, default_val in self._DEFAULTS.items():
             if getattr(self, default_arg) is None:
                 self._options[default_arg] = default_val
