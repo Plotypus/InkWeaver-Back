@@ -22,6 +22,7 @@ if current_version < required_version:
 DEFAULT_DB_NAME = 'inkweaver'
 DEFAULT_DB_HOST = 'localhost'
 DEFAULT_DB_PORT = 27017
+DEFAULT_LOGIN_ORIGIN = 'https://localhost:3000'
 
 define_option('port', default=8080, help='run on the given port', type=int)
 define_option('db-name', default=DEFAULT_DB_NAME, help='name of the database in MongoDB', type=str)
@@ -37,10 +38,11 @@ define_option('demo-db-prefix', default='demo-db', help='the prefix for all data
 define_option('demo-db-data', default=None, help='the data file to load demo data from', type=str)
 define_option('ssl-crt', default=None, help='the ssl cert file', type=str)
 define_option('ssl-key', default=None, help='the ssl key file', type=str)
+define_option('login-origin', default=DEFAULT_LOGIN_ORIGIN, help='hostname to configure CORS during login', type=str)
 
 
 def start_server(db_interface, demo_db_host, demo_db_port, demo_db_prefix, port, routes, session_manager,
-                 ssl_crt, ssl_key):
+                 ssl_crt, ssl_key, login_origin):
     settings = {
         'db_interface':        db_interface,
         'demo_db_host':        demo_db_host,
@@ -49,6 +51,7 @@ def start_server(db_interface, demo_db_host, demo_db_port, demo_db_prefix, port,
         'cookie_secret':       generate_cookie_secret(),
         'session_cookie_name': 'loom_session',
         'session_manager':     session_manager,
+        'login_origin':        login_origin,
     }
     app = tornado.web.Application(routes, **settings)
     if ssl_crt and ssl_key:
@@ -105,4 +108,4 @@ if __name__ == '__main__':
                                       options.db_pass)
 
     start_server(interface, demo_db_host, demo_db_port, options.demo_db_prefix, options.port, routing.get_routes(),
-                 session_manager, options.ssl_crt, options.ssl_key)
+                 session_manager, options.ssl_crt, options.ssl_key, options.login_origin)
