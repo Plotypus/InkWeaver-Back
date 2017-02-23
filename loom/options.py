@@ -113,7 +113,7 @@ class OptionParser:
         with open(config_file) as cf:
             for line in cf:
                 if line:
-                    left, right = line.split(':')
+                    left, right = line.split(':', 1)
                     key = left.strip()
                     val = right.strip()
                     file_options[key] = val
