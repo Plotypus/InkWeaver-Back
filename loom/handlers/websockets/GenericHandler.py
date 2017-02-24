@@ -1,6 +1,6 @@
 from loom import serialize
 from loom.dispatchers.messages.outgoing import OGMEncoder
-from loom.loggers import connections
+from loom.loggers import ws_connections
 
 import json
 import tornado.websocket
@@ -9,7 +9,7 @@ from uuid import uuid4 as generate_uuid
 
 
 class GenericHandler(tornado.websocket.WebSocketHandler):
-    logger = connections
+    logger = ws_connections
 
     @classmethod
     def encode_json(cls, data):

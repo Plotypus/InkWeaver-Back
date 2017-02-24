@@ -31,5 +31,6 @@ def make_logger(name, filename=None, null_logger=False,
     return logger
 
 
-connections = make_logger('connections')
+rest_connections = make_logger('rest_connections')
+ws_connections = make_logger('ws_connections')
 db_queries = make_logger('db_queries')

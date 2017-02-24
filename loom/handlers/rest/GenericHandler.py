@@ -1,10 +1,10 @@
-from loom.loggers import connections
+from loom.loggers import rest_connections
 import loom.serialize as serialize
 
 import tornado.web
 
 class GenericHandler(tornado.web.RequestHandler):
-    logger = connections
+    logger = rest_connections
 
     def encode_json(self, data):
         return serialize.encode_bson_to_string(data)
