@@ -15,27 +15,33 @@ class GenericHandler(tornado.web.RequestHandler):
     def write_json(self, dictionary):
         self.write(self.encode_json(dictionary))
 
+    def write_log(self, method, url, response, extra=None):
+        message = f'{method} {url} -> {response}'
+        if extra is not None:
+            message = f'{message} {extra}'
+        self.logger.info(message)
+
     def get(self, *args, **kwargs):
         error = 405
-        self.logger.debug(f'GET {self.request.uri} -> {error}')
+        self.write_log('GET', self.request.uri, error)
         self.send_error(error)
 
     def post(self, *args, **kwargs):
         error = 405
-        self.logger.debug(f'POST {self.request.uri} -> {error}')
+        self.write_log('POST', self.request.uri, error)
         self.send_error(error)
 
     def put(self, *args, **kwargs):
         error = 405
-        self.logger.debug(f'PUT {self.request.uri} -> {error}')
+        self.write_log('PUT', self.request.uri, error)
         self.send_error(error)
 
     def patch(self, *args, **kwargs):
         error = 405
-        self.logger.debug(f'PATCH {self.request.uri} -> {error}')
+        self.write_log('PATCH', self.request.uri, error)
         self.send_error(error)
 
     def delete(self, *args, **kwargs):
         error = 405
-        self.logger.debug(f'DELETE {self.request.uri} -> {error}')
+        self.write_log('DELETE', self.request.uri, error)
         self.send_error(error)
