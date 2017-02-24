@@ -202,6 +202,11 @@ class LAWProtocolDispatcher:
         return AddParagraphOutgoingMessage(message_id, paragraph_id)
 
     @requires_login
+    async def add_bookmark(self, message_id, name, story_id, section_id, paragraph_id, index=None):
+        bookmark_id = await self.db_interface.add_bookmark(name, story_id, section_id, paragraph_id, index)
+        return AddBookmarkOutgoingMessage(message_id, bookmark_id)
+
+    @requires_login
     async def edit_story(self, message_id, story_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
@@ -225,6 +230,20 @@ class LAWProtocolDispatcher:
         return EditSectionTitleOutgoingMessage(message_id)
 
     @requires_login
+    async def edit_bookmark(self, message_id, story_id, bookmark_id, update):
+        if update['update_type'] == 'set_name':
+            name = update['name']
+            await self.db_interface.set_bookmark_name(story_id, bookmark_id, name)
+            return EditBookmarkTitleOutgoingMessage(message_id)
+        else:
+            raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
+
+    @requires_login
+    async def set_note(self, message_id, section_id, paragraph_id, note):
+        await self.db_interface.set_note(section_id, paragraph_id, note)
+        return SetNoteOutgoingMessage(message_id)
+
+    @requires_login
     async def get_story_information(self, message_id, story_id):
         story = await self.db_interface.get_story(story_id)
         message = {
@@ -234,6 +253,11 @@ class LAWProtocolDispatcher:
             'users':        story['users'],
         }
         return GetStoryInformationOutgoingMessage(message_id, **message)
+
+    @requires_login
+    async def get_story_bookmarks(self, message_id, story_id):
+        bookmarks = await self.db_interface.get_story_bookmarks(story_id)
+        return GetStoryBookmarksOutgoingMessage(message_id, bookmarks)
 
     @requires_login
     async def get_story_hierarchy(self, message_id, story_id):
@@ -248,7 +272,13 @@ class LAWProtocolDispatcher:
     @requires_login
     async def get_section_content(self, message_id, section_id):
         paragraphs = await self.db_interface.get_section_content(section_id)
-        content = [{'text': paragraph['text'], 'paragraph_id': paragraph['_id']} for paragraph in paragraphs]
+        content = []
+        for db_paragraph in paragraphs:
+            paragraph = {'text': db_paragraph['text'], 'paragraph_id': db_paragraph['_id']}
+            note = db_paragraph.get('note')
+            if note is not None:
+                paragraph['note'] = note
+            content.append(paragraph)
         return GetSectionContentOutgoingMessage(message_id, content)
 
     @requires_login
@@ -265,6 +295,16 @@ class LAWProtocolDispatcher:
     async def delete_paragraph(self, message_id, section_id, paragraph_id):
         await self.db_interface.delete_paragraph(section_id, paragraph_id)
         return DeleteParagraphOutgoingMessage(message_id, "paragraph_deleted")
+
+    @requires_login
+    async def delete_note(self, message_id, section_id, paragraph_id):
+        await self.db_interface.delete_note(section_id, paragraph_id)
+        return DeleteNoteOutgoingMessage(message_id, "note_deleted")
+
+    @requires_login
+    async def delete_bookmark(self, message_id, bookmark_id):
+        await self.db_interface.delete_bookmark(bookmark_id)
+        return DeleteBookmarkOutgoingMessage(message_id, "bookmark_deleted")
 
     ###########################################################################
     #

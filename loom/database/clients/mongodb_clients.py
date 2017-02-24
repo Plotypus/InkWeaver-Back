@@ -321,6 +321,7 @@ class MongoDBClient:
             'wiki_id':    wiki_id,
             'users':      [user_description],
             'section_id': section_id,
+            'bookmarks':  list(),
             'statistics': None,
             'settings':   None,
         }
@@ -339,6 +340,7 @@ class MongoDBClient:
             'succeeding_subsections': list(),
             'statistics':             None,
             'links':                  list(),  # links is a list of lists of links (runs parallel to paragraphs)
+            'notes':                  list(),
         }
         if _id is not None:
             section['_id'] = _id
@@ -406,6 +408,39 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def insert_note_for_paragraph(self, paragraph_id: ObjectId, note: str, in_section_id, at_index=None):
+        inner_parameters = self._insertion_parameters({
+            'paragraph_id': paragraph_id,
+            'note': note,
+        }, at_index)
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': in_section_id},
+            update={
+                '$push': {
+                    'notes': inner_parameters
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def insert_bookmark(self, bookmark_id: ObjectId, story_id: ObjectId, section_id: ObjectId,
+                              paragraph_id: ObjectId, name: str, at_index=None):
+        inner_parameters = self._insertion_parameters({
+            'bookmark_id': bookmark_id,
+            'section_id': section_id,
+            'paragraph_id': paragraph_id,
+            'name': name,
+        }, at_index)
+        update_result: UpdateResult = await self.stories.update_one(
+            filter={'_id': story_id},
+            update={
+                '$push': {
+                    'bookmarks': inner_parameters
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def set_story_wiki(self, story_id: ObjectId, wiki_id: ObjectId):
         update_result: UpdateResult = await self.stories.update_one(
             filter={'_id': story_id},
@@ -450,6 +485,28 @@ class MongoDBClient:
                     # The `$` acts as a placeholder to update the first element that
                     # matches the query condition.
                     'content.$.text': text
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def set_bookmark_name(self, story_id: ObjectId, bookmark_id: ObjectId, new_name: str):
+        update_result: UpdateResult = await self.stories.update_one(
+            filter={'_id': story_id, 'bookmarks.bookmark_id': bookmark_id},
+            update={
+                '$set': {
+                    'bookmarks.$.name': new_name
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def set_note(self, section_id: ObjectId, paragraph_id: ObjectId, text: str):
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': section_id, 'notes.paragraph_id': paragraph_id},
+            update={
+                '$set': {
+                    'notes.$.note': text
                 }
             }
         )
@@ -514,11 +571,50 @@ class MongoDBClient:
                     },
                     'links': {
                         'paragraph_id': paragraph_id,
+                    },
+                    'notes': {
+                        'paragraph_id': paragraph_id,
                     }
                 }
             }
         )
         self.assert_update_one_was_successful(update_result)
+
+    async def delete_bookmark_by_id(self, bookmark_id: ObjectId):
+        update_result: UpdateResult = await self.stories.update_many(
+            filter={},
+            update={
+                '$pull': {
+                    'bookmarks': {
+                        'bookmark_id': bookmark_id
+                    }
+                }
+            }
+        )
+
+    async def delete_bookmark_by_section_id(self, section_id: ObjectId):
+        update_result: UpdateResult = await self.stories.update_many(
+            filter={},
+            update={
+                '$pull': {
+                    'bookmarks': {
+                        'section_id': section_id
+                    }
+                }
+            }
+        )
+
+    async def delete_bookmark_by_paragraph_id(self, paragraph_id: ObjectId):
+        update_result: UpdateResult = await self.stories.update_many(
+            filter={},
+            update={
+                '$pull': {
+                    'bookmarks': {
+                        'paragraph_id': paragraph_id
+                    }
+                }
+            }
+        )
 
     ###########################################################################
     #

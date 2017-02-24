@@ -226,13 +226,23 @@ class MongoDBInterface(AbstractDBInterface):
             paragraph_id = ObjectId()
             await self.client.insert_paragraph(paragraph_id, '', to_section_id=section_id, at_index=index)
             await self.client.insert_links_for_paragraph(paragraph_id, list(), in_section_id=section_id, at_index=index)
+            await self.client.insert_note_for_paragraph(paragraph_id, '', in_section_id=section_id, at_index=index)
             if text is not None:
                 await self.set_paragraph_text(section_id, text, paragraph_id)
             return paragraph_id
 
+    async def add_bookmark(self, name, story_id, section_id, paragraph_id, index=None):
+        bookmark_id = ObjectId()
+        await self.client.insert_bookmark(bookmark_id, story_id, section_id, paragraph_id, name, index)
+        return bookmark_id
+
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)
         return story
+
+    async def get_story_bookmarks(self, story_id):
+        story = await self.client.get_story(story_id)
+        return story['bookmarks']
 
     async def get_story_hierarchy(self, story_id):
         story = await self.get_story(story_id)
@@ -255,7 +265,14 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def get_section_content(self, section_id):
         section = await self.client.get_section(section_id)
-        return section['content']
+        # Empty-string notes are considered un-set (or has not been added, or has been deleted).
+        notes = section['notes']
+        paragraphs = section['content']
+        for index in range(len(paragraphs)):
+            note = notes[index]['note']
+            if note != '':
+                paragraphs[index]['note'] = note
+        return paragraphs
 
     async def set_story_title(self, story_id, title):
         story = await self.client.get_story(story_id)
@@ -311,6 +328,12 @@ class MongoDBInterface(AbstractDBInterface):
                 reference['context'] = context
                 break
 
+    async def set_bookmark_name(self, story_id, bookmark_id, new_name):
+        await self.client.set_bookmark_name(story_id, bookmark_id, new_name)
+
+    async def set_note(self, section_id, paragraph_id, text):
+        await self.client.set_note(section_id, paragraph_id, text)
+
     async def get_links_from_paragraph(self, paragraph_text):
         # TODO: Support languages other than English.
         sentences = nltk.sent_tokenize(paragraph_text)
@@ -350,12 +373,21 @@ class MongoDBInterface(AbstractDBInterface):
             for link_id in link_ids:
                 await self.delete_link(link_id)
         await self.client.delete_section(section['_id'])
+        await self.client.delete_bookmark_by_section_id(section_id)
 
     async def delete_paragraph(self, section_id, paragraph_id):
         link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
         for link_id in link_ids:
             await self.delete_link(link_id)
         await self.client.delete_paragraph(section_id, paragraph_id)
+        await self.client.delete_bookmark_by_paragraph_id(paragraph_id)
+
+    async def delete_note(self, section_id, paragraph_id):
+        # To delete a note, we simply set it as an empty-string.
+        await self.client.set_note(section_id, paragraph_id, '')
+
+    async def delete_bookmark(self, bookmark_id):
+        await self.client.delete_bookmark_by_id(bookmark_id)
 
     ###########################################################################
     #

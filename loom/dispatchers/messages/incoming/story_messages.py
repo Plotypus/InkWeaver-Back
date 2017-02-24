@@ -81,6 +81,23 @@ class AddParagraphIncomingMessage(IncomingMessage):
         return self._dispatcher.add_paragraph(self.message_id, self.section_id, self.text, self.succeeding_paragraph_id)
 
 
+class AddBookmarkIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'name',
+        'story_id',
+        'section_id',
+        'paragraph_id',
+    ]
+    _optional_fields = [
+        'index'
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.add_bookmark(self.message_id, self.name, self.story_id, self.section_id,
+                                             self.paragraph_id, self.index)
+
+
 ###########################################################################
 #
 # Edit Messages
@@ -119,6 +136,36 @@ class EditSectionTitleIncomingMessage(IncomingMessage):
     def dispatch(self):
         return self._dispatcher.edit_section_title(self.message_id, self.section_id, self.new_title)
 
+
+class EditBookmarkIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'story_id',
+        'bookmark_id',
+        'update',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.edit_bookmark(self.message_id, self.story_id, self.bookmark_id, self.update)
+
+
+###########################################################################
+#
+# Set Messages
+#
+###########################################################################
+class SetNoteIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'section_id',
+        'paragraph_id',
+        'note',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.set_note(self.message_id, self.section_id, self.paragraph_id, self.note)
+
+
 ###########################################################################
 #
 # Get Messages
@@ -132,6 +179,16 @@ class GetStoryInformationIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.get_story_information(self.message_id, self.story_id)
+
+
+class GetStoryBookmarksIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'story_id',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.get_story_bookmarks(self.message_id, self.story_id)
 
 
 class GetStoryHierarchyIncomingMessage(IncomingMessage):
@@ -198,3 +255,24 @@ class DeleteParagraphIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.delete_paragraph(self.message_id, self.section_id, self.paragraph_id)
+
+
+class DeleteNoteIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'section_id',
+        'paragraph_id',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.delete_note(self.message_id, self.section_id, self.paragraph_id)
+
+
+class DeleteBookmarkIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'bookmark_id',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.delete_bookmark(self.message_id, self.bookmark_id)

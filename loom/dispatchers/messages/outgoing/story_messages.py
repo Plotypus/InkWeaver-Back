@@ -48,6 +48,12 @@ class AddParagraphOutgoingMessage(OutgoingMessage):
         self.paragraph_id = paragraph_id
 
 
+class AddBookmarkOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int, bookmark_id: ObjectId):
+        self.reply_to_id = reply_to_id
+        self.bookmark_id = bookmark_id
+
+
 ###########################################################################
 #
 # Edit Messages
@@ -68,6 +74,21 @@ class EditSectionTitleOutgoingMessage(OutgoingMessage):
         self.reply_to_id = reply_to_id
 
 
+class EditBookmarkTitleOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
+
+
+###########################################################################
+#
+# Set Messages
+#
+###########################################################################
+class SetNoteOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
+
+
 ###########################################################################
 #
 # Get Messages
@@ -80,6 +101,12 @@ class GetStoryInformationOutgoingMessage(OutgoingMessage):
         self.section_id = section_id
         self.wiki_id = wiki_id
         self.users = users
+
+
+class GetStoryBookmarksOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int, bookmarks: list):
+        self.reply_to_id = reply_to_id
+        self.bookmarks = bookmarks
 
 
 class GetStoryHierarchyOutgoingMessage(OutgoingMessage):
@@ -122,3 +149,13 @@ class DeleteParagraphOutgoingMessage(OutgoingMessage):
         self.reply_to_id = reply_to_id
         self.event = event
 
+
+class DeleteNoteOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event
+
+class DeleteBookmarkOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int, event: str):
+        self.reply_to_id = reply_to_id
+        self.event = event

@@ -108,7 +108,15 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def add_bookmark(self, name, story_id, section_id, paragraph_id, index=None):
+        pass
+
+    @abstractmethod
     async def get_story(self, story_id):
+        pass
+
+    @abstractmethod
+    async def get_story_bookmarks(self, story_id):
         pass
 
     @abstractmethod
@@ -136,6 +144,14 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_bookmark_name(self, story_id, bookmark_id, new_name):
+        pass
+
+    @abstractmethod
+    async def set_note(self, section_id, paragraph_id, text):
+        pass
+
+    @abstractmethod
     async def delete_story(self, story_id):
         pass
 
@@ -145,6 +161,14 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def delete_paragraph(self, section_id, paragraph_id):
+        pass
+
+    @abstractmethod
+    async def delete_note(self, section_id, paragraph_id):
+        pass
+
+    @abstractmethod
+    async def delete_bookmark(self, bookmark_id):
         pass
 
     ###########################################################################
