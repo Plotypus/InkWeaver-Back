@@ -585,7 +585,9 @@ class MongoDBClient:
             filter={},
             update={
                 '$pull': {
-                    'bookmark_id': bookmark_id
+                    'bookmarks': {
+                        'bookmark_id': bookmark_id
+                    }
                 }
             }
         )
@@ -595,7 +597,9 @@ class MongoDBClient:
             filter={},
             update={
                 '$pull': {
-                    'section_id': section_id
+                    'bookmarks': {
+                        'section_id': section_id
+                    }
                 }
             }
         )
@@ -605,7 +609,9 @@ class MongoDBClient:
             filter={},
             update={
                 '$pull': {
-                    'paragraph_id': paragraph_id
+                    'bookmarks': {
+                        'paragraph_id': paragraph_id
+                    }
                 }
             }
         )
