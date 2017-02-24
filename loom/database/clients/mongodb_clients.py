@@ -490,6 +490,17 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
+    async def set_bookmark_name(self, story_id: ObjectId, bookmark_id: ObjectId, new_name: str):
+        update_result: UpdateResult = await self.stories.update_one(
+            filter={'_id': story_id, 'bookmarks.$.bookmark_id': bookmark_id},
+            update={
+                '$set': {
+                    'bookmarks.$.name': new_name
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def set_note(self, section_id: ObjectId, paragraph_id: ObjectId, text: str):
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': section_id, 'notes.paragraph_id': paragraph_id},
@@ -568,6 +579,36 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+
+    async def delete_bookmark_by_id(self, bookmark_id: ObjectId):
+        update_result: UpdateResult = await self.stories.update_many(
+            filter={},
+            update={
+                '$pull': {
+                    'bookmark_id': bookmark_id
+                }
+            }
+        )
+
+    async def delete_bookmark_by_section_id(self, section_id: ObjectId):
+        update_result: UpdateResult = await self.stories.update_many(
+            filter={},
+            update={
+                '$pull': {
+                    'section_id': section_id
+                }
+            }
+        )
+
+    async def delete_bookmark_by_paragraph_id(self, paragraph_id: ObjectId):
+        update_result: UpdateResult = await self.stories.update_many(
+            filter={},
+            update={
+                '$pull': {
+                    'paragraph_id': paragraph_id
+                }
+            }
+        )
 
     ###########################################################################
     #

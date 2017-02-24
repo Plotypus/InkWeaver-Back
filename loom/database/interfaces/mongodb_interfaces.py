@@ -328,6 +328,9 @@ class MongoDBInterface(AbstractDBInterface):
                 reference['context'] = context
                 break
 
+    async def set_bookmark_name(self, story_id, bookmark_id, new_name):
+        await self.client.set_bookmark_name(story_id, bookmark_id, new_name)
+
     async def set_note(self, section_id, paragraph_id, text):
         await self.client.set_note(section_id, paragraph_id, text)
 
@@ -380,6 +383,9 @@ class MongoDBInterface(AbstractDBInterface):
     async def delete_note(self, section_id, paragraph_id):
         # To delete a note, we simply set it as an empty-string.
         await self.client.set_note(section_id, paragraph_id, '')
+
+    async def delete_bookmark(self, bookmark_id):
+        await self.client.delete_bookmark_by_id(bookmark_id)
 
     ###########################################################################
     #

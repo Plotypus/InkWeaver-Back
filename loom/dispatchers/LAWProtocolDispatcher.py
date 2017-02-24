@@ -231,8 +231,12 @@ class LAWProtocolDispatcher:
 
     @requires_login
     async def edit_bookmark(self, message_id, story_id, bookmark_id, update):
-        # TODO: Implement this.
-        return EditBookmarkTitleOutgoingMessage(message_id)
+        if update['update_type'] == 'set_name':
+            name = update['name']
+            await self.db_interface.set_bookmark_name(story_id, bookmark_id, name)
+            return EditBookmarkTitleOutgoingMessage(message_id)
+        else:
+            raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
     @requires_login
     async def set_note(self, message_id, section_id, paragraph_id, note):
@@ -298,8 +302,8 @@ class LAWProtocolDispatcher:
         return DeleteNoteOutgoingMessage(message_id, "note_deleted")
 
     @requires_login
-    async def delete_bookmark(self, message_id, story_id, name):
-        # TODO: Implement this.
+    async def delete_bookmark(self, message_id, bookmark_id):
+        await self.db_interface.delete_bookmark(bookmark_id)
         return DeleteBookmarkOutgoingMessage(message_id, "bookmark_deleted")
 
     ###########################################################################

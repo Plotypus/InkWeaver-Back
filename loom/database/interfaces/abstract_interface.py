@@ -144,6 +144,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_bookmark_name(self, story_id, bookmark_id, new_name):
+        pass
+
+    @abstractmethod
     async def set_note(self, section_id, paragraph_id, text):
         pass
 
@@ -161,6 +165,10 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def delete_note(self, section_id, paragraph_id):
+        pass
+
+    @abstractmethod
+    async def delete_bookmark(self, bookmark_id):
         pass
 
     ###########################################################################
