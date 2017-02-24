@@ -492,7 +492,7 @@ class MongoDBClient:
 
     async def set_bookmark_name(self, story_id: ObjectId, bookmark_id: ObjectId, new_name: str):
         update_result: UpdateResult = await self.stories.update_one(
-            filter={'_id': story_id, 'bookmarks.$.bookmark_id': bookmark_id},
+            filter={'_id': story_id, 'bookmarks.bookmark_id': bookmark_id},
             update={
                 '$set': {
                     'bookmarks.$.name': new_name
