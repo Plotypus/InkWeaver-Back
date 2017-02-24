@@ -136,7 +136,7 @@ class EditSectionTitleIncomingMessage(IncomingMessage):
 
 ###########################################################################
 #
-# Edit Messages
+# Set Messages
 #
 ###########################################################################
 class SetNoteIncomingMessage(IncomingMessage):
