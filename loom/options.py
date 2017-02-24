@@ -91,7 +91,7 @@ class OptionParser:
             else:
                 choices = None
             self._parser.add_argument(
-                name=argument[0],
+                argument[0],
                 help=argument[1],
                 type=self._get_option_type(argument[0]),
                 choices=choices
