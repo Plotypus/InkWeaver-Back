@@ -20,7 +20,7 @@ class DemoHandler(LoomHandler):
         self.db_host = self.settings['demo_db_host']
         self.db_port = self.settings['demo_db_port']
         # TODO: Remove this.
-        self.write_console_message('using DB: {}'.format(self.db_name))
+        self.write_log('using DB: {}'.format(self.db_name))
         self._dispatcher = LAWProtocolDispatcher(self.db_interface)
         self.data_processor = DataProcessor(self.db_interface)
         self.startup()
@@ -35,12 +35,12 @@ class DemoHandler(LoomHandler):
 
     async def teardown(self):
         await self.db_interface.drop_database()
-        self.write_console_message("dropped database: {}".format(self.db_name))
+        self.write_log("dropped database: {}".format(self.db_name))
 
     async def load_file_and_set_user(self, filename):
         user_id = await self.data_processor.load_file(filename)
         self.dispatcher.set_user_id(user_id)
-        self.write_console_message("generated database from file: {}".format(self.demo_db_data))
+        self.write_log("generated database from file: {}".format(self.demo_db_data))
         self.ready = True
         self.send_ready_acknowledgement()
 

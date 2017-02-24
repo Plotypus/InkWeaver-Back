@@ -128,7 +128,7 @@ class LoomHandler(GenericHandler):
         if self.ready:
             await self.messages.put(message)
         else:
-            self.write_console_message("Dropping message: {}".format(message))
+            self.write_log("Dropping message: {}".format(message))
 
     async def process_messages(self):
         async for message in self.messages:
