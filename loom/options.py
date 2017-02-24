@@ -3,12 +3,15 @@ import argparse
 
 class OptionParser:
     _DEFAULTS = {
-        'port':           8080,
-        'db_name':        'inkweaver',
-        'db_host':        'localhost',
-        'db_port':        27017,
-        'demo_db_prefix': 'demo-db',
-        'login_origin':   'https://localhost:3000',
+        'port':               8080,
+        'db_name':            'inkweaver',
+        'db_host':            'localhost',
+        'db_port':            27017,
+        'demo_db_prefix':     'demo-db',
+        'login_origin':       'https://localhost:3000',
+        'logging_prefix':     '/var/log/plotypus/loom',
+        'logging_file_level': 'info',
+        'logging_out_level':  'info',
     }
 
     _TYPES = {
@@ -18,20 +21,23 @@ class OptionParser:
     }
 
     _ARGUMENTS = [
-        ('--config',            'a config file to load default options from'),
-        ('--port',              'run on the given port'),
-        ('--db-name',           'name of the database in MongoDB'),
-        ('--db-host',           'address of the MongoDB server'),
-        ('--db-port',           'MongoDB connection port'),
-        ('--db-user',           'user for MongoDB authentication'),
-        ('--db-pass',           'password for MongoDB authentication'),
-        ('--demo-db-host',      'the host for creating demonstration databases; defaults to --db-host'),
-        ('--demo-db-port',      'the port for creating demonstration databases; defaults to --db-port'),
-        ('--demo-db-prefix',    'the prefix for all databases created for the demo'),
-        ('--demo-db-data',      'the data file to load demo data from'),
-        ('--ssl-cert',          'the SSL cert file'),
-        ('--ssl-key',           'the SSL key file'),
-        ('--login-origin',      'hostname to configure CORS during login'),
+        ('--config',                'a config file to load default options from'),
+        ('--port',                  'run on the given port'),
+        ('--db-name',               'name of the database in MongoDB'),
+        ('--db-host',               'address of the MongoDB server'),
+        ('--db-port',               'MongoDB connection port'),
+        ('--db-user',               'user for MongoDB authentication'),
+        ('--db-pass',               'password for MongoDB authentication'),
+        ('--demo-db-host',          'the host for creating demonstration databases; defaults to --db-host'),
+        ('--demo-db-port',          'the port for creating demonstration databases; defaults to --db-port'),
+        ('--demo-db-prefix',        'the prefix for all databases created for the demo'),
+        ('--demo-db-data',          'the data file to load demo data from'),
+        ('--ssl-cert',              'the SSL cert file'),
+        ('--ssl-key',               'the SSL key file'),
+        ('--login-origin',          'hostname to configure CORS during login'),
+        ('--logging-prefix',        'directory to prefix to all log files'),
+        ('--logging-file-level',    'the minimum level to write to log files'),
+        ('--logging-out-level',     'the minimum level to write logging information to stdout'),
     ]
 
     def _fix_option_name(self, name):
