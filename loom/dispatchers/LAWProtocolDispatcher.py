@@ -234,6 +234,11 @@ class LAWProtocolDispatcher:
         return EditSectionTitleOutgoingMessage(message_id)
 
     @requires_login
+    async def set_note(self, message_id, section_id, paragraph_id, note):
+        await self.db_interface.set_note(section_id, paragraph_id, note)
+        return SetNoteOutgoingMessage(message_id)
+
+    @requires_login
     async def get_story_information(self, message_id, story_id):
         story = await self.db_interface.get_story(story_id)
         message = {
@@ -262,7 +267,13 @@ class LAWProtocolDispatcher:
     @requires_login
     async def get_section_content(self, message_id, section_id):
         paragraphs = await self.db_interface.get_section_content(section_id)
-        content = [{'text': paragraph['text'], 'paragraph_id': paragraph['_id']} for paragraph in paragraphs]
+        content = []
+        for db_paragraph in paragraphs:
+            paragraph = {'text': db_paragraph['text'], 'paragraph_id': db_paragraph['_id']}
+            note = db_paragraph.get('note')
+            if note is not None:
+                paragraph['note'] = note
+            content.append(paragraph)
         return GetSectionContentOutgoingMessage(message_id, content)
 
     @requires_login
@@ -279,6 +290,11 @@ class LAWProtocolDispatcher:
     async def delete_paragraph(self, message_id, section_id, paragraph_id):
         await self.db_interface.delete_paragraph(section_id, paragraph_id)
         return DeleteParagraphOutgoingMessage(message_id, "paragraph_deleted")
+
+    @requires_login
+    async def delete_note(self, message_id, section_id, paragraph_id):
+        await self.db_interface.delete_note(section_id, paragraph_id)
+        return DeleteNoteOutgoingMessage(message_id, "note_deleted")
 
     ###########################################################################
     #

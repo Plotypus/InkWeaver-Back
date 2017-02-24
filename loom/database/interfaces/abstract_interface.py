@@ -144,6 +144,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def set_note(self, section_id, paragraph_id, text):
+        pass
+
+    @abstractmethod
     async def delete_story(self, story_id):
         pass
 
@@ -153,6 +157,10 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def delete_paragraph(self, section_id, paragraph_id):
+        pass
+
+    @abstractmethod
+    async def delete_note(self, section_id, paragraph_id):
         pass
 
     ###########################################################################

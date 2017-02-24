@@ -136,6 +136,23 @@ class EditSectionTitleIncomingMessage(IncomingMessage):
 
 ###########################################################################
 #
+# Edit Messages
+#
+###########################################################################
+class SetNoteIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'section_id',
+        'paragraph_id',
+        'note',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.set_note(self.message_id, self.section_id, self.paragraph_id, self.note)
+
+
+###########################################################################
+#
 # Get Messages
 #
 ###########################################################################
@@ -223,3 +240,14 @@ class DeleteParagraphIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.delete_paragraph(self.message_id, self.section_id, self.paragraph_id)
+
+
+class DeleteNoteIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'section_id',
+        'paragraph_id',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.delete_note(self.message_id, self.section_id, self.paragraph_id)
