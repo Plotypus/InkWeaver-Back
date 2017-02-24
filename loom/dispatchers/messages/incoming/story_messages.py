@@ -89,10 +89,13 @@ class AddBookmarkIncomingMessage(IncomingMessage):
         'section_id',
         'paragraph_id',
     ]
+    _optional_fields = [
+        'index'
+    ]
 
     def dispatch(self):
         return self._dispatcher.add_bookmark(self.message_id, self.name, self.story_id, self.section_id,
-                                             self.paragraph_id)
+                                             self.paragraph_id, self.index)
 
 
 ###########################################################################

@@ -202,13 +202,9 @@ class LAWProtocolDispatcher:
         return AddParagraphOutgoingMessage(message_id, paragraph_id)
 
     @requires_login
-    async def add_bookmark(self, message_id, name, story_id, section_id, paragraph_id):
-        try:
-            await self.db_interface.add_bookmark(name, story_id, section_id, paragraph_id)
-        except ValueError:
-            return self.format_failure_json(message_id, "Bookmark name already exists.")
-        else:
-            return AddBookmarkOutgoingMessage(message_id)
+    async def add_bookmark(self, message_id, name, story_id, section_id, paragraph_id, index=None):
+        bookmark_id = await self.db_interface.add_bookmark(name, story_id, section_id, paragraph_id, index)
+        return AddBookmarkOutgoingMessage(message_id, bookmark_id)
 
     @requires_login
     async def edit_story(self, message_id, story_id, update):

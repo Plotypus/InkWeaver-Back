@@ -49,8 +49,9 @@ class AddParagraphOutgoingMessage(OutgoingMessage):
 
 
 class AddBookmarkOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int):
+    def __init__(self, reply_to_id: int, bookmark_id: ObjectId):
         self.reply_to_id = reply_to_id
+        self.bookmark_id = bookmark_id
 
 
 ###########################################################################

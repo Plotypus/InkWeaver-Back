@@ -231,12 +231,10 @@ class MongoDBInterface(AbstractDBInterface):
                 await self.set_paragraph_text(section_id, text, paragraph_id)
             return paragraph_id
 
-    async def add_bookmark(self, name, story_id, section_id, paragraph_id):
-        story = await self.client.get_story(story_id)
-        if name in story['bookmarks']:
-            raise ValueError
-        else:
-            await self.client.set_bookmark(name, story_id, section_id, paragraph_id)
+    async def add_bookmark(self, name, story_id, section_id, paragraph_id, index=None):
+        bookmark_id = ObjectId()
+        await self.client.insert_bookmark(bookmark_id, story_id, section_id, paragraph_id, name, index)
+        return bookmark_id
 
     async def get_story(self, story_id):
         story = await self.client.get_story(story_id)
@@ -244,8 +242,7 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def get_story_bookmarks(self, story_id):
         story = await self.client.get_story(story_id)
-        bookmarks = [{'name': name, **context} for name, context in story['bookmarks'].items()]
-        return bookmarks
+        return story['bookmarks']
 
     async def get_story_hierarchy(self, story_id):
         story = await self.get_story(story_id)

@@ -321,7 +321,7 @@ class MongoDBClient:
             'wiki_id':    wiki_id,
             'users':      [user_description],
             'section_id': section_id,
-            'bookmarks':  dict(),
+            'bookmarks':  list(),
             'statistics': None,
             'settings':   None,
         }
@@ -408,21 +408,6 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
 
-    async def set_bookmark(self, name, story_id, section_id, paragraph_id):
-        context = {
-            'section_id':   section_id,
-            'paragraph_id': paragraph_id,
-        }
-        update_result: UpdateResult = await self.stories.update_one(
-            filter={'_id': story_id},
-            update={
-                '$set': {
-                    f'bookmarks.{name}': context
-                }
-            }
-        )
-        self.assert_update_one_was_successful(update_result)
-
     async def insert_note_for_paragraph(self, paragraph_id: ObjectId, note: str, in_section_id, at_index=None):
         inner_parameters = self._insertion_parameters({
             'paragraph_id': paragraph_id,
@@ -433,6 +418,24 @@ class MongoDBClient:
             update={
                 '$push': {
                     'notes': inner_parameters
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
+    async def insert_bookmark(self, bookmark_id: ObjectId, story_id: ObjectId, section_id: ObjectId,
+                              paragraph_id: ObjectId, name: str, at_index=None):
+        inner_parameters = self._insertion_parameters({
+            'bookmark_id': bookmark_id,
+            'section_id': section_id,
+            'paragraph_id': paragraph_id,
+            'name': name,
+        }, at_index)
+        update_result: UpdateResult = await self.stories.update_one(
+            filter={'_id': story_id},
+            update={
+                '$push': {
+                    'bookmarks': inner_parameters
                 }
             }
         )
