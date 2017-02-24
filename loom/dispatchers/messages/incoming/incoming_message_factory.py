@@ -24,6 +24,7 @@ APPROVED_MESSAGES = {
     'edit_story':                      EditStoryIncomingMessage,
     'edit_paragraph':                  EditParagraphIncomingMessage,
     'edit_section_title':              EditSectionTitleIncomingMessage,
+    'edit_bookmark':                   EditBookmarkIncomingMessage,
     'set_note':                        SetNoteIncomingMessage,
     'get_story_information':           GetStoryInformationIncomingMessage,
     'get_story_bookmarks':             GetStoryBookmarksIncomingMessage,
@@ -34,6 +35,7 @@ APPROVED_MESSAGES = {
     'delete_section':                  DeleteSectionIncomingMessage,
     'delete_paragraph':                DeleteParagraphIncomingMessage,
     'delete_note':                     DeleteNoteIncomingMessage,
+    'delete_bookmark':                 DeleteBookmarkIncomingMessage,
 
     # Wikis
     'create_wiki':                     CreateWikiIncomingMessage,

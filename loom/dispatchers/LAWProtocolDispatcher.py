@@ -230,6 +230,11 @@ class LAWProtocolDispatcher:
         return EditSectionTitleOutgoingMessage(message_id)
 
     @requires_login
+    async def edit_bookmark(self, message_id, story_id, bookmark_id, update):
+        # TODO: Implement this.
+        return EditBookmarkTitleOutgoingMessage(message_id)
+
+    @requires_login
     async def set_note(self, message_id, section_id, paragraph_id, note):
         await self.db_interface.set_note(section_id, paragraph_id, note)
         return SetNoteOutgoingMessage(message_id)
@@ -291,6 +296,11 @@ class LAWProtocolDispatcher:
     async def delete_note(self, message_id, section_id, paragraph_id):
         await self.db_interface.delete_note(section_id, paragraph_id)
         return DeleteNoteOutgoingMessage(message_id, "note_deleted")
+
+    @requires_login
+    async def delete_bookmark(self, message_id, story_id, name):
+        # TODO: Implement this.
+        return DeleteBookmarkOutgoingMessage(message_id, "bookmark_deleted")
 
     ###########################################################################
     #

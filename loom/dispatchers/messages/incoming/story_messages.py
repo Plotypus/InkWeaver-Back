@@ -137,6 +137,18 @@ class EditSectionTitleIncomingMessage(IncomingMessage):
         return self._dispatcher.edit_section_title(self.message_id, self.section_id, self.new_title)
 
 
+class EditBookmarkIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'story_id',
+        'bookmark_id',
+        'update',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.edit_bookmark(self.message_id, self.story_id, self.bookmark_id, self.update)
+
+
 ###########################################################################
 #
 # Set Messages
@@ -254,3 +266,14 @@ class DeleteNoteIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.delete_note(self.message_id, self.section_id, self.paragraph_id)
+
+
+class DeleteBookmarkIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'story_id',
+        'bookmark_id',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.delete_bookmark(self.message_id, self.story_id, self.bookmark_id)
