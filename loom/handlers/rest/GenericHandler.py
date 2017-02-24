@@ -1,11 +1,11 @@
+from loom.loggers import connections
 import loom.serialize as serialize
 
 import tornado.web
 
 class GenericHandler(tornado.web.RequestHandler):
-    """
-    The default Plotypus HTTP request handler.
-    """
+    logger = connections
+
     def encode_json(self, data):
         return serialize.encode_bson_to_string(data)
 
@@ -16,16 +16,26 @@ class GenericHandler(tornado.web.RequestHandler):
         self.write(self.encode_json(dictionary))
 
     def get(self, *args, **kwargs):
-        self.send_error(405)
+        error = 405
+        self.logger.debug(f'GET {self.request.uri} -> {error}')
+        self.send_error(error)
 
     def post(self, *args, **kwargs):
-        self.send_error(405)
+        error = 405
+        self.logger.debug(f'POST {self.request.uri} -> {error}')
+        self.send_error(error)
 
     def put(self, *args, **kwargs):
-        self.send_error(405)
+        error = 405
+        self.logger.debug(f'PUT {self.request.uri} -> {error}')
+        self.send_error(error)
 
     def patch(self, *args, **kwargs):
-        self.send_error(405)
+        error = 405
+        self.logger.debug(f'PATCH {self.request.uri} -> {error}')
+        self.send_error(error)
 
     def delete(self, *args, **kwargs):
-        self.send_error(405)
+        error = 405
+        self.logger.debug(f'DELETE {self.request.uri} -> {error}')
+        self.send_error(error)
