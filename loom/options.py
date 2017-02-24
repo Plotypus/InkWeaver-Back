@@ -74,6 +74,7 @@ class OptionParser:
     def __init__(self):
         self._options = {}
         self._parser = argparse.ArgumentParser()
+        self._initialize_arguments()
 
     @staticmethod
     def _fix_option_name(name):
