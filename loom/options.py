@@ -67,6 +67,7 @@ class OptionParser:
         ('--ssl-key',               'the SSL key file'),
         ('--login-origin',          'hostname to configure CORS during login'),
         ('--logging-prefix',        'directory to prefix to all log files'),
+        ('--logging-level',         'the minimum default logging level'),
         ('--logging-file-level',    'the minimum level to write to log files'),
         ('--logging-out-level',     'the minimum level to write logging information to stdout'),
     ]
