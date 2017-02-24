@@ -10,14 +10,45 @@ class OptionParser:
         'demo_db_prefix':     'demo-db',
         'login_origin':       'https://localhost:3000',
         'logging_prefix':     '/var/log/plotypus/loom',
-        'logging_file_level': 'info',
-        'logging_out_level':  'info',
+        'logging_level':      'INFO',
+        'logging_file_level': 'INFO',
+        'logging_out_level':  'INFO',
     }
 
     _TYPES = {
         'port':         int,
         'db_port':      int,
         'demo_db_port': int,
+    }
+
+    _CHOICES = {
+        'logging_level': [
+            'NOTSET',
+            'DEBUG',
+            'INFO',
+            'WARNING',
+            'ERROR',
+            'CRITICAL',
+            'FATAL',
+        ],
+        'logging_file_level': [
+            'NOTSET',
+            'DEBUG',
+            'INFO',
+            'WARNING',
+            'ERROR',
+            'CRITICAL',
+            'FATAL',
+        ],
+        'logging_out_level': [
+            'NOTSET',
+            'DEBUG',
+            'INFO',
+            'WARNING',
+            'ERROR',
+            'CRITICAL',
+            'FATAL',
+        ],
     }
 
     _ARGUMENTS = [
@@ -40,17 +71,30 @@ class OptionParser:
         ('--logging-out-level',     'the minimum level to write logging information to stdout'),
     ]
 
-    def _fix_option_name(self, name):
+    def __init__(self):
+        self._options = {}
+        self._parser = argparse.ArgumentParser()
+
+    @staticmethod
+    def _fix_option_name(name):
         return name.strip().replace('-', '_')
 
     def _get_option_type(self, name):
         return self._TYPES.get(self._fix_option_name(name), str)
 
-    def __init__(self):
-        self._options = {}
-        self._parser = argparse.ArgumentParser()
+    def _initialize_arguments(self):
         for argument in self._ARGUMENTS:
-            self._parser.add_argument(argument[0], help=argument[1], type=self._get_option_type(argument[0]))
+            arg_name = argument[2:]
+            if arg_name in self._CHOICES:
+                choices = self._CHOICES[arg_name]
+            else:
+                choices = None
+            self._parser.add_argument(
+                name=argument[0],
+                help=argument[1],
+                type=self._get_option_type(argument[0]),
+                choices=choices
+            )
 
     def __getattr__(self, item):
         try:
