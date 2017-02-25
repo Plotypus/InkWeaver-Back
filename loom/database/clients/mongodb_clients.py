@@ -366,7 +366,7 @@ class MongoDBClient:
             'preceding_subsections':  list(),
             'inner_subsections':      list(),
             'succeeding_subsections': list(),
-            'statistics':             None,
+            'statistics':             {'word_frequency': {}, 'word_count': 0},
             'links':                  list(),  # links is a list of lists of links (runs parallel to paragraphs)
             'notes':                  list(),
         }
@@ -430,7 +430,7 @@ class MongoDBClient:
         inner_parameters = self._insertion_parameters({
             '_id':        paragraph_id,
             'text':       text,
-            'statistics': None,
+            'statistics': {'word_frequency': {}, 'word_count': 0},
         }, at_index)
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': to_section_id},
@@ -514,6 +514,18 @@ class MongoDBClient:
         self.assert_update_one_was_successful(update_result)
         self.log(f'set_section_title {{{section_id}}} to title {{{title}}}')
 
+    async def set_section_statistics(self, section_id: ObjectId, wf_table: dict, word_count: int):
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': section_id},
+            update={
+                '$set': {
+                    'statistics.word_frequency': wf_table,
+                    'statistics.word_count': word_count
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
+
     async def set_paragraph_text(self, paragraph_id: ObjectId, text: str, in_section_id: ObjectId):
         update_result: UpdateResult = await self.sections.update_one(
             # For filtering documents in an array, we use the name of the array field
@@ -530,6 +542,19 @@ class MongoDBClient:
         )
         self.assert_update_one_was_successful(update_result)
         self.log(f'set_paragraph_text {{{paragraph_id}}} in section {{{in_section_id}}}')
+
+    async def set_paragraph_statistics(self, paragraph_id: ObjectId, wf_table: dict, word_count: int,
+                                       in_section_id: ObjectId):
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': in_section_id, 'content._id': paragraph_id},
+            update={
+                '$set': {
+                    'content.$.statistics.word_frequency': wf_table,
+                    'content.$.statistics.word_count': word_count
+                }
+            }
+        )
+        self.assert_update_one_was_successful(update_result)
 
     async def set_bookmark_name(self, story_id: ObjectId, bookmark_id: ObjectId, new_name: str):
         update_result: UpdateResult = await self.stories.update_one(
@@ -565,6 +590,16 @@ class MongoDBClient:
         self.log(f'get_section {{{section_id}}}')
         return result
 
+    async def get_section_statistics(self, section_id: ObjectId):
+        projected_section = await self.sections.find_one(
+            filter={'_id': section_id},
+            projection={
+                'statistics': 1,
+                '_id': 0,
+            }
+        )
+        return projected_section['statistics']
+
     async def get_paragraph_ids(self, section_id: ObjectId):
         pipeline = [{'$unwind': '$content'}, {'$match': {'_id': section_id}},
                     {'$project': {'content._id': 1, '_id': 0}}]
@@ -584,6 +619,16 @@ class MongoDBClient:
         )
         self.log(f'get_paragraph_text {{{paragraph_id}}} in section {{{section_id}}}')
         return projected_section['content'][0]['text']
+
+    async def get_paragraph_statistics(self, section_id: ObjectId, paragraph_id: ObjectId):
+        projected_section = await self.sections.find_one(
+            filter={'_id': section_id, 'content._id': paragraph_id},
+            projection={
+                'content.$.statistics': 1,
+                '_id': 0,
+            }
+        )
+        return projected_section['content'][0]['statistics']
 
     async def delete_story(self, story_id: ObjectId):
         delete_result: DeleteResult = await self.stories.delete_one(
