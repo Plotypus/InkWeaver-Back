@@ -61,7 +61,7 @@ class MongoDBClient:
     def __repr__(self):
         return f'<{type(self)}|{self.host}:{self.port}>'
 
-    def log(self, message, log_level = LogLevel.INFO):
+    def log(self, message, log_level=LogLevel.INFO):
         self.logger.log(log_level, f'{repr(self)} {message}')
 
     @property
