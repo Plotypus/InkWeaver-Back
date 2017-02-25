@@ -1,5 +1,6 @@
 from loom import serialize
 from loom.dispatchers.messages.outgoing import OGMEncoder
+from loom.loggers import ws_connections
 
 import json
 import tornado.websocket
@@ -8,9 +9,8 @@ from uuid import uuid4 as generate_uuid
 
 
 class GenericHandler(tornado.websocket.WebSocketHandler):
-    """
-    The default Plotypus WebSocket Handler.
-    """
+    logger = ws_connections
+
     @classmethod
     def encode_json(cls, data):
         # TODO: Temporary fix, should use in serialize.
@@ -31,15 +31,15 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
     def __repr__(self):
         return '<{} {}>'.format(type(self).__name__, self.uuid)
 
-    def write_console_message(self, message):
-        print("{} {}".format(repr(self), message))
+    def write_log(self, message):
+        self.logger.info("{} {}".format(repr(self), message))
 
     def open(self):
         """
         Accept an incoming WS connection.
         :return:
         """
-        self.write_console_message('opened')
+        self.write_log('opened')
 
     def on_message(self, message):
         """
@@ -47,10 +47,10 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
         :param message:
         :return:
         """
-        self.write_console_message('received: {}'.format(message))
+        self.write_log('received: {}'.format(message))
 
     def write_message(self, message, binary=False):
-        self.write_console_message(f'sent response to client: {message}')
+        self.write_log(f'sent response to client: {message}')
         super().write_message(message, binary)
 
     def on_close(self):
@@ -58,7 +58,7 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
         Handle WS termination.
         :return:
         """
-        self.write_console_message('closed')
+        self.write_log('closed')
 
     def check_origin(self, origin):
         """

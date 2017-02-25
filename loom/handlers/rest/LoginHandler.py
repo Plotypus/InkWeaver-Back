@@ -11,6 +11,7 @@ class LoginHandler(GenericHandler):
         self.set_header('Access-Control-Allow-Headers', 'content-type')
 
     async def options(self):
+        self.write_log('OPTIONS', self.request.uri, 204)
         self.set_status(204)
         self.finish()
 
@@ -25,9 +26,12 @@ class LoginHandler(GenericHandler):
                 session_manager = self.settings['session_manager']
                 session_id = session_manager.generate_session_id_for_user(user_id)
                 self.set_secure_session_cookie(session_id)
+                self.write_log('POST', self.request.uri, 200)
             else:
+                self.write_log('POST', self.request.uri, 401)
                 self.send_error(401)
         else:
+            self.write_log('POST', self.request.uri, 422)
             self.send_error(422)
 
     async def _get_user_id_for_username(self, username):

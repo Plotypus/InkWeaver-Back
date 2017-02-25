@@ -1,3 +1,5 @@
+from loom.loggers import db_queries, LogLevel
+
 from bson.objectid import ObjectId
 from motor.core import AgnosticClient, AgnosticDatabase, AgnosticCollection
 from pymongo.results import DeleteResult, UpdateResult
@@ -34,6 +36,8 @@ class ExtraUpdatesError(BadUpdateError):
 
 
 class MongoDBClient:
+    logger = db_queries
+
     def __init__(self, mongodb_client_class, db_name='inkweaver', db_host='localhost', db_port=27017, db_user=None,
                  db_pass=None):
         if db_user and db_pass:
@@ -52,6 +56,15 @@ class MongoDBClient:
         self._database = getattr(self._client, db_name)
         # Attempt to do something in the database to ensure connection was successful.
         self.database.collection_names()
+        self.log("connected")
+
+    def __repr__(self):
+        return f'<{type(self)}|{self.host}:{self.port}>'
+
+    def log(self, message, log_level=LogLevel.INFO):
+        if isinstance(log_level, LogLevel):
+            log_level = log_level.value
+        self.logger.log(log_level, f'{repr(self)} {message}')
 
     @property
     def host(self) -> str:
@@ -174,6 +187,7 @@ class MongoDBClient:
         if _id is not None:
             user['_id'] = _id
         result = await self.users.insert_one(user)
+        self.log(f'create_user {{{username}}}; inserted ID: {{{result.inserted_id}}}')
         return result.inserted_id
 
     async def get_password_hash_for_username(self, username: str) -> str:
@@ -184,7 +198,9 @@ class MongoDBClient:
             }
         )
         if user is None:
+            self.log(f'get_password_hash_for_username {{{username}}} FAILED')
             raise NoMatchError
+        self.log(f'get_password_hash_for_username {{{username}}}', LogLevel.DEBUG)
         return user['password_hash']
 
     async def get_user_id_for_username(self, username: str) -> ObjectId:
@@ -194,7 +210,9 @@ class MongoDBClient:
                 '_id': 1,
             }
         )
-        return user['_id']
+        user_id = user['_id']
+        self.log(f'get_user_id_for_username {{{username}}}; inserted ID {{{user_id}}}')
+        return user_id
 
     async def add_story_to_user(self, user_id: ObjectId, story_id: ObjectId):
         update_result: UpdateResult = await self.users.update_one(
@@ -209,6 +227,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'add_story_to_user {{{story_id}}} for user {{{user_id}}}')
 
     async def add_wiki_to_user(self, user_id: ObjectId, wiki_id: ObjectId):
         update_result: UpdateResult = await self.users.update_one(
@@ -220,6 +239,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'add_wiki_to_user {{{wiki_id}}} for user {{{user_id}}}')
 
     async def set_user_password_hash(self, user_id, password_hash):
         return await self.set_user_field(user_id, 'password_hash', password_hash)
@@ -246,6 +266,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_user_field {{{field}}} for user {{{user_id}}}')
 
     async def set_user_story_position_context(self, user_id, story_id, position_context):
         update_result: UpdateResult = await self.users.update_one(
@@ -257,6 +278,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_user_story_position_context for user {{{user_id}}} for story {{{story_id}}}')
 
     async def get_user_preferences(self, user_id: ObjectId) -> Dict:
         result = await self.users.find_one(
@@ -270,6 +292,7 @@ class MongoDBClient:
                 'avatar':   1,
             }
         )
+        self.log(f'get_user_preferences for user {{{user_id}}}')
         return result
 
     async def get_user_stories(self, user_id: ObjectId) -> List[Dict]:
@@ -280,6 +303,7 @@ class MongoDBClient:
                 'stories': 1,
             }
         )
+        self.log(f'get_user_stories for user {{{user_id}}}')
         return result['stories']
 
     async def get_user_wiki_ids(self, user_id: ObjectId) -> List[ObjectId]:
@@ -290,6 +314,7 @@ class MongoDBClient:
                 'wikis': 1,
             }
         )
+        self.log(f'get_user_wiki_ids for user {{{user_id}}}')
         return result['wikis']
 
     async def remove_story_from_user(self, user_id: ObjectId, story_id: ObjectId):
@@ -302,6 +327,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'remove_story_from_user for user {{{user_id}}} for story {{{story_id}}}')
 
     ###########################################################################
     #
@@ -328,6 +354,8 @@ class MongoDBClient:
         if _id is not None:
             story['_id'] = _id
         result = await self.stories.insert_one(story)
+        self.log(f'create_story {{{title}}} attached to wiki {{{wiki_id}}} with head section {{{section_id}}}; '
+                 f'inserted ID {{{result.inserted_id}}}')
         return result.inserted_id
 
     async def create_section(self, title: str, _id=None) -> ObjectId:
@@ -345,6 +373,7 @@ class MongoDBClient:
         if _id is not None:
             section['_id'] = _id
         result = await self.sections.insert_one(section)
+        self.log(f'create_section {{{title}}}; inserted ID {{{result.inserted_id}}}')
         return result.inserted_id
 
     @staticmethod
@@ -367,6 +396,8 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'insert_preceding_subsection {{{subsection_id}}} to section {{{to_section_id}}} at index '
+                 f'{{{at_index}}}')
 
     async def insert_inner_subsection(self, subsection_id, to_section_id, at_index=None):
         inner_parameters = self._insertion_parameters(subsection_id, at_index)
@@ -379,6 +410,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'insert_inner_subsection {{{subsection_id}}} to section {{{to_section_id}}} at index {{{at_index}}}')
 
     async def insert_succeeding_subsection(self, subsection_id, to_section_id, at_index=None):
         inner_parameters = self._insertion_parameters(subsection_id, at_index)
@@ -391,6 +423,8 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'insert_succeeding_subsection {{{subsection_id}}} to section {{{to_section_id}}} at index '
+                 f'{{{at_index}}}')
 
     async def insert_paragraph(self, paragraph_id: ObjectId, text: str, to_section_id, at_index=None):
         inner_parameters = self._insertion_parameters({
@@ -407,6 +441,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'insert_paragraph {{{paragraph_id}}} to section {{{to_section_id}}} at index {{{at_index}}}')
 
     async def insert_note_for_paragraph(self, paragraph_id: ObjectId, note: str, in_section_id, at_index=None):
         inner_parameters = self._insertion_parameters({
@@ -422,6 +457,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'insert_note_for_paragraph {{{paragraph_id}}} in section {{{in_section_id}}} at index {{{at_index}}}')
 
     async def insert_bookmark(self, bookmark_id: ObjectId, story_id: ObjectId, section_id: ObjectId,
                               paragraph_id: ObjectId, name: str, at_index=None):
@@ -440,6 +476,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'insert_bookmark {{{bookmark_id}}} for story {{{story_id}}}')
 
     async def set_story_wiki(self, story_id: ObjectId, wiki_id: ObjectId):
         update_result: UpdateResult = await self.stories.update_one(
@@ -451,6 +488,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_story_wiki {{{story_id}}} to wiki {{{wiki_id}}}')
 
     async def set_story_title(self, story_id: ObjectId, new_title: str):
         update_result: UpdateResult = await self.stories.update_one(
@@ -462,6 +500,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_story_title {{{story_id}}} to title {{{new_title}}}')
 
     async def set_section_title(self, section_id: ObjectId, title: str):
         update_result: UpdateResult = await self.sections.update_one(
@@ -473,6 +512,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_section_title {{{section_id}}} to title {{{title}}}')
 
     async def set_paragraph_text(self, paragraph_id: ObjectId, text: str, in_section_id: ObjectId):
         update_result: UpdateResult = await self.sections.update_one(
@@ -489,6 +529,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_paragraph_text {{{paragraph_id}}} in section {{{in_section_id}}}')
 
     async def set_bookmark_name(self, story_id: ObjectId, bookmark_id: ObjectId, new_name: str):
         update_result: UpdateResult = await self.stories.update_one(
@@ -500,6 +541,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_bookmark_name {{{bookmark_id}}} in story {{{story_id}}} to {{{new_name}}}')
 
     async def set_note(self, section_id: ObjectId, paragraph_id: ObjectId, text: str):
         update_result: UpdateResult = await self.sections.update_one(
@@ -511,13 +553,16 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_note for paragraph {{{paragraph_id}}} in section {{{section_id}}}')
 
     async def get_story(self, story_id: ObjectId) -> Dict:
         result = await self.stories.find_one({'_id': story_id})
+        self.log(f'get_story {{{story_id}}}')
         return result
 
     async def get_section(self, section_id: ObjectId) -> Dict:
         result = await self.sections.find_one({'_id': section_id})
+        self.log(f'get_section {{{section_id}}}')
         return result
 
     async def get_paragraph_ids(self, section_id: ObjectId):
@@ -526,6 +571,7 @@ class MongoDBClient:
         results = []
         async for doc in self.sections.aggregate(pipeline):
             results.append(doc['content']['_id'])
+        self.log(f'get_paragraph_ids for section {{{section_id}}}')
         return results
 
     async def get_paragraph_text(self, section_id: ObjectId, paragraph_id: ObjectId):
@@ -536,6 +582,7 @@ class MongoDBClient:
                 '_id': 0,
             }
         )
+        self.log(f'get_paragraph_text {{{paragraph_id}}} in section {{{section_id}}}')
         return projected_section['content'][0]['text']
 
     async def delete_story(self, story_id: ObjectId):
@@ -543,6 +590,7 @@ class MongoDBClient:
             filter={'_id': story_id}
         )
         self.assert_delete_one_was_successful(delete_result)
+        self.log(f'delete_story {{{story_id}}}')
 
     async def delete_section(self, section_id: ObjectId):
         parent_update_result: UpdateResult = await self.sections.update_many(
@@ -560,6 +608,7 @@ class MongoDBClient:
             filter={'_id': section_id}
         )
         self.assert_delete_one_was_successful(delete_result)
+        self.log(f'delete_section {{{section_id}}}')
 
     async def delete_paragraph(self, section_id: ObjectId, paragraph_id: ObjectId):
         update_result: UpdateResult = await self.sections.update_one(
@@ -579,6 +628,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'delete_paragraph {{{paragraph_id}}} in section {{{section_id}}}')
 
     async def delete_bookmark_by_id(self, bookmark_id: ObjectId):
         update_result: UpdateResult = await self.stories.update_many(
@@ -591,6 +641,7 @@ class MongoDBClient:
                 }
             }
         )
+        self.log(f'delete_bookmark_by_id {{{bookmark_id}}}')
 
     async def delete_bookmark_by_section_id(self, section_id: ObjectId):
         update_result: UpdateResult = await self.stories.update_many(
@@ -603,6 +654,7 @@ class MongoDBClient:
                 }
             }
         )
+        self.log(f'delete_bookmark_by_section_id {{{section_id}}}')
 
     async def delete_bookmark_by_paragraph_id(self, paragraph_id: ObjectId):
         update_result: UpdateResult = await self.stories.update_many(
@@ -615,6 +667,7 @@ class MongoDBClient:
                 }
             }
         )
+        self.log(f'delete_bookmark_by_paragraph_id {{{paragraph_id}}}')
 
     ###########################################################################
     #
@@ -635,6 +688,7 @@ class MongoDBClient:
         if _id is not None:
             wiki['_id'] = _id
         result = await self.wikis.insert_one(wiki)
+        self.log(f'create_wiki {{{title}}} with head segment {{{segment_id}}}; inserted ID {{{result.inserted_id}}}')
         return result.inserted_id
 
     async def create_segment(self, title: str, template_headings=None, _id=None) -> ObjectId:
@@ -651,6 +705,7 @@ class MongoDBClient:
         if _id is not None:
             segment['_id'] = _id
         result = await self.segments.insert_one(segment)
+        self.log(f'create_segment {{{title}}}; inserted ID {{{result.inserted_id}}}')
         return result.inserted_id
 
     async def create_page(self, title: str, template_headings=None, _id=None) -> ObjectId:
@@ -663,6 +718,7 @@ class MongoDBClient:
         if _id is not None:
             page['_id'] = _id
         result = await self.pages.insert_one(page)
+        self.log(f'create_page {{{title}}}; inserted ID {{{result.inserted_id}}}')
         return result.inserted_id
 
     async def append_segment_to_parent_segment(self, child_segment: ObjectId, parent_segment: ObjectId):
@@ -675,6 +731,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'append_segment_to_parent_segment {{{child_segment}}} to parent {{{parent_segment}}}')
 
     async def append_page_to_parent_segment(self, page_id: ObjectId, segment_id: ObjectId):
         update_result: UpdateResult = await self.segments.update_one(
@@ -686,6 +743,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'append_page_to_parent_segment {{{page_id}}} to parent {{{segment_id}}}')
 
     async def append_template_heading_to_segment(self, title: str, segment_id: ObjectId):
         update_result: UpdateResult = await self.segments.update_one(
@@ -701,6 +759,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'append_template_heading_to_segment {{{title}}} to segment {{{segment_id}}}')
 
     async def insert_heading(self, title: str, page_id: ObjectId, at_index=None):
         heading = {
@@ -717,6 +776,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'insert_heading {{{title}}} to page {{{page_id}}} at index {{{at_index}}}')
 
     async def set_wiki_title(self, new_title:str, wiki_id: ObjectId):
         update_result: UpdateResult = await self.wikis.update_one(
@@ -728,6 +788,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_wiki_title {{{wiki_id}}} to title {{{new_title}}}')
 
     async def set_segment_title(self, title: str, segment_id: ObjectId):
         update_result: UpdateResult = await self.segments.update_one(
@@ -739,6 +800,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_segment_title {{{segment_id}}} to title {{{title}}}')
 
     async def set_template_heading_title(self, old_title: str, new_title: str, segment_id: ObjectId):
         update_result: UpdateResult = await self.segments.update_one(
@@ -750,6 +812,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_template_heading_title from {{{old_title}}} to {{{new_title}}} in segment {{{segment_id}}}')
 
     async def set_template_heading_text(self, title: str, text: str, segment_id: ObjectId):
         update_result: UpdateResult = await self.segments.update_one(
@@ -761,6 +824,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_template_heading_text for heading {{{title}}} in segment {{{segment_id}}}')
 
     async def set_page_title(self, new_title: str, page_id: ObjectId):
         update_result: UpdateResult = await self.pages.update_one(
@@ -772,6 +836,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_page_title {{{page_id}}} to title {{{new_title}}}')
 
     async def set_heading_title(self, old_title: str, new_title: str, page_id: ObjectId):
         update_result: UpdateResult = await self.pages.update_one(
@@ -789,6 +854,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_heading_title from {{{old_title}}} to {{{new_title}}} in page {{{page_id}}}')
 
     async def set_heading_text(self, title: str, text: str, page_id: ObjectId):
         update_result: UpdateResult = await self.pages.update_one(
@@ -806,6 +872,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_heading_text for heading {{{title}}} in page {{{page_id}}}')
 
     async def set_page_references(self, page_id: ObjectId, references: List):
         update_result: UpdateResult = await self.pages.update_one(
@@ -817,17 +884,21 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_page_references {{{page_id}}}')
 
     async def get_wiki(self, wiki_id: ObjectId) -> Dict:
         result = await self.wikis.find_one({'_id': wiki_id})
+        self.log(f'get_wiki {{{wiki_id}}}')
         return result
 
     async def get_segment(self, segment_id: ObjectId) -> Dict:
         result = await self.segments.find_one({'_id': segment_id})
+        self.log(f'get_segment {{{segment_id}}}')
         return result
 
     async def get_page(self, page_id: ObjectId) -> Dict:
         result = await self.pages.find_one({'_id': page_id})
+        self.log(f'get_page {{{page_id}}}')
         return result
 
     async def get_template_heading(self, title: str, segment_id: ObjectId):
@@ -835,6 +906,7 @@ class MongoDBClient:
             '_id':                     segment_id,
             'template_headings.title': title
         })
+        self.log(f'get_template_heading {{{title}}} in segment {{{segment_id}}}')
         return result
 
     async def get_heading(self, title: str, page_id: ObjectId):
@@ -842,6 +914,7 @@ class MongoDBClient:
             '_id':            page_id,
             'headings.title': title
         })
+        self.log(f'get_heading {{{title}}} in page {{{page_id}}}')
         return result
 
     async def get_summaries_of_stories_using_wiki(self, wiki_id: ObjectId):
@@ -852,6 +925,7 @@ class MongoDBClient:
         results = []
         async for result in result_cursor:
             results.append(result)
+        self.log(f'get_summaries_of_stories_using_wiki {{{wiki_id}}}')
         return results
 
     async def delete_wiki(self, wiki_id: ObjectId):
@@ -868,6 +942,7 @@ class MongoDBClient:
             filter={'_id': wiki_id}
         )
         self.assert_delete_one_was_successful(delete_result)
+        self.log(f'delete_wiki {{{wiki_id}}}')
 
     async def delete_segment(self, segment_id: ObjectId):
         parent_update_result: UpdateResult = await self.segments.update_many(
@@ -883,6 +958,7 @@ class MongoDBClient:
             filter={'_id': segment_id}
         )
         self.assert_delete_one_was_successful(delete_result)
+        self.log(f'delete_segment {{{segment_id}}}')
 
     async def delete_template_heading(self, template_heading_title: str, segment_id: ObjectId):
         update_result: UpdateResult = await self.segments.update_one(
@@ -896,6 +972,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'delete_template_heading {{{template_heading_title}}} in segment {{{segment_id}}}')
 
     async def delete_page(self, page_id: ObjectId):
         parent_update_result: UpdateResult = await self.segments.update_many(
@@ -911,6 +988,7 @@ class MongoDBClient:
             filter={'_id': page_id}
         )
         self.assert_delete_one_was_successful(delete_result)
+        self.log(f'delete_page {{{page_id}}}')
 
     async def delete_heading(self, heading_title, page_id):
         update_result: UpdateResult = await self.pages.update_one(
@@ -924,6 +1002,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'delete_heading {{{heading_title}}} in page {{{page_id}}}')
 
     ###########################################################################
     #
@@ -951,10 +1030,12 @@ class MongoDBClient:
         if _id is not None:
             link['_id'] = _id
         result = await self.links.insert_one(link)
+        self.log(f'create_link to page {{{page_id}}} for alias {{{alias_id}}}; inserted ID {{{result.inserted_id}}}')
         return result.inserted_id
 
     async def get_link(self, link_id: ObjectId):
         result = await self.links.find_one({'_id': link_id})
+        self.log(f'get_link {{{link_id}}}')
         return result
 
     async def get_links_in_paragraph(self, paragraph_id: ObjectId, section_id: ObjectId):
@@ -962,6 +1043,7 @@ class MongoDBClient:
             filter={'_id': section_id, 'links.paragraph_id': paragraph_id},
             projection={'links.links': 1, '_id': 0}
         )
+        self.log(f'get_links_in_paragraph {{{paragraph_id}}} in section {{{section_id}}}')
         return section_projection['links'][0]['links']
 
     async def set_link_context(self, link_id: ObjectId, context: Dict):
@@ -974,6 +1056,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_link_context {{{link_id}}}')
 
     async def update_link_context(self, link_id: ObjectId, paragraph_id: ObjectId, text: str, story_id=None,
                                   section_id=None):
@@ -990,6 +1073,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'update_link_context {{{link_id}}}')
 
     async def insert_reference_to_page(self, page_id: ObjectId, link_id: ObjectId, story_id: ObjectId,
                                        section_id: ObjectId, paragraph_id: ObjectId, text=None, index=None):
@@ -1008,6 +1092,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'insert_reference_to_page {{{page_id}}} with link {{{link_id}}}')
 
     async def insert_links_for_paragraph(self, paragraph_id: ObjectId, links: List[ObjectId], in_section_id: ObjectId,
                                          at_index=None):
@@ -1024,6 +1109,8 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'insert_links_for_paragraph {{{paragraph_id}}} in section {{{in_section_id}}} at index '
+                 f'{{{at_index}}}')
 
     async def set_links_in_section(self, section_id: ObjectId, links: List[ObjectId], paragraph_id: ObjectId):
         update_result: UpdateResult = await self.sections.update_one(
@@ -1035,6 +1122,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_links_in_section {{{section_id}}}')
 
     async def remove_reference_from_page(self, link_id: ObjectId, page_id: ObjectId):
         update_result: UpdateResult = await self.pages.update_one(
@@ -1048,12 +1136,14 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'remove_reference_from_page {{{link_id}}} from page {{{page_id}}}')
 
     async def delete_link(self, link_id: ObjectId):
         delete_result: DeleteResult = await self.links.delete_one(
             filter={'_id': link_id}
         )
         self.assert_delete_one_was_successful(delete_result)
+        self.log(f'delete_link {{{link_id}}}')
 
     ###########################################################################
     #
@@ -1070,6 +1160,7 @@ class MongoDBClient:
         if _id is not None:
             alias['_id'] = _id
         result = await self.aliases.insert_one(alias)
+        self.log(f'create_alias {{{name}}} in page {{{page_id}}}; inserted ID {{{result.inserted_id}}}')
         return result.inserted_id
 
     async def set_alias_name(self, name: str, alias_id: ObjectId):
@@ -1082,6 +1173,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_alias_name {{{alias_id}}} to name {{{name}}}')
 
     async def insert_link_to_alias(self, link_id: ObjectId, alias_id: ObjectId):
         update_result: UpdateResult = await self.aliases.update_one(
@@ -1093,9 +1185,11 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'insert_link_to_alias {{{link_id}}} to alias {{{alias_id}}}')
 
     async def get_alias(self, alias_id: ObjectId):
         result = await self.aliases.find_one({'_id': alias_id})
+        self.log(f'get_alias {{{alias_id}}}')
         return result
 
     async def insert_alias_to_page(self, page_id: ObjectId, name: str, alias_id: ObjectId):
@@ -1108,6 +1202,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'insert_alias_to_page {{{alias_id}}} to page {{{page_id}}}')
 
     async def update_alias_name_in_page(self, page_id: ObjectId, old_name: str, new_name: str):
         update_result: UpdateResult = await self.pages.update_one(
@@ -1119,12 +1214,14 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'update_alias_name_in_page {{{page_id}}} from {{{old_name}}} to {{{new_name}}}')
 
     async def get_aliases_from_page(self, page_id: ObjectId):
         result = await self.pages.find_one(
             filter={'_id': page_id},
             projection={'_id': 0, 'aliases': 1}
         )
+        self.log(f'get_aliases_from_page {{{page_id}}}')
         return None if result is None else result['aliases']
 
     async def find_alias_in_page(self, page_id: ObjectId, name: str):
@@ -1134,6 +1231,7 @@ class MongoDBClient:
             {'$project': {alias_field: 1, '_id': 0}},
         ]
         results = []
+        self.log(f'find_alias_in_page {{{page_id}}} with name {{{name}}}')
         async for match in self.pages.aggregate(pipeline):
             results.append(match['aliases'][name])
         if len(results) > 1:
@@ -1153,10 +1251,11 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'remove_alias_from_page {{{alias_name}}} from page {{{page_id}}}')
 
-    async def remove_link_from_alias(self, link_id: ObjectId, page_id: ObjectId):
+    async def remove_link_from_alias(self, link_id: ObjectId, alias_id: ObjectId):
         update_result: UpdateResult = await self.aliases.update_one(
-            filter={'_id': page_id},
+            filter={'_id': alias_id},
             update={
                 '$pull': {
                     'links': link_id,
@@ -1164,12 +1263,14 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'remove_link_from_alias {{{link_id}}} from alias {{{alias_id}}}')
 
     async def delete_alias(self, alias_id: ObjectId):
         delete_result: DeleteResult = await self.aliases.delete_one(
             filter={'_id': alias_id}
         )
         self.assert_delete_one_was_successful(delete_result)
+        self.log(f'delete_alias {{{alias_id}}}')
 
 
 class MongoDBMotorTornadoClient(MongoDBClient):  # pragma: no cover
