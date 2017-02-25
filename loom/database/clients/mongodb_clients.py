@@ -62,6 +62,8 @@ class MongoDBClient:
         return f'<{type(self)}|{self.host}:{self.port}>'
 
     def log(self, message, log_level=LogLevel.INFO):
+        if isinstance(log_level, LogLevel):
+            log_level = log_level.value
         self.logger.log(log_level, f'{repr(self)} {message}')
 
     @property
