@@ -2,7 +2,17 @@ import loom.options
 
 import logging
 
+from enum import Enum
 from os.path import join, abspath
+
+
+class LogLevel(Enum):
+    NOTSET = logging.NOTSET
+    DEBUG = logging.DEBUG
+    INFO = logging.INFO
+    WARNING = logging.WARNING
+    ERROR = logging.ERROR
+    CRITICAL = logging.CRITICAL
 
 
 def make_logger(name, filename=None, null_logger=False,
