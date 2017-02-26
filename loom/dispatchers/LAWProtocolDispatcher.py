@@ -509,15 +509,15 @@ class LAWProtocolDispatcher:
 
     @requires_login
     async def get_story_statistics(self, message_id, story_id):
-        # TODO: Implement this
-        return GetStoryStatisticsOutgoingMessage(message_id, None)
+        stats = await self.db_interface.get_story_statistics(story_id)
+        return GetStoryStatisticsOutgoingMessage(message_id, stats)
 
     @requires_login
     async def get_section_statistics(self, message_id, section_id):
-        # TODO: Implement this
-        return GetSectionStatisticsOutgoingMessage(message_id, None)
+        stats = await self.db_interface.get_section_statistics(section_id)
+        return GetSectionStatisticsOutgoingMessage(message_id, stats)
 
     @requires_login
     async def get_paragraph_statistics(self, message_id, section_id, paragraph_id):
-        # TODO: Implement this
-        return GetParagraphStatisticsOutgoingMessage(message_id, None)
+        stats = await self.db_interface.get_paragraph_statistics(section_id, paragraph_id)
+        return GetParagraphStatisticsOutgoingMessage(message_id, stats)

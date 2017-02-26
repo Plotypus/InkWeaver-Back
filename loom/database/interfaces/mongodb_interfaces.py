@@ -786,6 +786,33 @@ class MongoDBInterface(AbstractDBInterface):
         title = page['title']
         return page['aliases'].get(title) is not None
 
+    ###########################################################################
+    #
+    # Statistics Methods
+    #
+    ###########################################################################
+
+    async def get_story_statistics(self, story_id):
+        story = await self.client.get_story(story_id)
+        stats = await self._recur_get_section_statistics(story['section_id'])
+        return stats
+
+    async def _recur_get_section_statistics(self, section_id):
+        section = await self.client.get_section(section_id)
+        for subsection_id in chain(section['preceding_subsections'],
+                                   section['inner_subsections'],
+                                   section['succeeding_subsections']):
+            subsection_stats = await self._recur_get_section_statistics(subsection_id)
+            section['statistics']['word_frequency'].update(subsection_stats['word_frequency'])
+            section['statistics']['word_count'] += subsection_stats['word_count']
+        return section['statistics']
+
+    async def get_section_statistics(self, section_id):
+        return await self.client.get_section_statistics(section_id)
+
+    async def get_paragraph_statistics(self, section_id, paragraph_id):
+        return await self.client.get_paragraph_statistics(section_id, paragraph_id)
+
 
 class MongoDBTornadoInterface(MongoDBInterface):
     def __init__(self, db_name, db_host, db_port, db_user=None, db_pass=None):
