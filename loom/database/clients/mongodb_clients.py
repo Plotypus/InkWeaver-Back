@@ -525,6 +525,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_section_statistics {{{section_id}}}')
 
     async def set_paragraph_text(self, paragraph_id: ObjectId, text: str, in_section_id: ObjectId):
         update_result: UpdateResult = await self.sections.update_one(
@@ -555,6 +556,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_one_was_successful(update_result)
+        self.log(f'set_paragraph_statistics {{{paragraph_id}}} in section {{{in_section_id}}}')
 
     async def set_bookmark_name(self, story_id: ObjectId, bookmark_id: ObjectId, new_name: str):
         update_result: UpdateResult = await self.stories.update_one(
@@ -598,6 +600,7 @@ class MongoDBClient:
                 '_id': 0,
             }
         )
+        self.log(f'get_section_statistics {{{section_id}}}')
         return projected_section['statistics']
 
     async def get_paragraph_ids(self, section_id: ObjectId):
@@ -628,6 +631,7 @@ class MongoDBClient:
                 '_id': 0,
             }
         )
+        self.log(f'get_paragraph_statistics {{{paragraph_id}}} in section {{{section_id}}}')
         return projected_section['content'][0]['statistics']
 
     async def delete_story(self, story_id: ObjectId):
