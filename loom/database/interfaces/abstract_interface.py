@@ -316,3 +316,21 @@ class AbstractDBInterface(ABC):
     @abstractmethod
     async def delete_alias(self, alias_id):
         pass
+
+    ###########################################################################
+    #
+    # Statistics Methods
+    #
+    ###########################################################################
+
+    @abstractmethod
+    async def get_story_statistics(self, story_id):
+        pass
+
+    @abstractmethod
+    async def get_section_statistics(self, section_id):
+        pass
+
+    @abstractmethod
+    async def get_paragraph_statistics(self, section_id, paragraph_id):
+        pass
