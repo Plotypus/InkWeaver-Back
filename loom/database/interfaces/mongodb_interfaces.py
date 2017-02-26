@@ -1,14 +1,16 @@
 from .abstract_interface import AbstractDBInterface
 
 from loom.database.clients import *
-from loom.serialize import encode_bson_to_string
+from loom.serialize import decode_string_to_bson, encode_bson_to_string
 
 import nltk
 import re
 
 from bson.objectid import ObjectId
+from collections import Counter
 from itertools import chain
 from os.path import dirname, join as pathjoin
+from string import punctuation
 from typing import ClassVar
 
 # Adjust the NLTK path.
@@ -17,7 +19,7 @@ nltk.data.path.insert(0, pathjoin(dirname(dirname(dirname(__file__))), 'nltk_dat
 
 def generate_link_format_regex():
     o = ObjectId()
-    inner_regex = r'([a-f\d]{24})'
+    inner_regex = r'[a-f\d]{24}'
     bson_string = encode_bson_to_string(o)
     # TODO: Temporary fix.
     # Strip the whitespace in the encoding and allow one or more spaces.
@@ -290,7 +292,7 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.set_section_title(section_id, title)
 
     async def set_paragraph_text(self, section_id, text, paragraph_id):
-        sentences_and_links = await self.get_links_from_paragraph(text)
+        sentences_and_links, word_frequencies = await self.get_links_and_word_counts_from_paragraph(text)
         page_updates = {}
         section_links = []
         for sentence, links in sentences_and_links:
@@ -320,6 +322,17 @@ class MongoDBInterface(AbstractDBInterface):
         # Update links for this paragraph for the section.
         await self.client.set_links_in_section(section_id, section_links, paragraph_id)
         await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
+        # Get statistics for section and paragraph
+        section_stats = await self.client.get_section_statistics(section_id)
+        section_wf = Counter(section_stats['word_frequency'])
+        paragraph_stats = await self.client.get_paragraph_statistics(section_id, paragraph_id)
+        paragraph_wf = Counter(paragraph_stats['word_frequency'])
+        # Update statistics for section and paragraph
+        section_wf.subtract(paragraph_wf)
+        section_wf.update(word_frequencies)
+        await self.client.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
+        await self.client.set_paragraph_statistics(paragraph_id, word_frequencies, sum(word_frequencies.values()),
+                                                   section_id)
 
     @staticmethod
     def _update_link_in_references_with_context(references, link_id, context):
@@ -334,21 +347,31 @@ class MongoDBInterface(AbstractDBInterface):
     async def set_note(self, section_id, paragraph_id, text):
         await self.client.set_note(section_id, paragraph_id, text)
 
-    async def get_links_from_paragraph(self, paragraph_text):
+    async def get_links_and_word_counts_from_paragraph(self, paragraph_text):
         # TODO: Support languages other than English.
         sentences = nltk.sent_tokenize(paragraph_text)
+        word_counts = Counter()
         results = []
         for sentence in sentences:
             sentence_links = []
-            potential_link_ids = map(ObjectId, re.findall(self.link_format_regex, sentence))
-            for potential_id in potential_link_ids:
+            links_replaced_sentence = sentence
+            link_matches = re.findall(self.link_format_regex, sentence)
+            for match in link_matches:
+                potential_id = decode_string_to_bson(match)
                 link = await self.get_link(potential_id)
                 if link is not None:
+                    alias = await self.client.get_alias(link['alias_id'])
+                    replacement = alias['name']
+                    links_replaced_sentence = links_replaced_sentence.replace(match, replacement)
                     sentence_links.append(link)
+            # Mongo does not support '$' or '.' in key name, so we replace them with their unicode equivalents.
+            words = [token.replace('.', '').replace('$', '') for token in
+                     nltk.word_tokenize(links_replaced_sentence) if token not in punctuation]
+            word_counts.update(words)
             if sentence_links:
                 sentence_tuple = (sentence, sentence_links)
                 results.append(sentence_tuple)
-        return results
+        return results, word_counts
 
     async def delete_story(self, story_id):
         story = await self.get_story(story_id)
@@ -762,6 +785,33 @@ class MongoDBInterface(AbstractDBInterface):
     async def _page_title_is_alias(self, page):
         title = page['title']
         return page['aliases'].get(title) is not None
+
+    ###########################################################################
+    #
+    # Statistics Methods
+    #
+    ###########################################################################
+
+    async def get_story_statistics(self, story_id):
+        story = await self.client.get_story(story_id)
+        stats = await self._recur_get_section_statistics(story['section_id'])
+        return stats
+
+    async def _recur_get_section_statistics(self, section_id):
+        section = await self.client.get_section(section_id)
+        for subsection_id in chain(section['preceding_subsections'],
+                                   section['inner_subsections'],
+                                   section['succeeding_subsections']):
+            subsection_stats = await self._recur_get_section_statistics(subsection_id)
+            section['statistics']['word_frequency'].update(subsection_stats['word_frequency'])
+            section['statistics']['word_count'] += subsection_stats['word_count']
+        return section['statistics']
+
+    async def get_section_statistics(self, section_id):
+        return await self.client.get_section_statistics(section_id)
+
+    async def get_paragraph_statistics(self, section_id, paragraph_id):
+        return await self.client.get_paragraph_statistics(section_id, paragraph_id)
 
 
 class MongoDBTornadoInterface(MongoDBInterface):

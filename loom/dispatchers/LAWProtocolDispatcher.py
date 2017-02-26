@@ -491,7 +491,6 @@ class LAWProtocolDispatcher:
     #
     ###########################################################################
 
-
     @requires_login
     async def change_alias_name(self, message_id, alias_id, new_name):
         await self.db_interface.change_alias_name(alias_id, new_name)
@@ -501,3 +500,24 @@ class LAWProtocolDispatcher:
     async def delete_alias(self, message_id, alias_id):
         await self.db_interface.delete_alias(alias_id)
         return DeleteAliasOutgoingMessage(message_id, "alias_deleted")
+
+    ###########################################################################
+    #
+    # Statistics Methods
+    #
+    ###########################################################################
+
+    @requires_login
+    async def get_story_statistics(self, message_id, story_id):
+        stats = await self.db_interface.get_story_statistics(story_id)
+        return GetStoryStatisticsOutgoingMessage(message_id, stats)
+
+    @requires_login
+    async def get_section_statistics(self, message_id, section_id):
+        stats = await self.db_interface.get_section_statistics(section_id)
+        return GetSectionStatisticsOutgoingMessage(message_id, stats)
+
+    @requires_login
+    async def get_paragraph_statistics(self, message_id, section_id, paragraph_id):
+        stats = await self.db_interface.get_paragraph_statistics(section_id, paragraph_id)
+        return GetParagraphStatisticsOutgoingMessage(message_id, stats)
