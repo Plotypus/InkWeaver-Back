@@ -478,12 +478,12 @@ class LAWProtocolDispatcher:
     @requires_login
     async def create_link(self, message_id, story_id, section_id, paragraph_id, name, page_id):
         link_id = await self.db_interface.create_link(story_id, section_id, paragraph_id, name, page_id)
-        return CreateLinkOutgoingMessage(message_id, link_id)
+        return CreateLinkOutgoingMessage("link_created", link_id, story_id, section_id, paragraph_id, name, page_id)
 
     @requires_login
     async def delete_link(self, message_id, link_id):
         await self.db_interface.delete_link(link_id)
-        return DeleteLinkOutgoingMessage(message_id, "link_deleted")
+        return DeleteLinkOutgoingMessage("link_deleted", link_id)
 
     ###########################################################################
     #
@@ -494,7 +494,7 @@ class LAWProtocolDispatcher:
     @requires_login
     async def change_alias_name(self, message_id, alias_id, new_name):
         await self.db_interface.change_alias_name(alias_id, new_name)
-        return ChangeAliasNameOutgoingMessage(message_id)
+        return ChangeAliasNameOutgoingMessage("alias_name_changed", alias_id, new_name)
 
     @requires_login
     async def delete_alias(self, message_id, alias_id):

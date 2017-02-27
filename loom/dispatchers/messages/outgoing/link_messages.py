@@ -9,9 +9,15 @@ from bson import ObjectId
 #
 ###########################################################################
 class CreateLinkOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, link_id: ObjectId):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, link_id: ObjectId, story_id: ObjectId, section_id: ObjectId, paragraph_id: ObjectId,
+                 name: str, page_id: ObjectId):
+        self.event = event
         self.link_id = link_id
+        self.story_id = story_id
+        self.section_id = section_id
+        self.paragraph_id = paragraph_id
+        self.name = name
+        self.page_id = page_id
 
     
 ###########################################################################
@@ -20,8 +26,10 @@ class CreateLinkOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class ChangeAliasNameOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, alias_id: ObjectId, new_name: str):
+        self.event = event
+        self.alias_id = alias_id
+        self.new_name = new_name
 
     
 ###########################################################################
@@ -30,6 +38,6 @@ class ChangeAliasNameOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class DeleteLinkOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, event: str):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, link_id: ObjectId):
         self.event = event
+        self.link_id = link_id
