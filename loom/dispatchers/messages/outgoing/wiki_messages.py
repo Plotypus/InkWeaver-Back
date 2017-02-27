@@ -25,25 +25,34 @@ class CreateWikiOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class AddSegmentOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, segment_id: ObjectId):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, segment_id: ObjectId, title: str, parent_id: ObjectId):
+        self.event = event
         self.segment_id = segment_id
+        self.title = title
+        self.parent_id = parent_id
 
     
 class AddTemplateHeadingOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, title: str, segment_id: ObjectId):
+        self.event = event
+        self.title = title
+        self.segment_id = segment_id
 
     
 class AddPageOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, page_id: ObjectId):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, page_id: ObjectId, title: str, parent_id: ObjectId):
+        self.event = event
         self.page_id = page_id
+        self.title = title
+        self.parent_id = parent_id
 
     
 class AddHeadingOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, title: str, page_id: ObjectId, index=None):
+        self.event = event
+        self.title = title
+        self.page_id = page_id
+        self.index = index
 
     
 ###########################################################################
@@ -52,28 +61,40 @@ class AddHeadingOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class EditWikiOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, wiki_id: ObjectId, update: dict):
+        self.event = event
+        self.wiki_id = wiki_id
+        self.update = update
 
 
 class EditSegmentOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, segment_id: ObjectId, update: dict):
+        self.event = event
+        self.segment_id = segment_id
+        self.update = update
 
     
 class EditTemplateHeadingOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, segment_id: ObjectId, template_heading_title: str, update: dict):
+        self.event = event
+        self.segment_id = segment_id
+        self.template_heading_title = template_heading_title
+        self.update = update
 
     
 class EditPageOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, page_id: ObjectId, update: dict):
+        self.event = event
+        self.page_id = page_id
+        self.update = update
 
     
 class EditHeadingOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, page_id: ObjectId, heading_title: str, update: dict):
+        self.event = event
+        self.page_id = page_id
+        self.heading_title = heading_title
+        self.update = update
 
     
 ###########################################################################
@@ -129,36 +150,38 @@ class GetWikiPageOutgoingMessage(OutgoingMessage):
 #
 ###########################################################################
 class DeleteWikiOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, event: str):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, wiki_id: ObjectId):
         self.event = event
+        self.wiki_id = wiki_id
 
     
 class DeleteSegmentOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, event: str):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, segment_id: ObjectId):
         self.event = event
+        self.segment_id = segment_id
     
     
 class DeleteTemplateHeadingOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, event: str):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, segment_id: ObjectId, template_heading_title: str):
         self.event = event
+        self.segment_id = segment_id
+        self.template_heading_title = template_heading_title
 
     
 class DeletePageOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, event: str):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, page_id: ObjectId):
         self.event = event
+        self.page_id = page_id
 
     
 class DeleteHeadingOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, event: str):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, page_id: ObjectId, heading_title: str):
         self.event = event
+        self.page_id = page_id
+        self.heading_title = heading_title
 
     
 class DeleteAliasOutgoingMessage(OutgoingMessage):
-    def __init__(self, reply_to_id: int, event: str):
-        self.reply_to_id = reply_to_id
+    def __init__(self, event: str, alias_id: ObjectId):
         self.event = event
+        self.alias_id = alias_id
