@@ -184,34 +184,36 @@ class LAWProtocolDispatcher:
     @requires_login
     async def add_preceding_subsection(self, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_preceding_subsection(title, parent_id, index)
-        return AddPrecedingSubsectionOutgoingMessage(message_id, subsection_id)
+        return AddPrecedingSubsectionOutgoingMessage("preceding_subsection_added", subsection_id, title, parent_id,
+                                                     index)
 
     @requires_login
     async def add_inner_subsection(self, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_inner_subsection(title, parent_id, index)
-        return AddInnerSubsectionOutgoingMessage(message_id, subsection_id)
+        return AddInnerSubsectionOutgoingMessage("inner_subsection_added", subsection_id, title, parent_id, index)
 
     @requires_login
     async def add_succeeding_subsection(self, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_succeeding_subsection(title, parent_id, index)
-        return AddSucceedingSubsectionOutgoingMessage(message_id, subsection_id)
+        return AddSucceedingSubsectionOutgoingMessage("succeeding_subsection_added", subsection_id, title, parent_id,
+                                                      index)
 
     @requires_login
     async def add_paragraph(self, message_id, section_id, text, succeeding_paragraph_id=None):
         paragraph_id = await self.db_interface.add_paragraph(section_id, text, succeeding_paragraph_id)
-        return AddParagraphOutgoingMessage(message_id, paragraph_id)
+        return AddParagraphOutgoingMessage("paragraph_added", paragraph_id, section_id, text, succeeding_paragraph_id)
 
     @requires_login
     async def add_bookmark(self, message_id, name, story_id, section_id, paragraph_id, index=None):
         bookmark_id = await self.db_interface.add_bookmark(name, story_id, section_id, paragraph_id, index)
-        return AddBookmarkOutgoingMessage(message_id, bookmark_id)
+        return AddBookmarkOutgoingMessage("bookmark_added", bookmark_id, story_id, section_id, paragraph_id, index)
 
     @requires_login
     async def edit_story(self, message_id, story_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_story_title(story_id, title)
-            return EditStoryOutgoingMessage(message_id)
+            return EditStoryOutgoingMessage("story_updated", story_id, update)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
@@ -220,28 +222,28 @@ class LAWProtocolDispatcher:
         if update['update_type'] == 'set_text':
             text = update['text']
             await self.db_interface.set_paragraph_text(section_id, paragraph_id=paragraph_id, text=text)
-            return EditParagraphOutgoingMessage(message_id)
+            return EditParagraphOutgoingMessage("paragraph_updated", section_id, update, paragraph_id)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
     @requires_login
     async def edit_section_title(self, message_id, section_id, new_title):
         await self.db_interface.set_section_title(section_id, new_title)
-        return EditSectionTitleOutgoingMessage(message_id)
+        return EditSectionTitleOutgoingMessage("section_title_updated", section_id, new_title)
 
     @requires_login
     async def edit_bookmark(self, message_id, story_id, bookmark_id, update):
         if update['update_type'] == 'set_name':
             name = update['name']
             await self.db_interface.set_bookmark_name(story_id, bookmark_id, name)
-            return EditBookmarkTitleOutgoingMessage(message_id)
+            return EditBookmarkTitleOutgoingMessage("bookmark_updated", story_id, bookmark_id, update)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
     @requires_login
     async def set_note(self, message_id, section_id, paragraph_id, note):
         await self.db_interface.set_note(section_id, paragraph_id, note)
-        return SetNoteOutgoingMessage(message_id)
+        return SetNoteOutgoingMessage("note_updated", section_id, paragraph_id, note)
 
     @requires_login
     async def get_story_information(self, message_id, story_id):
@@ -284,27 +286,27 @@ class LAWProtocolDispatcher:
     @requires_login
     async def delete_story(self, message_id, story_id):
         await self.db_interface.delete_story(story_id)
-        return DeleteStoryOutgoingMessage(message_id, "story_deleted")
+        return DeleteStoryOutgoingMessage("story_deleted", story_id)
 
     @requires_login
     async def delete_section(self, message_id, section_id):
         await self.db_interface.delete_section(section_id)
-        return DeleteSectionOutgoingMessage(message_id, "section_deleted")
+        return DeleteSectionOutgoingMessage("section_deleted", section_id)
 
     @requires_login
     async def delete_paragraph(self, message_id, section_id, paragraph_id):
         await self.db_interface.delete_paragraph(section_id, paragraph_id)
-        return DeleteParagraphOutgoingMessage(message_id, "paragraph_deleted")
+        return DeleteParagraphOutgoingMessage("paragraph_deleted", section_id, paragraph_id)
 
     @requires_login
     async def delete_note(self, message_id, section_id, paragraph_id):
         await self.db_interface.delete_note(section_id, paragraph_id)
-        return DeleteNoteOutgoingMessage(message_id, "note_deleted")
+        return DeleteNoteOutgoingMessage("note_deleted", section_id, paragraph_id)
 
     @requires_login
     async def delete_bookmark(self, message_id, bookmark_id):
         await self.db_interface.delete_bookmark(bookmark_id)
-        return DeleteBookmarkOutgoingMessage(message_id, "bookmark_deleted")
+        return DeleteBookmarkOutgoingMessage("bookmark_deleted", bookmark_id)
 
     ###########################################################################
     #
@@ -494,7 +496,7 @@ class LAWProtocolDispatcher:
     @requires_login
     async def change_alias_name(self, message_id, alias_id, new_name):
         await self.db_interface.change_alias_name(alias_id, new_name)
-        return ChangeAliasNameOutgoingMessage("alias_name_changed", alias_id, new_name)
+        return ChangeAliasNameOutgoingMessage("alias_updated", alias_id, new_name)
 
     @requires_login
     async def delete_alias(self, message_id, alias_id):
