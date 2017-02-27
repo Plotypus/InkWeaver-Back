@@ -135,14 +135,17 @@ class LAWProtocolDispatcher:
     @requires_login
     async def set_user_name(self, message_id, name):
         await self.db_interface.set_user_name(self.user_id, name)
+        return SetUserNameOutgoingMessage(message_id)
 
     @requires_login
     async def set_user_email(self, message_id, email):
         await self.db_interface.set_user_email(self.user_id, email)
+        return SetUserEmailOutgoingMessage(message_id)
 
     @requires_login
     async def set_user_bio(self, message_id, bio):
         await self.db_interface.set_user_bio(self.user_id, bio)
+        return SetUserBioOutgoingMessage(message_id)
 
     # TODO: Implement this.
     # async def set_user_avatar(self, message_id, avatar):
