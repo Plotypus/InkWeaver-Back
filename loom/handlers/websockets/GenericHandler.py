@@ -1,5 +1,5 @@
 from loom import serialize
-from loom.dispatchers.messages.outgoing import OGMEncoder
+from loom.messages.outgoing import OGMEncoder
 from loom.loggers import ws_connections
 
 import json
