@@ -6,7 +6,7 @@ from enum import Enum
 from os.path import join, abspath
 
 
-class LogLevel(Enum):
+class LogLevel:
     NOTSET = logging.NOTSET
     DEBUG = logging.DEBUG
     INFO = logging.INFO
@@ -23,21 +23,22 @@ def make_logger(name, filename=None, null_logger=False,
     if logger_level is None:
         logger_level = logging.WARNING
     logger.setLevel(logger_level)
-    if null_logger:
-        logger.addHandler(logging.NullHandler())
-        return logger
-    if filename is None:
-        filename = f'{name}.log'
-    if file_level:
-        if loom.options.parser.logging_prefix is not None:
-            filename = join(abspath(loom.options.parser.logging_prefix), filename)
-        file_handler = logging.FileHandler(filename)
-        file_handler.setLevel(file_level)
-        logger.addHandler(file_handler)
-    if stream_level:
-        stream_handler = logging.StreamHandler()
-        stream_handler.setLevel(stream_level)
-        logger.addHandler(stream_handler)
+    if logger.level != LogLevel.NOTSET:
+        if null_logger:
+            logger.addHandler(logging.NullHandler())
+            return logger
+        if filename is None:
+            filename = f'{name}.log'
+        if file_level and loom.options.parser.logging_file_level != logging._levelToName[LogLevel.NOTSET]:
+            if loom.options.parser.logging_prefix is not None:
+                filename = join(abspath(loom.options.parser.logging_prefix), filename)
+            file_handler = logging.FileHandler(filename)
+            file_handler.setLevel(file_level)
+            logger.addHandler(file_handler)
+        if stream_level:
+            stream_handler = logging.StreamHandler()
+            stream_handler.setLevel(stream_level)
+            logger.addHandler(stream_handler)
     return logger
 
 
