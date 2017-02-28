@@ -16,7 +16,6 @@ class Router:
 
     def subscribe(self, object_id: ObjectId, handler: LoomHandler):
         uuid = handler.uuid
-        self.handler_map[uuid] = handler
         self.lookup_map[uuid] = object_id
         self.broadcast_map[object_id].add(uuid)
 
@@ -28,7 +27,11 @@ class Router:
         self.broadcast_map[object_id].remove(uuid)
         del(self.lookup_map[uuid])
 
-    def remove(self, handler: LoomHandler):
+    def connect(self, handler: LoomHandler):
+        uuid = handler.uuid
+        self.handler_map[uuid] = handler
+
+    def disconnect(self, handler: LoomHandler):
         uuid = handler.uuid
         object_id = self.lookup_map[uuid]
         self._unsubscribe(object_id, uuid)
