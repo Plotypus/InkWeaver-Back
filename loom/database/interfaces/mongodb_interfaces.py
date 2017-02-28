@@ -808,7 +808,7 @@ class MongoDBInterface(AbstractDBInterface):
         return section['statistics']
 
     async def get_section_statistics(self, section_id):
-        return await self.client.get_section_statistics(section_id)
+        return await self._recur_get_section_statistics(section_id)
 
     async def get_paragraph_statistics(self, section_id, paragraph_id):
         return await self.client.get_paragraph_statistics(section_id, paragraph_id)
