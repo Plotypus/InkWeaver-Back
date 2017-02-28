@@ -1,3 +1,4 @@
+from .outgoing_message import OutgoingMessage, UnicastMessage, BroadcastMessage, StoryBroadcastMessage, WikiBroadcastMessage
 from .link_messages import *
 from .statistics_messages import *
 from .story_messages import *

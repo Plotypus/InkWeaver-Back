@@ -1,3 +1,4 @@
+from .incoming_message import IncomingMessage
 from .incoming_message_factory import IncomingMessageFactory
 from .link_messages import *
 from .story_messages import *
