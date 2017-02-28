@@ -1,4 +1,4 @@
-from .outgoing_message import OutgoingMessage
+from .outgoing_message import UnicastMessage
 
 
 ###########################################################################
@@ -6,19 +6,19 @@ from .outgoing_message import OutgoingMessage
 # Get Messages
 #
 ###########################################################################
-class GetStoryStatisticsOutgoingMessage(OutgoingMessage):
+class GetStoryStatisticsOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, statistics: dict):
         self.reply_to_id = reply_to_id
         self.statistics = statistics
 
 
-class GetSectionStatisticsOutgoingMessage(OutgoingMessage):
+class GetSectionStatisticsOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, statistics: dict):
         self.reply_to_id = reply_to_id
         self.statistics = statistics
 
 
-class GetParagraphStatisticsOutgoingMessage(OutgoingMessage):
+class GetParagraphStatisticsOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, statistics: dict):
         self.reply_to_id = reply_to_id
         self.statistics = statistics

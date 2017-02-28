@@ -1,4 +1,4 @@
-from .outgoing_message import OutgoingMessage
+from .outgoing_message import StoryBroadcastMessage
 
 from bson import ObjectId
 
@@ -8,7 +8,7 @@ from bson import ObjectId
 # Create Messages
 #
 ###########################################################################
-class CreateLinkOutgoingMessage(OutgoingMessage):
+class CreateLinkOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, link_id: ObjectId, story_id: ObjectId, section_id: ObjectId, paragraph_id: ObjectId,
                  name: str, page_id: ObjectId):
         self.event = event
@@ -25,7 +25,7 @@ class CreateLinkOutgoingMessage(OutgoingMessage):
 # Edit Messages
 #
 ###########################################################################
-class ChangeAliasNameOutgoingMessage(OutgoingMessage):
+class ChangeAliasNameOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, alias_id: ObjectId, new_name: str):
         self.event = event
         self.alias_id = alias_id
@@ -37,7 +37,7 @@ class ChangeAliasNameOutgoingMessage(OutgoingMessage):
 # Delete Messages
 #
 ###########################################################################
-class DeleteLinkOutgoingMessage(OutgoingMessage):
+class DeleteLinkOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, link_id: ObjectId):
         self.event = event
         self.link_id = link_id

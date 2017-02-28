@@ -1,4 +1,4 @@
-from .. import OutgoingMessage
+from ..outgoing_message import OutgoingMessage
 
 
 class AddTextToSectionOutgoingMessage(OutgoingMessage):

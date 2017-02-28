@@ -1,4 +1,4 @@
-from .outgoing_message import OutgoingMessage
+from .outgoing_message import UnicastMessage, WikiBroadcastMessage
 
 from bson import ObjectId
 
@@ -8,7 +8,7 @@ from bson import ObjectId
 # Create Messages
 #
 ###########################################################################
-class CreateWikiOutgoingMessage(OutgoingMessage):
+class CreateWikiOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, wiki_title: str, wiki_id: ObjectId, segment_id: ObjectId, users: list,
                  summary: str):
         self.reply_to_id = reply_to_id
@@ -24,7 +24,7 @@ class CreateWikiOutgoingMessage(OutgoingMessage):
 # Add Messages
 #
 ###########################################################################
-class AddSegmentOutgoingMessage(OutgoingMessage):
+class AddSegmentOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, segment_id: ObjectId, title: str, parent_id: ObjectId):
         self.event = event
         self.segment_id = segment_id
@@ -32,14 +32,14 @@ class AddSegmentOutgoingMessage(OutgoingMessage):
         self.parent_id = parent_id
 
     
-class AddTemplateHeadingOutgoingMessage(OutgoingMessage):
+class AddTemplateHeadingOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, title: str, segment_id: ObjectId):
         self.event = event
         self.title = title
         self.segment_id = segment_id
 
     
-class AddPageOutgoingMessage(OutgoingMessage):
+class AddPageOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, page_id: ObjectId, title: str, parent_id: ObjectId):
         self.event = event
         self.page_id = page_id
@@ -47,7 +47,7 @@ class AddPageOutgoingMessage(OutgoingMessage):
         self.parent_id = parent_id
 
     
-class AddHeadingOutgoingMessage(OutgoingMessage):
+class AddHeadingOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, title: str, page_id: ObjectId, index=None):
         self.event = event
         self.title = title
@@ -60,21 +60,21 @@ class AddHeadingOutgoingMessage(OutgoingMessage):
 # Edit Messages
 #
 ###########################################################################
-class EditWikiOutgoingMessage(OutgoingMessage):
+class EditWikiOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, wiki_id: ObjectId, update: dict):
         self.event = event
         self.wiki_id = wiki_id
         self.update = update
 
 
-class EditSegmentOutgoingMessage(OutgoingMessage):
+class EditSegmentOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, segment_id: ObjectId, update: dict):
         self.event = event
         self.segment_id = segment_id
         self.update = update
 
     
-class EditTemplateHeadingOutgoingMessage(OutgoingMessage):
+class EditTemplateHeadingOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, segment_id: ObjectId, template_heading_title: str, update: dict):
         self.event = event
         self.segment_id = segment_id
@@ -82,14 +82,14 @@ class EditTemplateHeadingOutgoingMessage(OutgoingMessage):
         self.update = update
 
     
-class EditPageOutgoingMessage(OutgoingMessage):
+class EditPageOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, page_id: ObjectId, update: dict):
         self.event = event
         self.page_id = page_id
         self.update = update
 
     
-class EditHeadingOutgoingMessage(OutgoingMessage):
+class EditHeadingOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, page_id: ObjectId, heading_title: str, update: dict):
         self.event = event
         self.page_id = page_id
@@ -102,7 +102,7 @@ class EditHeadingOutgoingMessage(OutgoingMessage):
 # Get Messages
 #
 ###########################################################################
-class GetWikiInformationOutgoingMessage(OutgoingMessage):
+class GetWikiInformationOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, wiki_title: str, segment_id: ObjectId, users: list,
                  summary: str):
         self.reply_to_id = reply_to_id
@@ -112,21 +112,21 @@ class GetWikiInformationOutgoingMessage(OutgoingMessage):
         self.summary = summary
 
     
-class GetWikiHierarchyOutgoingMessage(OutgoingMessage):
+class GetWikiHierarchyOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, hierarchy: dict, link_table: list):
         self.reply_to_id = reply_to_id
         self.hierarchy = hierarchy
         self.link_table = link_table
 
     
-class GetWikiSegmentHierarchyOutgoingMessage(OutgoingMessage):
+class GetWikiSegmentHierarchyOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, hierarchy: dict, link_table: list):
         self.reply_to_id = reply_to_id
         self.hierarchy = hierarchy
         self.link_table = link_table
     
     
-class GetWikiSegmentOutgoingMessage(OutgoingMessage):
+class GetWikiSegmentOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, title: str, segments: list, pages: list, template_headings: list):
         self.reply_to_id = reply_to_id
         self.title = title
@@ -135,7 +135,7 @@ class GetWikiSegmentOutgoingMessage(OutgoingMessage):
         self.template_headings = template_headings
 
     
-class GetWikiPageOutgoingMessage(OutgoingMessage):
+class GetWikiPageOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, title: str, aliases: dict, references: list, headings: list):
         self.reply_to_id = reply_to_id
         self.title = title
@@ -149,39 +149,39 @@ class GetWikiPageOutgoingMessage(OutgoingMessage):
 # Delete Messages
 #
 ###########################################################################
-class DeleteWikiOutgoingMessage(OutgoingMessage):
+class DeleteWikiOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, wiki_id: ObjectId):
         self.event = event
         self.wiki_id = wiki_id
 
     
-class DeleteSegmentOutgoingMessage(OutgoingMessage):
+class DeleteSegmentOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, segment_id: ObjectId):
         self.event = event
         self.segment_id = segment_id
     
     
-class DeleteTemplateHeadingOutgoingMessage(OutgoingMessage):
+class DeleteTemplateHeadingOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, segment_id: ObjectId, template_heading_title: str):
         self.event = event
         self.segment_id = segment_id
         self.template_heading_title = template_heading_title
 
     
-class DeletePageOutgoingMessage(OutgoingMessage):
+class DeletePageOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, page_id: ObjectId):
         self.event = event
         self.page_id = page_id
 
     
-class DeleteHeadingOutgoingMessage(OutgoingMessage):
+class DeleteHeadingOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, page_id: ObjectId, heading_title: str):
         self.event = event
         self.page_id = page_id
         self.heading_title = heading_title
 
     
-class DeleteAliasOutgoingMessage(OutgoingMessage):
+class DeleteAliasOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, event: str, alias_id: ObjectId):
         self.event = event
         self.alias_id = alias_id

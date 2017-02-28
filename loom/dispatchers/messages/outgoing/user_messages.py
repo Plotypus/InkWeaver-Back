@@ -1,4 +1,4 @@
-from .outgoing_message import OutgoingMessage
+from .outgoing_message import UnicastMessage
 
 
 ###########################################################################
@@ -6,7 +6,7 @@ from .outgoing_message import OutgoingMessage
 # Get Messages
 #
 ###########################################################################
-class GetUserPreferencesOutgoingMessage(OutgoingMessage):
+class GetUserPreferencesOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, username: str, name: str, email: str, bio: str, avatar: str):
         self.reply_to_id = reply_to_id
         self.username = username
@@ -16,13 +16,13 @@ class GetUserPreferencesOutgoingMessage(OutgoingMessage):
         self.avatar = avatar
 
     
-class GetUserStoriesOutgoingMessage(OutgoingMessage):
+class GetUserStoriesOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, stories: list):
         self.reply_to_id = reply_to_id
         self.stories = stories
 
     
-class GetUserWikisOutgoingMessage(OutgoingMessage):
+class GetUserWikisOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, wikis: list):
         self.reply_to_id = reply_to_id
         self.wikis = wikis
@@ -33,17 +33,17 @@ class GetUserWikisOutgoingMessage(OutgoingMessage):
 # Set Messages
 #
 ###########################################################################
-class SetUserNameOutgoingMessage(OutgoingMessage):
+class SetUserNameOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int):
         self.reply_to_id = reply_to_id
 
 
-class SetUserEmailOutgoingMessage(OutgoingMessage):
+class SetUserEmailOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int):
         self.reply_to_id = reply_to_id
 
 
-class SetUserBioOutgoingMessage(OutgoingMessage):
+class SetUserBioOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int):
         self.reply_to_id = reply_to_id
 
@@ -53,7 +53,7 @@ class SetUserBioOutgoingMessage(OutgoingMessage):
 # Login Messages
 #
 ###########################################################################
-class UserLoginOutgoingMessage(OutgoingMessage):
+class UserLoginOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, event: str):
         self.reply_to_id = reply_to_id
         self.event = event

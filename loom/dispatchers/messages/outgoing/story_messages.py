@@ -1,4 +1,4 @@
-from .outgoing_message import OutgoingMessage
+from .outgoing_message import UnicastMessage, StoryBroadcastMessage
 
 from bson import ObjectId
 
@@ -8,7 +8,7 @@ from bson import ObjectId
 # Create Messages
 #
 ###########################################################################
-class CreateStoryOutgoingMessage(OutgoingMessage):
+class CreateStoryOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, story_title: str, story_id: ObjectId, section_id: ObjectId, wiki_id: ObjectId,
                  users: list):
         self.reply_to_id = reply_to_id
@@ -24,7 +24,7 @@ class CreateStoryOutgoingMessage(OutgoingMessage):
 # Add Messages
 #
 ###########################################################################
-class AddPrecedingSubsectionOutgoingMessage(OutgoingMessage):
+class AddPrecedingSubsectionOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, section_id: ObjectId, title: str, parent_id: ObjectId, index=None):
         self.event = event
         self.section_id = section_id
@@ -33,7 +33,7 @@ class AddPrecedingSubsectionOutgoingMessage(OutgoingMessage):
         self.index = index
 
 
-class AddInnerSubsectionOutgoingMessage(OutgoingMessage):
+class AddInnerSubsectionOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, section_id: ObjectId, title: str, parent_id: ObjectId, index=None):
         self.event = event
         self.section_id = section_id
@@ -42,7 +42,7 @@ class AddInnerSubsectionOutgoingMessage(OutgoingMessage):
         self.index = index
 
 
-class AddSucceedingSubsectionOutgoingMessage(OutgoingMessage):
+class AddSucceedingSubsectionOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, section_id: ObjectId, title: str, parent_id: ObjectId, index=None):
         self.event = event
         self.section_id = section_id
@@ -51,7 +51,7 @@ class AddSucceedingSubsectionOutgoingMessage(OutgoingMessage):
         self.index = index
 
 
-class AddParagraphOutgoingMessage(OutgoingMessage):
+class AddParagraphOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, paragraph_id: ObjectId, section_id: ObjectId, text: str,
                  succeeding_paragraph_id=None):
         self.event = event
@@ -61,7 +61,7 @@ class AddParagraphOutgoingMessage(OutgoingMessage):
         self.succeeding_paragraph_id = succeeding_paragraph_id
 
 
-class AddBookmarkOutgoingMessage(OutgoingMessage):
+class AddBookmarkOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, bookmark_id: ObjectId, story_id: ObjectId, section_id: ObjectId,
                  paragraph_id: ObjectId, index=None):
         self.event = event
@@ -77,14 +77,14 @@ class AddBookmarkOutgoingMessage(OutgoingMessage):
 # Edit Messages
 #
 ###########################################################################
-class EditStoryOutgoingMessage(OutgoingMessage):
+class EditStoryOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, story_id: ObjectId, update: dict):
         self.event = event
         self.story_id = story_id
         self.update = update
 
 
-class EditParagraphOutgoingMessage(OutgoingMessage):
+class EditParagraphOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, section_id: ObjectId, update: dict, paragraph_id: ObjectId):
         self.event = event
         self.section_id = section_id
@@ -92,14 +92,14 @@ class EditParagraphOutgoingMessage(OutgoingMessage):
         self.paragraph_id = paragraph_id
 
 
-class EditSectionTitleOutgoingMessage(OutgoingMessage):
+class EditSectionTitleOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, section_id: ObjectId, new_title: str):
         self.event = event
         self.section_id = section_id
         self.new_title = new_title
 
 
-class EditBookmarkTitleOutgoingMessage(OutgoingMessage):
+class EditBookmarkTitleOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, story_id: ObjectId, bookmark_id: ObjectId, update: dict):
         self.event = event
         self.story_id = story_id
@@ -112,7 +112,7 @@ class EditBookmarkTitleOutgoingMessage(OutgoingMessage):
 # Set Messages
 #
 ###########################################################################
-class SetNoteOutgoingMessage(OutgoingMessage):
+class SetNoteOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, section_id: ObjectId, paragraph_id: ObjectId, note: str):
         self.event = event
         self.section_id = section_id
@@ -125,7 +125,7 @@ class SetNoteOutgoingMessage(OutgoingMessage):
 # Get Messages
 #
 ###########################################################################
-class GetStoryInformationOutgoingMessage(OutgoingMessage):
+class GetStoryInformationOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, story_title: str, section_id: ObjectId, wiki_id: ObjectId, users: list):
         self.reply_to_id = reply_to_id
         self.story_title = story_title
@@ -134,25 +134,25 @@ class GetStoryInformationOutgoingMessage(OutgoingMessage):
         self.users = users
 
 
-class GetStoryBookmarksOutgoingMessage(OutgoingMessage):
+class GetStoryBookmarksOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, bookmarks: list):
         self.reply_to_id = reply_to_id
         self.bookmarks = bookmarks
 
 
-class GetStoryHierarchyOutgoingMessage(OutgoingMessage):
+class GetStoryHierarchyOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, hierarchy: dict):
         self.reply_to_id = reply_to_id
         self.hierarchy = hierarchy
 
 
-class GetSectionHierarchyOutgoingMessage(OutgoingMessage):
+class GetSectionHierarchyOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, hierarchy: dict):
         self.reply_to_id = reply_to_id
         self.hierarchy = hierarchy
 
 
-class GetSectionContentOutgoingMessage(OutgoingMessage):
+class GetSectionContentOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, content: list):
         self.reply_to_id = reply_to_id
         self.content = content
@@ -163,33 +163,33 @@ class GetSectionContentOutgoingMessage(OutgoingMessage):
 # Delete Messages
 #
 ###########################################################################
-class DeleteStoryOutgoingMessage(OutgoingMessage):
+class DeleteStoryOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, story_id: ObjectId):
         self.event = event
         self.story_id = story_id
 
 
-class DeleteSectionOutgoingMessage(OutgoingMessage):
+class DeleteSectionOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, section_id: ObjectId):
         self.event = event
         self.section_id = section_id
 
 
-class DeleteParagraphOutgoingMessage(OutgoingMessage):
+class DeleteParagraphOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, section_id: ObjectId, paragraph_id: ObjectId):
         self.event = event
         self.section_id = section_id
         self.paragraph_id = paragraph_id
 
 
-class DeleteNoteOutgoingMessage(OutgoingMessage):
+class DeleteNoteOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, section_id: ObjectId, paragraph_id: ObjectId):
         self.event = event
         self.section_id = section_id
         self.paragraph_id = paragraph_id
 
 
-class DeleteBookmarkOutgoingMessage(OutgoingMessage):
+class DeleteBookmarkOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, bookmark_id: ObjectId):
         self.event = event
         self.bookmark_id = bookmark_id
