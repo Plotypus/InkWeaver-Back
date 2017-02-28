@@ -239,7 +239,7 @@ class LAWProtocolDispatcher:
         if update['update_type'] == 'set_name':
             name = update['name']
             await self.db_interface.set_bookmark_name(story_id, bookmark_id, name)
-            return EditBookmarkTitleOutgoingMessage("bookmark_updated", story_id, bookmark_id, update)
+            return EditBookmarkOutgoingMessage("bookmark_updated", story_id, bookmark_id, update)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
