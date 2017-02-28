@@ -135,14 +135,17 @@ class LAWProtocolDispatcher:
     @requires_login
     async def set_user_name(self, message_id, name):
         await self.db_interface.set_user_name(self.user_id, name)
+        return SetUserNameOutgoingMessage(message_id)
 
     @requires_login
     async def set_user_email(self, message_id, email):
         await self.db_interface.set_user_email(self.user_id, email)
+        return SetUserEmailOutgoingMessage(message_id)
 
     @requires_login
     async def set_user_bio(self, message_id, bio):
         await self.db_interface.set_user_bio(self.user_id, bio)
+        return SetUserBioOutgoingMessage(message_id)
 
     # TODO: Implement this.
     # async def set_user_avatar(self, message_id, avatar):
@@ -184,34 +187,36 @@ class LAWProtocolDispatcher:
     @requires_login
     async def add_preceding_subsection(self, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_preceding_subsection(title, parent_id, index)
-        return AddPrecedingSubsectionOutgoingMessage(message_id, subsection_id)
+        return AddPrecedingSubsectionOutgoingMessage("preceding_subsection_added", subsection_id, title, parent_id,
+                                                     index)
 
     @requires_login
     async def add_inner_subsection(self, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_inner_subsection(title, parent_id, index)
-        return AddInnerSubsectionOutgoingMessage(message_id, subsection_id)
+        return AddInnerSubsectionOutgoingMessage("inner_subsection_added", subsection_id, title, parent_id, index)
 
     @requires_login
     async def add_succeeding_subsection(self, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_succeeding_subsection(title, parent_id, index)
-        return AddSucceedingSubsectionOutgoingMessage(message_id, subsection_id)
+        return AddSucceedingSubsectionOutgoingMessage("succeeding_subsection_added", subsection_id, title, parent_id,
+                                                      index)
 
     @requires_login
     async def add_paragraph(self, message_id, section_id, text, succeeding_paragraph_id=None):
         paragraph_id = await self.db_interface.add_paragraph(section_id, text, succeeding_paragraph_id)
-        return AddParagraphOutgoingMessage(message_id, paragraph_id)
+        return AddParagraphOutgoingMessage("paragraph_added", paragraph_id, section_id, text, succeeding_paragraph_id)
 
     @requires_login
     async def add_bookmark(self, message_id, name, story_id, section_id, paragraph_id, index=None):
         bookmark_id = await self.db_interface.add_bookmark(name, story_id, section_id, paragraph_id, index)
-        return AddBookmarkOutgoingMessage(message_id, bookmark_id)
+        return AddBookmarkOutgoingMessage("bookmark_added", bookmark_id, story_id, section_id, paragraph_id, index)
 
     @requires_login
     async def edit_story(self, message_id, story_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_story_title(story_id, title)
-            return EditStoryOutgoingMessage(message_id)
+            return EditStoryOutgoingMessage("story_updated", story_id, update)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
@@ -220,28 +225,28 @@ class LAWProtocolDispatcher:
         if update['update_type'] == 'set_text':
             text = update['text']
             await self.db_interface.set_paragraph_text(section_id, paragraph_id=paragraph_id, text=text)
-            return EditParagraphOutgoingMessage(message_id)
+            return EditParagraphOutgoingMessage("paragraph_updated", section_id, update, paragraph_id)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
     @requires_login
     async def edit_section_title(self, message_id, section_id, new_title):
         await self.db_interface.set_section_title(section_id, new_title)
-        return EditSectionTitleOutgoingMessage(message_id)
+        return EditSectionTitleOutgoingMessage("section_title_updated", section_id, new_title)
 
     @requires_login
     async def edit_bookmark(self, message_id, story_id, bookmark_id, update):
         if update['update_type'] == 'set_name':
             name = update['name']
             await self.db_interface.set_bookmark_name(story_id, bookmark_id, name)
-            return EditBookmarkTitleOutgoingMessage(message_id)
+            return EditBookmarkTitleOutgoingMessage("bookmark_updated", story_id, bookmark_id, update)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
     @requires_login
     async def set_note(self, message_id, section_id, paragraph_id, note):
         await self.db_interface.set_note(section_id, paragraph_id, note)
-        return SetNoteOutgoingMessage(message_id)
+        return SetNoteOutgoingMessage("note_updated", section_id, paragraph_id, note)
 
     @requires_login
     async def get_story_information(self, message_id, story_id):
@@ -284,27 +289,27 @@ class LAWProtocolDispatcher:
     @requires_login
     async def delete_story(self, message_id, story_id):
         await self.db_interface.delete_story(story_id)
-        return DeleteStoryOutgoingMessage(message_id, "story_deleted")
+        return DeleteStoryOutgoingMessage("story_deleted", story_id)
 
     @requires_login
     async def delete_section(self, message_id, section_id):
         await self.db_interface.delete_section(section_id)
-        return DeleteSectionOutgoingMessage(message_id, "section_deleted")
+        return DeleteSectionOutgoingMessage("section_deleted", section_id)
 
     @requires_login
     async def delete_paragraph(self, message_id, section_id, paragraph_id):
         await self.db_interface.delete_paragraph(section_id, paragraph_id)
-        return DeleteParagraphOutgoingMessage(message_id, "paragraph_deleted")
+        return DeleteParagraphOutgoingMessage("paragraph_deleted", section_id, paragraph_id)
 
     @requires_login
     async def delete_note(self, message_id, section_id, paragraph_id):
         await self.db_interface.delete_note(section_id, paragraph_id)
-        return DeleteNoteOutgoingMessage(message_id, "note_deleted")
+        return DeleteNoteOutgoingMessage("note_deleted", section_id, paragraph_id)
 
     @requires_login
     async def delete_bookmark(self, message_id, bookmark_id):
         await self.db_interface.delete_bookmark(bookmark_id)
-        return DeleteBookmarkOutgoingMessage(message_id, "bookmark_deleted")
+        return DeleteBookmarkOutgoingMessage("bookmark_deleted", bookmark_id)
 
     ###########################################################################
     #
@@ -328,29 +333,29 @@ class LAWProtocolDispatcher:
     @requires_login
     async def add_segment(self, message_id, title, parent_id):
         segment_id = await self.db_interface.add_child_segment(title, parent_id)
-        return AddSegmentOutgoingMessage(message_id, segment_id)
+        return AddSegmentOutgoingMessage("segment_added", segment_id, title, parent_id)
 
     @requires_login
     async def add_template_heading(self, message_id, title, segment_id):
         await self.db_interface.add_template_heading(title, segment_id)
-        return AddTemplateHeadingOutgoingMessage(message_id)
+        return AddTemplateHeadingOutgoingMessage("template_heading_added", title, segment_id)
 
     @requires_login
     async def add_page(self, message_id, title, parent_id):
         page_id = await self.db_interface.create_page(title, parent_id)
-        return AddPageOutgoingMessage(message_id, page_id)
+        return AddPageOutgoingMessage("page_added", page_id, title, parent_id)
 
     @requires_login
     async def add_heading(self, message_id, title, page_id, index=None):
         await self.db_interface.add_heading(title, page_id, index)
-        return AddHeadingOutgoingMessage(message_id)
+        return AddHeadingOutgoingMessage("heading_added", title, page_id, index)
 
     @requires_login
     async def edit_wiki(self, message_id, wiki_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_wiki_title(title, wiki_id)
-            return EditWikiOutgoingMessage(message_id)
+            return EditWikiOutgoingMessage("wiki_updated", wiki_id, update)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
@@ -359,7 +364,7 @@ class LAWProtocolDispatcher:
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_segment_title(title, segment_id)
-            return EditSegmentOutgoingMessage(message_id)
+            return EditSegmentOutgoingMessage("segment_updated", segment_id, update)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
@@ -369,11 +374,13 @@ class LAWProtocolDispatcher:
             title = update['title']
             await self.db_interface.set_template_heading_title(old_title=template_heading_title, new_title=title,
                                                                segment_id=segment_id)
-            return EditTemplateHeadingOutgoingMessage(message_id)
+            return EditTemplateHeadingOutgoingMessage("template_heading_updated", segment_id, template_heading_title,
+                                                      update)
         elif update['update_type'] == 'set_text':
             text = update['text']
             await self.db_interface.set_template_heading_text(template_heading_title, text, segment_id)
-            return EditTemplateHeadingOutgoingMessage(message_id)
+            return EditTemplateHeadingOutgoingMessage("template_heading_updated", segment_id, template_heading_title,
+                                                      update)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
@@ -382,7 +389,7 @@ class LAWProtocolDispatcher:
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_page_title(title, page_id)
-            return EditPageOutgoingMessage(message_id)
+            return EditPageOutgoingMessage("page_updated", page_id, update)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
@@ -391,11 +398,11 @@ class LAWProtocolDispatcher:
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_heading_title(old_title=heading_title, new_title=title, page_id=page_id)
-            return EditHeadingOutgoingMessage(message_id)
+            return EditHeadingOutgoingMessage("heading_updated", page_id, heading_title, update)
         elif update['update_type'] == 'set_text':
             text = update['text']
             await self.db_interface.set_heading_text(heading_title, text, page_id)
-            return EditHeadingOutgoingMessage(message_id)
+            return EditHeadingOutgoingMessage("heading_updated", page_id, heading_title, update)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
@@ -447,27 +454,27 @@ class LAWProtocolDispatcher:
     @requires_login
     async def delete_wiki(self, message_id, wiki_id):
         await self.db_interface.delete_wiki(self.user_id, wiki_id)
-        return DeleteWikiOutgoingMessage(message_id, "wiki_deleted")
+        return DeleteWikiOutgoingMessage("wiki_deleted", wiki_id)
         
     @requires_login
     async def delete_segment(self, message_id, segment_id):
         await self.db_interface.delete_segment(segment_id)
-        return DeleteSegmentOutgoingMessage(message_id, "segment_deleted")
+        return DeleteSegmentOutgoingMessage("segment_deleted", segment_id)
 
     @requires_login
     async def delete_template_heading(self, message_id, segment_id, template_heading_title):
         await self.db_interface.delete_template_heading(template_heading_title, segment_id)
-        return DeleteTemplateHeadingOutgoingMessage(message_id, "template_heading_deleted")
+        return DeleteTemplateHeadingOutgoingMessage("template_heading_deleted", segment_id, template_heading_title)
 
     @requires_login
     async def delete_page(self, message_id, page_id):
         await self.db_interface.delete_page(page_id)
-        return DeletePageOutgoingMessage(message_id, "page_deleted")
+        return DeletePageOutgoingMessage("page_deleted", page_id)
 
     @requires_login
     async def delete_heading(self, message_id, heading_title, page_id):
         await self.db_interface.delete_heading(heading_title, page_id)
-        return DeleteHeadingOutgoingMessage(message_id, "heading_deleted")
+        return DeleteHeadingOutgoingMessage("heading_deleted", page_id, heading_title)
 
     ###########################################################################
     #
@@ -478,12 +485,12 @@ class LAWProtocolDispatcher:
     @requires_login
     async def create_link(self, message_id, story_id, section_id, paragraph_id, name, page_id):
         link_id = await self.db_interface.create_link(story_id, section_id, paragraph_id, name, page_id)
-        return CreateLinkOutgoingMessage(message_id, link_id)
+        return CreateLinkOutgoingMessage("link_created", link_id, story_id, section_id, paragraph_id, name, page_id)
 
     @requires_login
     async def delete_link(self, message_id, link_id):
         await self.db_interface.delete_link(link_id)
-        return DeleteLinkOutgoingMessage(message_id, "link_deleted")
+        return DeleteLinkOutgoingMessage("link_deleted", link_id)
 
     ###########################################################################
     #
@@ -494,12 +501,12 @@ class LAWProtocolDispatcher:
     @requires_login
     async def change_alias_name(self, message_id, alias_id, new_name):
         await self.db_interface.change_alias_name(alias_id, new_name)
-        return ChangeAliasNameOutgoingMessage(message_id)
+        return ChangeAliasNameOutgoingMessage("alias_updated", alias_id, new_name)
 
     @requires_login
     async def delete_alias(self, message_id, alias_id):
         await self.db_interface.delete_alias(alias_id)
-        return DeleteAliasOutgoingMessage(message_id, "alias_deleted")
+        return DeleteAliasOutgoingMessage("alias_deleted", alias_id)
 
     ###########################################################################
     #

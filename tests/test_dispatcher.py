@@ -140,7 +140,8 @@ class TestLAWDispatcher:
     ])
     async def test_set_user_name(self, action, msg):
         result = await self.dispatcher.dispatch(msg, action)
-        assert result is None
+        assert isinstance(result, SetUserNameOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [
@@ -148,7 +149,8 @@ class TestLAWDispatcher:
     ])
     async def test_set_user_email(self, action, msg):
         result = await self.dispatcher.dispatch(msg, action)
-        assert result is None
+        assert isinstance(result, SetUserEmailOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [
@@ -156,7 +158,8 @@ class TestLAWDispatcher:
     ])
     async def test_set_user_bio(self, action, msg):
         result = await self.dispatcher.dispatch(msg, action)
-        assert result is None
+        assert isinstance(result, SetUserBioOutgoingMessage)
+        assert result.reply_to_id == msg['message_id']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [
@@ -278,7 +281,8 @@ class TestLAWDispatcher:
         msg['update'] = correct
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, EditStoryOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.story_id == story_id
+        assert result.update == msg['update']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg, wrong_type, wrong_key, correct', [
@@ -307,7 +311,9 @@ class TestLAWDispatcher:
         msg['update'] = correct
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, EditParagraphOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.section_id == section_id
+        assert result.paragraph_id == paragraph_id
+        assert result.update == msg['update']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [
@@ -318,7 +324,8 @@ class TestLAWDispatcher:
         msg['section_id'] = section_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, EditSectionTitleOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.section_id == section_id
+        assert result.new_title == msg['new_title']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [
@@ -396,7 +403,7 @@ class TestLAWDispatcher:
         msg['story_id'] = story_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, DeleteStoryOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.story_id == story_id
         assert result.event == "story_deleted"
 
     @pytest.mark.asyncio
@@ -408,7 +415,7 @@ class TestLAWDispatcher:
         msg['section_id'] = section_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, DeleteSectionOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.section_id == section_id
         assert result.event == 'section_deleted'
 
     @pytest.mark.asyncio
@@ -422,7 +429,8 @@ class TestLAWDispatcher:
         msg['paragraph_id'] = paragraph_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, DeleteParagraphOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.section_id == section_id
+        assert result.paragraph_id == paragraph_id
         assert result.event == "paragraph_deleted"
 
     @pytest.mark.asyncio
@@ -451,11 +459,12 @@ class TestLAWDispatcher:
         ('add_segment', {'message_id': 54, 'title': 'test-title', 'parent_id': None})
     ])
     async def test_add_segment(self, action, msg):
-        _, segment_id = await self.create_test_wiki()
-        msg['parent_id'] = segment_id
+        _, parent_id = await self.create_test_wiki()
+        msg['parent_id'] = parent_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, AddSegmentOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.title == msg['title']
+        assert result.parent_id == parent_id
         assert result.segment_id is not None
         assert isinstance(result.segment_id, ObjectId)
 
@@ -468,18 +477,19 @@ class TestLAWDispatcher:
         msg['segment_id'] = segment_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, AddTemplateHeadingOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.segment_id == segment_id
+        assert result.title == msg['title']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [
         ('add_page', {'message_id': 3, 'title': 'test-title', 'parent_id': None})
     ])
     async def test_add_page(self, action, msg):
-        _, segment_id = await self.create_test_wiki()
-        msg['parent_id'] = segment_id
+        _, parent_id = await self.create_test_wiki()
+        msg['parent_id'] = parent_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, AddPageOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.parent_id == parent_id
         assert result.page_id is not None
         assert isinstance(result.page_id, ObjectId)
 
@@ -493,7 +503,9 @@ class TestLAWDispatcher:
         msg['page_id'] = page_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, AddHeadingOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.page_id == page_id
+        assert result.title == msg['title']
+        assert result.index == msg['index']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg, wrong_type, wrong_key, correct', [
@@ -520,7 +532,8 @@ class TestLAWDispatcher:
         msg['update'] = correct
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, EditWikiOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.wiki_id == wiki_id
+        assert result.update == msg['update']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg, wrong_type, wrong_key, correct', [
@@ -547,7 +560,8 @@ class TestLAWDispatcher:
         msg['update'] = correct
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, EditSegmentOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.segment_id == segment_id
+        assert result.update == msg['update']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg, wrong_type, title_wrong_key, text_wrong_key, title_msg, text_msg', [
@@ -581,11 +595,13 @@ class TestLAWDispatcher:
         msg['update'] = text_msg
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, EditTemplateHeadingOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.segment_id == segment_id
+        assert result.update == msg['update']
         msg['update'] = title_msg
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, EditTemplateHeadingOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.segment_id == segment_id
+        assert result.update == msg['update']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg, wrong_type, wrong_key, correct', [
@@ -613,7 +629,8 @@ class TestLAWDispatcher:
         msg['update'] = correct
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, EditPageOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.page_id == page_id
+        assert result.update == msg['update']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg, wrong_type, title_wrong_key, text_wrong_key, title_msg, text_msg', [
@@ -647,11 +664,15 @@ class TestLAWDispatcher:
         msg['update'] = text_msg
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, EditHeadingOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.page_id == page_id
+        assert result.heading_title == msg['heading_title']
+        assert result.update == msg['update']
         msg['update'] = title_msg
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, EditHeadingOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.page_id == page_id
+        assert result.heading_title == msg['heading_title']
+        assert result.update == msg['update']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [
@@ -746,7 +767,7 @@ class TestLAWDispatcher:
         msg['wiki_id'] = wiki_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, DeleteWikiOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.wiki_id == wiki_id
         assert result.event == "wiki_deleted"
 
     @pytest.mark.asyncio
@@ -758,7 +779,7 @@ class TestLAWDispatcher:
         msg['segment_id'] = segment_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, DeleteSegmentOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.segment_id == segment_id
         assert result.event == "segment_deleted"
 
     @pytest.mark.asyncio
@@ -771,7 +792,7 @@ class TestLAWDispatcher:
         msg['segment_id'] = segment_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, DeleteTemplateHeadingOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.segment_id == segment_id
         assert result.event == "template_heading_deleted"
 
     @pytest.mark.asyncio
@@ -784,7 +805,7 @@ class TestLAWDispatcher:
         msg['page_id'] = page_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, DeletePageOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.page_id == page_id
         assert result.event == "page_deleted"
 
     @pytest.mark.asyncio
@@ -798,7 +819,8 @@ class TestLAWDispatcher:
         msg['page_id'] = page_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, DeleteHeadingOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.page_id == page_id
+        assert result.heading_title == msg['heading_title']
         assert result.event == "heading_deleted"
 
     @pytest.mark.asyncio
@@ -813,7 +835,7 @@ class TestLAWDispatcher:
         msg['alias_id'] = alias_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, DeleteAliasOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.alias_id == alias_id
         assert result.event == "alias_deleted"
 
     @pytest.mark.asyncio
@@ -832,7 +854,11 @@ class TestLAWDispatcher:
         msg['page_id'] = page_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, CreateLinkOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.story_id == story_id
+        assert result.page_id == page_id
+        assert result.section_id == section_id
+        assert result.paragraph_id == paragraph_id
+        assert result.name == msg['name']
         assert result.link_id is not None
         assert isinstance(result.link_id, ObjectId)
 
@@ -848,7 +874,8 @@ class TestLAWDispatcher:
         msg['alias_id'] = alias_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, ChangeAliasNameOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.new_name == msg['new_name']
+        assert result.alias_id == alias_id
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('action, msg', [
@@ -863,5 +890,5 @@ class TestLAWDispatcher:
         msg['link_id'] = link_id
         result = await self.dispatcher.dispatch(msg, action)
         assert isinstance(result, DeleteLinkOutgoingMessage)
-        assert result.reply_to_id == msg['message_id']
+        assert result.link_id == link_id
         assert result.event == "link_deleted"

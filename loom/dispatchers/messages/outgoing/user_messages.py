@@ -30,6 +30,26 @@ class GetUserWikisOutgoingMessage(OutgoingMessage):
 
 ###########################################################################
 #
+# Set Messages
+#
+###########################################################################
+class SetUserNameOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
+
+
+class SetUserEmailOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
+
+
+class SetUserBioOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int):
+        self.reply_to_id = reply_to_id
+
+
+###########################################################################
+#
 # Login Messages
 #
 ###########################################################################
