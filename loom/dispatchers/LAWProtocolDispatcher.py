@@ -239,7 +239,7 @@ class LAWProtocolDispatcher:
         if update['update_type'] == 'set_name':
             name = update['name']
             await self.db_interface.set_bookmark_name(story_id, bookmark_id, name)
-            return EditBookmarkTitleOutgoingMessage("bookmark_updated", story_id, bookmark_id, update)
+            return EditBookmarkOutgoingMessage("bookmark_updated", story_id, bookmark_id, update)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
@@ -277,13 +277,8 @@ class LAWProtocolDispatcher:
     @requires_login
     async def get_section_content(self, message_id, section_id):
         paragraphs = await self.db_interface.get_section_content(section_id)
-        content = []
-        for db_paragraph in paragraphs:
-            paragraph = {'text': db_paragraph['text'], 'paragraph_id': db_paragraph['_id']}
-            note = db_paragraph.get('note')
-            if note is not None:
-                paragraph['note'] = note
-            content.append(paragraph)
+        content = [{'text': paragraph['text'], 'paragraph_id': paragraph['_id'], 'note': paragraph['note']}
+                   for paragraph in paragraphs]
         return GetSectionContentOutgoingMessage(message_id, content)
 
     @requires_login

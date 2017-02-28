@@ -51,6 +51,14 @@ class OptionParser:
         ],
     }
 
+    _LOGGING_ARGS = [
+        'logging_level',
+        'logging_file_level',
+        'logging_out_level',
+    ]
+
+    _UNSET_LOGS = 'NOTSET'
+
     _ARGUMENTS = [
         ('--config',                'a config file to load default options from'),
         ('--port',                  'run on the given port'),
@@ -72,6 +80,10 @@ class OptionParser:
         ('--logging-out-level',     'the minimum level to write logging information to stdout'),
     ]
 
+    _ACTIONS = [
+        ('--no-logging',            'disable all logging',          'store_true'),
+    ]
+
     def __init__(self):
         self._options = {}
         self._parser = argparse.ArgumentParser()
@@ -81,21 +93,31 @@ class OptionParser:
     def _fix_option_name(name):
         return name.strip().replace('-', '_')
 
+    @staticmethod
+    def _strip_option_name(name):
+        return OptionParser._fix_option_name(name[2:])
+
     def _get_option_type(self, name):
         return self._TYPES.get(self._fix_option_name(name), str)
 
     def _initialize_arguments(self):
-        for argument in self._ARGUMENTS:
-            arg_name = argument[2:]
+        for argument, help_text in self._ARGUMENTS:
+            arg_name = self._strip_option_name(argument)
             if arg_name in self._CHOICES:
                 choices = self._CHOICES[arg_name]
             else:
                 choices = None
             self._parser.add_argument(
-                argument[0],
-                help=argument[1],
-                type=self._get_option_type(argument[0]),
+                argument,
+                help=help_text,
+                type=self._get_option_type(arg_name),
                 choices=choices
+            )
+        for argument, help_text, action in self._ACTIONS:
+            self._parser.add_argument(
+                argument,
+                help=help_text,
+                action=action
             )
 
     def __getattr__(self, item):
@@ -127,12 +149,18 @@ class OptionParser:
         if parsed_args.config is not None:
             config_args = self._parse_config_file(parsed_args.config)
             self._options.update(config_args)
+        no_log = False
+        if parsed_args.no_logging:
+            no_log = True
         for key, val in vars(parsed_args).items():
             if key not in self._options or val is not None:
                 self._options[key] = val
         for default_arg, default_val in self._DEFAULTS.items():
             if getattr(self, default_arg) is None:
                 self._options[default_arg] = default_val
+        if no_log:
+            for logging_arg in self._LOGGING_ARGS:
+                self._options[logging_arg] = self._UNSET_LOGS
 
 
 # Provide a default, global OptionParser.

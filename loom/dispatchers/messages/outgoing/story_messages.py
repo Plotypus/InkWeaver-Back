@@ -99,7 +99,7 @@ class EditSectionTitleOutgoingMessage(StoryBroadcastMessage):
         self.new_title = new_title
 
 
-class EditBookmarkTitleOutgoingMessage(StoryBroadcastMessage):
+class EditBookmarkOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, event: str, story_id: ObjectId, bookmark_id: ObjectId, update: dict):
         self.event = event
         self.story_id = story_id
