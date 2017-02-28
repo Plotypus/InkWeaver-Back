@@ -228,7 +228,8 @@ class MongoDBInterface(AbstractDBInterface):
             paragraph_id = ObjectId()
             await self.client.insert_paragraph(paragraph_id, '', to_section_id=section_id, at_index=index)
             await self.client.insert_links_for_paragraph(paragraph_id, list(), in_section_id=section_id, at_index=index)
-            await self.client.insert_note_for_paragraph(paragraph_id, '', in_section_id=section_id, at_index=index)
+            # Default the note to None
+            await self.client.insert_note_for_paragraph(paragraph_id, None, in_section_id=section_id, at_index=index)
             if text is not None:
                 await self.set_paragraph_text(section_id, text, paragraph_id)
             return paragraph_id
@@ -267,13 +268,12 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def get_section_content(self, section_id):
         section = await self.client.get_section(section_id)
-        # Empty-string notes are considered un-set (or has not been added, or has been deleted).
-        notes = section['notes']
-        paragraphs = section['content']
-        for index in range(len(paragraphs)):
-            note = notes[index]['note']
-            if note != '':
-                paragraphs[index]['note'] = note
+        paragraphs = []
+        for db_paragraph, db_note in zip(section['content'], section['notes']):
+            def join_dictionaries_and_return(paragraph, note):
+                paragraph.update(note)
+                return paragraph
+            paragraphs.append(join_dictionaries_and_return(db_paragraph, db_note))
         return paragraphs
 
     async def set_story_title(self, story_id, title):
@@ -808,7 +808,7 @@ class MongoDBInterface(AbstractDBInterface):
         return section['statistics']
 
     async def get_section_statistics(self, section_id):
-        return await self.client.get_section_statistics(section_id)
+        return await self._recur_get_section_statistics(section_id)
 
     async def get_paragraph_statistics(self, section_id, paragraph_id):
         return await self.client.get_paragraph_statistics(section_id, paragraph_id)
