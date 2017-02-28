@@ -1,6 +1,6 @@
 from loom.dispatchers.LAWProtocolDispatcher import LAWProtocolDispatcher
-from .messages.incoming.demo import DemoIncomingMessageFactory
-from .messages.outgoing.demo import AddTextToSectionOutgoingMessage
+from loom.messages.incoming.demo import DemoIncomingMessageFactory
+from loom.messages.outgoing.demo import AddTextToSectionOutgoingMessage
 
 
 class DemoDataDispatcher(LAWProtocolDispatcher):

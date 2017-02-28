@@ -1,6 +1,6 @@
 from loom.database.interfaces import MongoDBAsyncioInterface
 from loom.dispatchers.LAWProtocolDispatcher import LAWProtocolDispatcher, LAWNotLoggedInError
-from loom.dispatchers.messages.outgoing import *
+from loom.messages.outgoing import *
 
 import asyncio
 import pytest

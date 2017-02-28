@@ -1,7 +1,7 @@
 import loom.serialize
 
-from .messages import IncomingMessageFactory
-from .messages.outgoing import *
+from loom.messages import IncomingMessageFactory
+from loom.messages.outgoing import *
 from loom.database.interfaces import AbstractDBInterface
 
 from decorator import decorator

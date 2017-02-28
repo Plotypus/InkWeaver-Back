@@ -1,4 +1,4 @@
-from loom.dispatchers.messages.incoming.incoming_message import IncomingMessage
+from ..incoming_message import IncomingMessage
 
 from bson import ObjectId
 
