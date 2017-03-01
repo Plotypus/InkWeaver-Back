@@ -70,7 +70,7 @@ class Router:
                 raise RuntimeError(f"unknown instance of SubscriptionIncomingMessage: {message_object}")
         else:
             # Dispatch the incoming message and process the response.
-            response = self.dispatcher.dispatch(message_object, action, message_id)
+            response = self.dispatcher.dispatch(message_object, uuid, message_id)
             if isinstance(response, UnicastMessage):
                 self.unicast(response)
             elif isinstance(response, StoryBroadcastMessage):
