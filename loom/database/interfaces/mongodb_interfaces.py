@@ -16,6 +16,7 @@ from typing import ClassVar
 # Adjust the NLTK path.
 nltk.data.path.insert(0, pathjoin(dirname(dirname(dirname(__file__))), 'nltk_data'))
 
+CREATE_LINK_REGEX = re.compile(r'{#\|(.*?)\|#}')
 
 def generate_link_format_regex():
     o = ObjectId()
@@ -292,6 +293,7 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.set_section_title(section_id, title)
 
     async def set_paragraph_text(self, section_id, text, paragraph_id):
+        text = await self._find_and_create_links_in_paragraph(section_id, paragraph_id, text)
         sentences_and_links, word_frequencies = await self.get_links_and_word_counts_from_paragraph(text)
         page_updates = {}
         section_links = []
@@ -341,12 +343,6 @@ class MongoDBInterface(AbstractDBInterface):
                 reference['context'] = context
                 break
 
-    async def set_bookmark_name(self, story_id, bookmark_id, new_name):
-        await self.client.set_bookmark_name(story_id, bookmark_id, new_name)
-
-    async def set_note(self, section_id, paragraph_id, text):
-        await self.client.set_note(section_id, paragraph_id, text)
-
     async def get_links_and_word_counts_from_paragraph(self, paragraph_text):
         # TODO: Support languages other than English.
         sentences = nltk.sent_tokenize(paragraph_text)
@@ -372,6 +368,40 @@ class MongoDBInterface(AbstractDBInterface):
                 sentence_tuple = (sentence, sentence_links)
                 results.append(sentence_tuple)
         return results, word_counts
+
+    async def _find_and_create_links_in_paragraph(self, section_id, paragraph_id, text):
+        prev_end = 0
+        # Buffer used for efficiently joining the string back together.
+        buffer = []
+        # Iterate through each encoded request and replace with a link_id.
+        for match in CREATE_LINK_REGEX.finditer(text):
+            start, end = match.span()
+            link_id = await self._create_link_and_replace_text(section_id, paragraph_id, text, start, end)
+            # Add the previous text and link_id to the buffer.
+            buffer.append(text[prev_end:start])
+            buffer.append(link_id)
+            prev_end = end
+        # Don't forget to add the rest of the string.
+        buffer.append(text[prev_end:])
+        return ''.join(buffer)
+
+    async def _create_link_and_replace_text(self, section_id, paragraph_id, text, start, end):
+        # Get the match and split it into story_id, page_id, and name.
+        tokens = text[start:end].split('|')[1:4]
+        story_id, page_id, name = tuple(tokens)
+        # Convert oids from strings to ObjectId.
+        story_id = decode_string_to_bson(story_id)
+        page_id = decode_string_to_bson(page_id)
+        link_id = await self.create_link(story_id, section_id, paragraph_id, name, page_id)
+        # Strip out the space in the encoding.
+        encoded_link_id = encode_bson_to_string(link_id).replace(' ', '')
+        return encoded_link_id
+
+    async def set_bookmark_name(self, story_id, bookmark_id, new_name):
+        await self.client.set_bookmark_name(story_id, bookmark_id, new_name)
+
+    async def set_note(self, section_id, paragraph_id, text):
+        await self.client.set_note(section_id, paragraph_id, text)
 
     async def delete_story(self, story_id):
         story = await self.get_story(story_id)
