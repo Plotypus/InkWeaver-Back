@@ -10,6 +10,8 @@ class OGMEncoder(json.JSONEncoder):
         if isinstance(o, OutgoingMessage):
             # Recur on the body object
             return self.default(vars(o))
+        if isinstance(o, OutgoingMessage.Identifier):
+            return self.default(vars(o))
         if isinstance(o, ObjectId):
             # Tentative ObjectId format
             return {'$oid': str(o)}
