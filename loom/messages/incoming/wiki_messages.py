@@ -10,11 +10,12 @@ from .field_types import RequiredField, OptionalField
 class CreateWikiIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.user_id = RequiredField()
         self.title = RequiredField()
         self.summary = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.create_wiki(self.message_id, self.title, self.summary)
+        return self._dispatcher.create_wiki(self.uuid, self.message_id, self.title, self.summary)
 
 
 ###########################################################################
@@ -29,7 +30,7 @@ class AddSegmentIncomingMessage(IncomingMessage):
         self.parent_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.add_segment(self.message_id, self.title, self.parent_id)
+        return self._dispatcher.add_segment(self.uuid, self.message_id, self.title, self.parent_id)
 
 
 class AddTemplateHeadingIncomingMessage(IncomingMessage):
@@ -39,7 +40,7 @@ class AddTemplateHeadingIncomingMessage(IncomingMessage):
         self.segment_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.add_template_heading(self.message_id, self.title, self.segment_id)
+        return self._dispatcher.add_template_heading(self.uuid, self.message_id, self.title, self.segment_id)
 
 
 class AddPageIncomingMessage(IncomingMessage):
@@ -49,7 +50,7 @@ class AddPageIncomingMessage(IncomingMessage):
         self.parent_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.add_page(self.message_id, self.title, self.parent_id)
+        return self._dispatcher.add_page(self.uuid, self.message_id, self.title, self.parent_id)
 
 
 class AddHeadingIncomingMessage(IncomingMessage):
@@ -60,7 +61,7 @@ class AddHeadingIncomingMessage(IncomingMessage):
         self.index = OptionalField()
 
     def dispatch(self):
-        return self._dispatcher.add_heading(self.message_id, self.title, self.page_id, self.index)
+        return self._dispatcher.add_heading(self.uuid, self.message_id, self.title, self.page_id, self.index)
 
 
 ###########################################################################
@@ -75,7 +76,7 @@ class EditWikiIncomingMessage(IncomingMessage):
         self.update = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.edit_wiki(self.message_id, self.wiki_id, self.update)
+        return self._dispatcher.edit_wiki(self.uuid, self.message_id, self.wiki_id, self.update)
 
 
 class EditSegmentIncomingMessage(IncomingMessage):
@@ -85,7 +86,7 @@ class EditSegmentIncomingMessage(IncomingMessage):
         self.update = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.edit_segment(self.message_id, self.segment_id, self.update)
+        return self._dispatcher.edit_segment(self.uuid, self.message_id, self.segment_id, self.update)
 
 
 class EditTemplateHeadingIncomingMessage(IncomingMessage):
@@ -96,8 +97,8 @@ class EditTemplateHeadingIncomingMessage(IncomingMessage):
         self.update = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.edit_template_heading(self.message_id, self.segment_id, self.template_heading_title,
-                                                      self.update)
+        return self._dispatcher.edit_template_heading(self.uuid, self.message_id, self.segment_id,
+                                                      self.template_heading_title, self.update)
 
 
 class EditPageIncomingMessage(IncomingMessage):
@@ -107,7 +108,7 @@ class EditPageIncomingMessage(IncomingMessage):
         self.update = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.edit_page(self.message_id, self.page_id, self.update)
+        return self._dispatcher.edit_page(self.uuid, self.message_id, self.page_id, self.update)
 
 
 class EditHeadingIncomingMessage(IncomingMessage):
@@ -118,7 +119,7 @@ class EditHeadingIncomingMessage(IncomingMessage):
         self.update = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.edit_heading(self.message_id, self.page_id, self.heading_title, self.update)
+        return self._dispatcher.edit_heading(self.uuid, self.message_id, self.page_id, self.heading_title, self.update)
 
 
 ###########################################################################
@@ -132,7 +133,7 @@ class GetWikiInformationIncomingMessage(IncomingMessage):
         self.wiki_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_wiki_information(self.message_id, self.wiki_id)
+        return self._dispatcher.get_wiki_information(self.uuid, self.message_id, self.wiki_id)
 
 
 class GetWikiHierarchyIncomingMessage(IncomingMessage):
@@ -141,7 +142,7 @@ class GetWikiHierarchyIncomingMessage(IncomingMessage):
         self.wiki_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_wiki_hierarchy(self.message_id, self.wiki_id)
+        return self._dispatcher.get_wiki_hierarchy(self.uuid, self.message_id, self.wiki_id)
 
 
 class GetWikiSegmentHierarchyIncomingMessage(IncomingMessage):
@@ -150,7 +151,7 @@ class GetWikiSegmentHierarchyIncomingMessage(IncomingMessage):
         self.segment_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_wiki_segment_hierarchy(self.message_id, self.segment_id)
+        return self._dispatcher.get_wiki_segment_hierarchy(self.uuid, self.message_id, self.segment_id)
 
 
 class GetWikiSegmentIncomingMessage(IncomingMessage):
@@ -159,7 +160,7 @@ class GetWikiSegmentIncomingMessage(IncomingMessage):
         self.segment_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_wiki_segment(self.message_id, self.segment_id)
+        return self._dispatcher.get_wiki_segment(self.uuid, self.message_id, self.segment_id)
 
 
 class GetWikiPageIncomingMessage(IncomingMessage):
@@ -168,7 +169,7 @@ class GetWikiPageIncomingMessage(IncomingMessage):
         self.page_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_wiki_page(self.message_id, self.page_id)
+        return self._dispatcher.get_wiki_page(self.uuid, self.message_id, self.page_id)
 
 
 ###########################################################################
@@ -179,10 +180,11 @@ class GetWikiPageIncomingMessage(IncomingMessage):
 class DeleteWikiIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.user_id = RequiredField()
         self.wiki_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_wiki(self.message_id, self.wiki_id)
+        return self._dispatcher.delete_wiki(self.uuid, self.message_id, self.user_id, self.wiki_id)
 
 
 class DeleteSegmentIncomingMessage(IncomingMessage):
@@ -191,7 +193,7 @@ class DeleteSegmentIncomingMessage(IncomingMessage):
         self.segment_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_segment(self.message_id, self.segment_id)
+        return self._dispatcher.delete_segment(self.uuid, self.message_id, self.segment_id)
 
 
 class DeleteTemplateHeadingIncomingMessage(IncomingMessage):
@@ -201,7 +203,8 @@ class DeleteTemplateHeadingIncomingMessage(IncomingMessage):
         self.template_heading_title = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_template_heading(self.message_id, self.segment_id, self.template_heading_title)
+        return self._dispatcher.delete_template_heading(self.uuid, self.message_id, self.segment_id,
+                                                        self.template_heading_title)
 
 
 class DeletePageIncomingMessage(IncomingMessage):
@@ -210,7 +213,7 @@ class DeletePageIncomingMessage(IncomingMessage):
         self.page_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_page(self.message_id, self.page_id)
+        return self._dispatcher.delete_page(self.uuid, self.message_id, self.page_id)
 
 
 class DeleteHeadingIncomingMessage(IncomingMessage):
@@ -220,7 +223,7 @@ class DeleteHeadingIncomingMessage(IncomingMessage):
         self.heading_title = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_heading(self.message_id, self.heading_title, self.page_id)
+        return self._dispatcher.delete_heading(self.uuid, self.message_id, self.heading_title, self.page_id)
 
 
 class DeleteAliasIncomingMessage(IncomingMessage):
@@ -229,4 +232,4 @@ class DeleteAliasIncomingMessage(IncomingMessage):
         self.alias_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_alias(self.message_id, self.alias_id)
+        return self._dispatcher.delete_alias(self.uuid, self.message_id, self.alias_id)

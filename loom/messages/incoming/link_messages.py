@@ -14,7 +14,7 @@ class ChangeAliasNameIncomingMessage(IncomingMessage):
         self.new_name = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.change_alias_name(self.message_id, self.alias_id, self.new_name)
+        return self._dispatcher.change_alias_name(self.uuid, self.message_id, self.alias_id, self.new_name)
 
 
 ###########################################################################
@@ -28,4 +28,4 @@ class DeleteLinkIncomingMessage(IncomingMessage):
         self.link_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_link(self.message_id, self.link_id)
+        return self._dispatcher.delete_link(self.uuid, self.message_id, self.link_id)

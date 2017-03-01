@@ -10,25 +10,28 @@ from .field_types import RequiredField
 class GetUserPreferencesIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.user_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_user_preferences(self.message_id)
+        return self._dispatcher.get_user_preferences(self.uuid, self.message_id, self.user_id)
 
 
 class GetUserStoriesIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.user_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_user_stories(self.message_id)
+        return self._dispatcher.get_user_stories(self.uuid, self.message_id, self.user_id)
 
 
 class GetUserWikisIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.user_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_user_wikis(self.message_id)
+        return self._dispatcher.get_user_wikis(self.uuid, self.message_id, self.user_id)
 
 
 ###########################################################################
@@ -39,50 +42,39 @@ class GetUserWikisIncomingMessage(IncomingMessage):
 class SetUserNameIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.user_id = RequiredField()
         self.name = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.set_user_name(self.message_id, self.name)
+        return self._dispatcher.set_user_name(self.uuid, self.message_id, self.user_id, self.name)
 
 
 class SetUserEmailIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.user_id = RequiredField()
         self.email = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.set_user_email(self.message_id, self.email)
+        return self._dispatcher.set_user_email(self.uuid, self.message_id, self.user_id, self.email)
 
 
 class SetUserBioIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.user_id = RequiredField()
         self.bio = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.set_user_bio(self.message_id, self.bio)
+        return self._dispatcher.set_user_bio(self.uuid, self.message_id, self.user_id, self.bio)
 
 
 class SetUserStoryPositionContextIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.user_id = RequiredField()
         self.story_id = RequiredField()
         self.position_context = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.set_user_story_position_context(self.story_id, self.position_context)
-
-
-###########################################################################
-#
-# Login Messages
-#
-###########################################################################
-class UserLoginIncomingMessage(IncomingMessage):
-    def __init__(self):
-        super().__init__()
-        self.username = RequiredField()
-        self.password = RequiredField()
-
-    def dispatch(self):
-        return self._dispatcher.user_login(self.message_id, self.username, self.password)
+        return self._dispatcher.set_user_story_position_context(self.user_id, self.story_id, self.position_context)

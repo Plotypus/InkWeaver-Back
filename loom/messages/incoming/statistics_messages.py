@@ -13,7 +13,7 @@ class GetStoryStatisticsIncomingMessage(IncomingMessage):
         self.story_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_story_statistics(self.message_id, self.story_id)
+        return self._dispatcher.get_story_statistics(self.uuid, self.message_id, self.story_id)
 
 
 class GetSectionStatisticsIncomingMessage(IncomingMessage):
@@ -22,7 +22,7 @@ class GetSectionStatisticsIncomingMessage(IncomingMessage):
         self.section_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_section_statistics(self.message_id, self.section_id)
+        return self._dispatcher.get_section_statistics(self.uuid, self.message_id, self.section_id)
 
 
 class GetParagraphStatisticsIncomingMessage(IncomingMessage):
@@ -32,4 +32,4 @@ class GetParagraphStatisticsIncomingMessage(IncomingMessage):
         self.paragraph_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_paragraph_statistics(self.message_id, self.section_id, self.paragraph_id)
+        return self._dispatcher.get_paragraph_statistics(self.uuid, self.message_id, self.section_id, self.paragraph_id)
