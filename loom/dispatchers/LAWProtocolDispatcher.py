@@ -487,17 +487,6 @@ class LAWProtocolDispatcher:
     ###########################################################################
 
     @requires_login
-    async def create_link(self, uuid, message_id, story_id, section_id, paragraph_id, name, page_id):
-        link_id = await self.db_interface.create_link(story_id, section_id, paragraph_id, name, page_id)
-        return CreateLinkOutgoingMessage(uuid, message_id,
-                                         link_id=link_id,
-                                         story_id=story_id,
-                                         section_id=section_id,
-                                         paragraph_id=paragraph_id,
-                                         name=name,
-                                         page_id=page_id)
-
-    @requires_login
     async def delete_link(self, uuid, message_id, link_id):
         await self.db_interface.delete_link(link_id)
         return DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)

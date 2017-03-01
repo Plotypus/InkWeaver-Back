@@ -64,7 +64,6 @@ APPROVED_MESSAGES = {
     'delete_heading':                  DeleteHeadingIncomingMessage,
 
     # Links
-    'create_link':                     CreateLinkIncomingMessage,
     'delete_link':                     DeleteLinkIncomingMessage,
 
     # Aliases

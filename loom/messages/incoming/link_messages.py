@@ -4,25 +4,6 @@ from .field_types import RequiredField
 
 ###########################################################################
 #
-# Create Messages
-#
-###########################################################################
-class CreateLinkIncomingMessage(IncomingMessage):
-    def __init__(self):
-        super().__init__()
-        self.story_id = RequiredField()
-        self.section_id = RequiredField()
-        self.paragraph_id = RequiredField()
-        self.name = RequiredField()
-        self.page_id = RequiredField()
-
-    def dispatch(self):
-        return self._dispatcher.create_link(self.message_id, self.story_id, self.section_id, self.paragraph_id,
-                                            self.name, self.page_id)
-
-
-###########################################################################
-#
 # Edit Messages
 #
 ###########################################################################
