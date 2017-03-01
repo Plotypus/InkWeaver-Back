@@ -29,6 +29,6 @@ class WikiBroadcastMessage(BroadcastMessage):
 
 
 class OutgoingErrorMessage(UnicastMessage):
-    def __init__(self, uuid: UUID, message_id: int, error_message: str):
+    def __init__(self, uuid: UUID, message_id: int, *, error_message: str):
         super().__init__(uuid, message_id, 'error_occurred')
         self.error_message = error_message

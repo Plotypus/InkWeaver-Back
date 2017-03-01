@@ -10,7 +10,7 @@ from uuid import UUID
 #
 ###########################################################################
 class CreateLinkOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, link_id: ObjectId, story_id: ObjectId, section_id: ObjectId,
+    def __init__(self, uuid: UUID, message_id: int, *, link_id: ObjectId, story_id: ObjectId, section_id: ObjectId,
                  paragraph_id: ObjectId, name: str, page_id: ObjectId):
         super().__init__(uuid, message_id, 'link_created')
         self.link_id = link_id
@@ -27,7 +27,7 @@ class CreateLinkOutgoingMessage(StoryBroadcastMessage):
 #
 ###########################################################################
 class ChangeAliasNameOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, alias_id: ObjectId, new_name: str):
+    def __init__(self, uuid: UUID, message_id: int, *, alias_id: ObjectId, new_name: str):
         super().__init__(uuid, message_id, 'alias_updated')
         self.alias_id = alias_id
         self.new_name = new_name
@@ -39,6 +39,6 @@ class ChangeAliasNameOutgoingMessage(StoryBroadcastMessage):
 #
 ###########################################################################
 class DeleteLinkOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, link_id: ObjectId):
+    def __init__(self, uuid: UUID, message_id: int, *, link_id: ObjectId):
         super().__init__(uuid, message_id, 'link_deleted')
         self.link_id = link_id

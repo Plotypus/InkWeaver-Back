@@ -10,7 +10,7 @@ from uuid import UUID
 #
 ###########################################################################
 class CreateStoryOutgoingMessage(UnicastMessage):
-    def __init__(self, uuid: UUID, message_id: int, story_title: str, story_id: ObjectId, section_id: ObjectId,
+    def __init__(self, uuid: UUID, message_id: int, *, story_title: str, story_id: ObjectId, section_id: ObjectId,
                  wiki_id: ObjectId, users: list):
         super().__init__(uuid, message_id, 'created_story')
         self.story_title = story_title
@@ -26,7 +26,8 @@ class CreateStoryOutgoingMessage(UnicastMessage):
 #
 ###########################################################################
 class AddPrecedingSubsectionOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, section_id: ObjectId, title: str, parent_id: ObjectId, index=None):
+    def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId, title: str, parent_id: ObjectId,
+                 index=None):
         super().__init__(uuid, message_id, 'preceding_subsection_added')
         self.section_id = section_id
         self.title = title
@@ -35,7 +36,8 @@ class AddPrecedingSubsectionOutgoingMessage(StoryBroadcastMessage):
 
 
 class AddInnerSubsectionOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, section_id: ObjectId, title: str, parent_id: ObjectId, index=None):
+    def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId, title: str, parent_id: ObjectId,
+                 index=None):
         super().__init__(uuid, message_id, 'inner_subsection_added')
         self.section_id = section_id
         self.title = title
@@ -44,7 +46,8 @@ class AddInnerSubsectionOutgoingMessage(StoryBroadcastMessage):
 
 
 class AddSucceedingSubsectionOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, section_id: ObjectId, title: str, parent_id: ObjectId, index=None):
+    def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId, title: str, parent_id: ObjectId,
+                 index=None):
         super().__init__(uuid, message_id, 'succeeding_subsection_added')
         self.section_id = section_id
         self.title = title
@@ -53,7 +56,7 @@ class AddSucceedingSubsectionOutgoingMessage(StoryBroadcastMessage):
 
 
 class AddParagraphOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, paragraph_id: ObjectId, section_id: ObjectId, text: str,
+    def __init__(self, uuid: UUID, message_id: int, *, paragraph_id: ObjectId, section_id: ObjectId, text: str,
                  succeeding_paragraph_id=None):
         super().__init__(uuid, message_id, 'paragraph_added')
         self.paragraph_id = paragraph_id
@@ -63,7 +66,7 @@ class AddParagraphOutgoingMessage(StoryBroadcastMessage):
 
 
 class AddBookmarkOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, bookmark_id: ObjectId, story_id: ObjectId, section_id: ObjectId,
+    def __init__(self, uuid: UUID, message_id: int, *, bookmark_id: ObjectId, story_id: ObjectId, section_id: ObjectId,
                  paragraph_id: ObjectId, index=None):
         super().__init__(uuid, message_id, 'bookmark_added')
         self.bookmark_id = bookmark_id
@@ -79,14 +82,14 @@ class AddBookmarkOutgoingMessage(StoryBroadcastMessage):
 #
 ###########################################################################
 class EditStoryOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, story_id: ObjectId, update: dict):
+    def __init__(self, uuid: UUID, message_id: int, *, story_id: ObjectId, update: dict):
         super().__init__(uuid, message_id, 'story_updated')
         self.story_id = story_id
         self.update = update
 
 
 class EditParagraphOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, section_id: ObjectId, update: dict, paragraph_id: ObjectId):
+    def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId, update: dict, paragraph_id: ObjectId):
         super().__init__(uuid, message_id, 'paragraph_updated')
         self.section_id = section_id
         self.update = update
@@ -94,14 +97,14 @@ class EditParagraphOutgoingMessage(StoryBroadcastMessage):
 
 
 class EditSectionTitleOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, section_id: ObjectId, new_title: str):
+    def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId, new_title: str):
         super().__init__(uuid, message_id, 'section_title_updated')
         self.section_id = section_id
         self.new_title = new_title
 
 
 class EditBookmarkOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, story_id: ObjectId, bookmark_id: ObjectId, update: dict):
+    def __init__(self, uuid: UUID, message_id: int, *, story_id: ObjectId, bookmark_id: ObjectId, update: dict):
         super().__init__(uuid, message_id, 'bookmark_updated')
         self.story_id = story_id
         self.bookmark_id = bookmark_id
@@ -114,7 +117,7 @@ class EditBookmarkOutgoingMessage(StoryBroadcastMessage):
 #
 ###########################################################################
 class SetNoteOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, section_id: ObjectId, paragraph_id: ObjectId, note: str):
+    def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId, paragraph_id: ObjectId, note: str):
         super().__init__(uuid, message_id, 'note_updated')
         self.section_id = section_id
         self.paragraph_id = paragraph_id
@@ -127,7 +130,7 @@ class SetNoteOutgoingMessage(StoryBroadcastMessage):
 #
 ###########################################################################
 class GetStoryInformationOutgoingMessage(UnicastMessage):
-    def __init__(self, uuid: UUID, message_id: int, story_title: str, section_id: ObjectId, wiki_id: ObjectId,
+    def __init__(self, uuid: UUID, message_id: int, *, story_title: str, section_id: ObjectId, wiki_id: ObjectId,
                  users: list):
         super().__init__(uuid, message_id, 'got_story_information')
         self.story_title = story_title
@@ -137,25 +140,25 @@ class GetStoryInformationOutgoingMessage(UnicastMessage):
 
 
 class GetStoryBookmarksOutgoingMessage(UnicastMessage):
-    def __init__(self, uuid: UUID, message_id: int, bookmarks: list):
+    def __init__(self, uuid: UUID, message_id: int, *, bookmarks: list):
         super().__init__(uuid, message_id, 'got_story_bookmarks')
         self.bookmarks = bookmarks
 
 
 class GetStoryHierarchyOutgoingMessage(UnicastMessage):
-    def __init__(self, uuid: UUID, message_id: int, hierarchy: dict):
+    def __init__(self, uuid: UUID, message_id: int, *, hierarchy: dict):
         super().__init__(uuid, message_id, 'got_story_hierarchy')
         self.hierarchy = hierarchy
 
 
 class GetSectionHierarchyOutgoingMessage(UnicastMessage):
-    def __init__(self, uuid: UUID, message_id: int, hierarchy: dict):
+    def __init__(self, uuid: UUID, message_id: int, *, hierarchy: dict):
         super().__init__(uuid, message_id, 'got_section_hierarchy')
         self.hierarchy = hierarchy
 
 
 class GetSectionContentOutgoingMessage(UnicastMessage):
-    def __init__(self, uuid: UUID, message_id: int, content: list):
+    def __init__(self, uuid: UUID, message_id: int, *, content: list):
         super().__init__(uuid, message_id, 'got_section_content')
         self.content = content
 
@@ -166,32 +169,32 @@ class GetSectionContentOutgoingMessage(UnicastMessage):
 #
 ###########################################################################
 class DeleteStoryOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, story_id: ObjectId):
+    def __init__(self, uuid: UUID, message_id: int, *, story_id: ObjectId):
         super().__init__(uuid, message_id, 'story_deleted')
         self.story_id = story_id
 
 
 class DeleteSectionOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, section_id: ObjectId):
+    def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId):
         super().__init__(uuid, message_id, 'section_deleted')
         self.section_id = section_id
 
 
 class DeleteParagraphOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, section_id: ObjectId, paragraph_id: ObjectId):
+    def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId, paragraph_id: ObjectId):
         super().__init__(uuid, message_id, 'paragraph_deleted')
         self.section_id = section_id
         self.paragraph_id = paragraph_id
 
 
 class DeleteNoteOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, section_id: ObjectId, paragraph_id: ObjectId):
+    def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId, paragraph_id: ObjectId):
         super().__init__(uuid, message_id, 'note_deleted')
         self.section_id = section_id
         self.paragraph_id = paragraph_id
 
 
 class DeleteBookmarkOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, bookmark_id: ObjectId):
+    def __init__(self, uuid: UUID, message_id: int, *, bookmark_id: ObjectId):
         super().__init__(uuid, message_id, 'bookmark_deleted')
         self.bookmark_id = bookmark_id
