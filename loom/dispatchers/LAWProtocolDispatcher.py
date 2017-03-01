@@ -1,13 +1,8 @@
-import loom.serialize
-
-from loom.messages import IncomingMessageFactory
-from loom.messages.outgoing import *
 from loom.database.interfaces import AbstractDBInterface
+from loom.messages import IncomingMessage
+from loom.messages.outgoing import *
 
 from decorator import decorator
-from typing import Dict
-
-JSON = Dict
 
 
 class LAWError(Exception):
@@ -59,7 +54,6 @@ class LAWProtocolDispatcher:
     def __init__(self, interface: AbstractDBInterface, user_id=None):
         self._db_interface = interface
         self._user_id = user_id
-        self._message_factory = IncomingMessageFactory()
 
     @property
     def db_interface(self):
@@ -72,10 +66,6 @@ class LAWProtocolDispatcher:
     def set_user_id(self, new_user_id):
         self._user_id = new_user_id
 
-    @property
-    def message_factory(self):
-        return self._message_factory
-
     def format_failure_json(self, reply_to_id=None, reason=None, **fields):
         response = {
             'success': False,
@@ -86,21 +76,10 @@ class LAWProtocolDispatcher:
         response.update(fields)
         return response
 
-    async def dispatch(self, message: JSON, action: str, message_id=None):
-        # Receive the message and format it into one of our IncomingMessage objects.
-        try:
-            message_object = self.message_factory.build_message(self, action, message)
-        # Bad action.
-        except ValueError:
-            return self.format_failure_json(message_id, f"Action '{action}' not supported.")
-        # Bad message format.
-        except TypeError as e:
-            # TODO: Replace with with a more specific error
-            message = e.args[0]
-            return self.format_failure_json(message_id, message)
+    async def dispatch(self, message: IncomingMessage, action: str, message_id=None):
         # Dispatch the IncomingMessage.
         try:
-            return await message_object.dispatch()
+            return await message.dispatch()
         except LAWError as e:
             return self.format_failure_json(message_id, str(e))
         except Exception as e:
