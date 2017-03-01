@@ -26,7 +26,7 @@ class UnsubscribeFromStoryIncomingMessage(SubscriptionIncomingMessage):
 class SubscribeToWikiIncomingMessage(SubscriptionIncomingMessage):
     def __init__(self):
         super().__init__()
-        self.story_id = RequiredField()
+        self.wiki_id = RequiredField()
 
 
 class UnsubscribeFromWikiIncomingMessage(SubscriptionIncomingMessage):
