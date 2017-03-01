@@ -10,3 +10,8 @@ class IncomingMessage(ABC, Message):
     @abstractmethod
     def dispatch(self):
         pass
+
+
+class SubscriptionIncomingMessage(IncomingMessage):
+    def dispatch(self):
+        pass

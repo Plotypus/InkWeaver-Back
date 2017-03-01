@@ -1,6 +1,7 @@
 from .link_messages import *
 from .statistics_messages import *
 from .story_messages import *
+from .subscription_messages import *
 from .user_messages import *
 from .wiki_messages import *
 
@@ -74,6 +75,12 @@ APPROVED_MESSAGES = {
     'get_story_statistics':            GetStoryStatisticsIncomingMessage,
     'get_section_statistics':          GetSectionStatisticsIncomingMessage,
     'get_paragraph_statistics':        GetParagraphStatisticsIncomingMessage,
+
+    # Subscriptions
+    'subscribe_to_story':              SubscribeToStoryIncomingMessage,
+    'unsubscribe_from_story':          UnsubscribeFromStoryIncomingMessage,
+    'subscribe_to_wiki':               SubscribeToWikiIncomingMessage,
+    'unsubscribe_from_wiki':           UnsubscribeFromWikiIncomingMessage,
 }
 
 
