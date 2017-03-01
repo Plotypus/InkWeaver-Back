@@ -825,7 +825,8 @@ class MongoDBInterface(AbstractDBInterface):
             page = await self.get_page(page_id)
             frequencies = defaultdict(int)
             for reference in filter(lambda ref: ref['story_id'] == story_id, page['references']):
-                frequencies[reference['section_id']] += 1
+                key = encode_bson_to_string(reference['section_id'])
+                frequencies[key] += 1
             pages.append({'page_id': page_id, 'section_frequencies': frequencies})
         for child_segment_id in segment['segments']:
             child_pages = await self._get_page_section_frequencies(story_id, child_segment_id)
