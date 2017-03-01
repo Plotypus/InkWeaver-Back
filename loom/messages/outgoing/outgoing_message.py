@@ -18,7 +18,7 @@ class WikiBroadcastMessage(BroadcastMessage):
     pass
 
 
-class OutgoingErrorMessage(OutgoingMessage):
+class OutgoingErrorMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, error_message: str):
         self.reply_to_id = reply_to_id
         self.event = 'error_occurred'

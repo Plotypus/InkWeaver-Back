@@ -1,4 +1,4 @@
-from .outgoing_message import OutgoingMessage
+from .outgoing_message import UnicastMessage
 
 
 ###########################################################################
@@ -6,13 +6,13 @@ from .outgoing_message import OutgoingMessage
 # Story Messages
 #
 ###########################################################################
-class SubscribeToStoryOutgoingMessage(OutgoingMessage):
+class SubscribeToStoryOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, event: str):
         self.reply_to_id = reply_to_id
         self.event = event
 
 
-class UnsubscribeFromStoryOutgoingMessage(OutgoingMessage):
+class UnsubscribeFromStoryOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, event: str):
         self.reply_to_id = reply_to_id
         self.event = event
@@ -23,13 +23,13 @@ class UnsubscribeFromStoryOutgoingMessage(OutgoingMessage):
 # Wiki Messages
 #
 ###########################################################################
-class SubscribeToWikiOutgoingMessage(OutgoingMessage):
+class SubscribeToWikiOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, event: str):
         self.reply_to_id = reply_to_id
         self.event = event
 
 
-class UnsubscribeFromWikiOutgoingMessage(OutgoingMessage):
+class UnsubscribeFromWikiOutgoingMessage(UnicastMessage):
     def __init__(self, reply_to_id: int, event: str):
         self.reply_to_id = reply_to_id
         self.event = event
