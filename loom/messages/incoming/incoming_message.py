@@ -1,6 +1,8 @@
 from ..message import Message
 from .field_types import RequiredField, OptionalField
 
+from loom.dispatchers import AbstractDispatcher
+
 from abc import ABC, abstractmethod
 
 from typing import Iterable
@@ -34,7 +36,7 @@ class IncomingMessage(ABC, Message):
         for field, value in message.items():
             setattr(self, f'{field}', value)
 
-    def set_dispatcher(self, dispatcher):
+    def set_dispatcher(self, dispatcher: AbstractDispatcher):
         self._dispatcher = dispatcher
 
     @abstractmethod
