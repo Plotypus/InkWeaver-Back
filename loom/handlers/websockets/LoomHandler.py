@@ -1,9 +1,7 @@
 from .GenericHandler import *
 
-from loom.database.interfaces import AbstractDBInterface  # For type hinting.
-from loom.dispatchers import *
+from loom.routers import Router
 
-from bson import ObjectId
 from tornado.ioloop import IOLoop
 from tornado.queues import Queue
 from typing import Dict
@@ -33,7 +31,7 @@ class LoomHandler(GenericHandler):
             self.on_failure(reason="Could not successfully open connection.")
             self.close()
             return
-        self._dispatcher = LAWProtocolDispatcher(self.db_interface, user_id)
+        self._router = self.settings['router']
         self.startup()
 
     def on_failure(self, reply_to_id=None, reason=None, **fields):
@@ -44,8 +42,8 @@ class LoomHandler(GenericHandler):
         if reply_to_id is not None:
             response['reply_to_id'] = reply_to_id
         response.update(fields)
-        json = self.encode_json(response)
-        self.write_message(json)
+        json_response = self.encode_json(response)
+        self.write_message(json_response)
 
     def write_json(self, data):
         json_string = self.encode_json(data)
@@ -61,20 +59,12 @@ class LoomHandler(GenericHandler):
         self.send_ready_acknowledgement()
 
     @property
-    def dispatcher(self) -> LAWProtocolDispatcher:
-        return self._dispatcher
-
-    @property
-    def db_interface(self) -> AbstractDBInterface:
-        try:
-            return self._db_interface
-        except AttributeError:
-            self._db_interface = self.settings['db_interface']
-            return self._db_interface
-
-    @property
     def messages(self) -> Queue:
         return self._messages
+
+    @property
+    def router(self) -> Router:
+        return self._router
 
     def _get_user_id_for_session_id(self, session_id):
         session_manager = self.settings['session_manager']
@@ -101,11 +91,11 @@ class LoomHandler(GenericHandler):
     ############################################################
 
     def on_message(self, message):
-        # TODO: Remove this.
         super().on_message(message)
+        # noinspection PyBroadException
         try:
-            json = self.decode_json(message)
-        except:
+            json_message = self.decode_json(message)
+        except Exception:
             self.on_failure(reason="Message received was not valid JSON.", received_message=message)
             return
         # `on_message` may not be a coroutine (as of Tornado 4.3).
@@ -116,11 +106,12 @@ class LoomHandler(GenericHandler):
         #   https://stackoverflow.com/questions/35542864/how-to-use-python-3-5-style-async-and-await-in-tornado-for-websockets
         # And:
         #   http://stackoverflow.com/questions/33723830/exception-ignored-in-tornado-websocket-on-message-method
-        IOLoop.current().spawn_callback(self.handle_message, json)
+        IOLoop.current().spawn_callback(self.handle_message, json_message)
 
     def send_ready_acknowledgement(self):
         message = {
-            'event': 'acknowledged'
+            'event': 'acknowledged',
+            'uuid': self.uuid,
         }
         self.write_json(message)
 
@@ -139,13 +130,7 @@ class LoomHandler(GenericHandler):
             except KeyError:
                 self.on_failure(reply_to_id=message_id, reason="`action` field not supplied")
             else:
-                try:
-                    json_result = await self.dispatcher.dispatch(message, action, message_id)
-                    self.write_json(json_result)
-                except LAWUnimplementedError:
-                    err_message = "invalid `action`: {}".format(action)
-                    self.on_failure(reply_to_id=message_id, reason=err_message)
-                except LAWBadArgumentsError as e:
-                    self.on_failure(reply_to_id=message_id, reason=e.message)
+                # Spawn a callback to handle the message, freeing this handler immediately.
+                IOLoop.current().spawn_callback(self.router.process_incoming, self, message, action, message_id)
             finally:
                 self.messages.task_done()
