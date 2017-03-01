@@ -15,11 +15,11 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def set_user_name(self, uuid, message_id, name, user_id):
+    async def set_user_name(self, uuid, message_id, user_id, name):
         pass
 
     @abstractmethod
-    async def set_user_email(self, uuid, message_id, email, user_id):
+    async def set_user_email(self, uuid, message_id, user_id, email):
         pass
 
     @abstractmethod

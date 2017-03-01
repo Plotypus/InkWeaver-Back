@@ -100,11 +100,11 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         wikis = await self.db_interface.get_user_wikis(user_id)
         return GetUserWikisOutgoingMessage(uuid, message_id, wikis=wikis)
     
-    async def set_user_name(self, uuid, message_id, name, user_id):
+    async def set_user_name(self, uuid, message_id, user_id, name):
         await self.db_interface.set_user_name(user_id, name)
         return SetUserNameOutgoingMessage(uuid, message_id)
 
-    async def set_user_email(self, uuid, message_id, email, user_id):
+    async def set_user_email(self, uuid, message_id, user_id, email):
         await self.db_interface.set_user_email(user_id, email)
         return SetUserEmailOutgoingMessage(uuid, message_id)
 
