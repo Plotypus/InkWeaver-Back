@@ -8,6 +8,7 @@ from typing import Iterable
 
 class IncomingMessage(ABC, Message):
     def __init__(self):
+        self.uuid = RequiredField()
         self.message_id = RequiredField()
 
     @property
