@@ -1,6 +1,5 @@
 from .incoming_message import IncomingMessage
-
-from bson import ObjectId
+from .field_types import RequiredField
 
 
 ###########################################################################
@@ -9,14 +8,13 @@ from bson import ObjectId
 #
 ###########################################################################
 class CreateLinkIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'story_id',
-        'section_id',
-        'paragraph_id',
-        'name',
-        'page_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.story_id = RequiredField()
+        self.section_id = RequiredField()
+        self.paragraph_id = RequiredField()
+        self.name = RequiredField()
+        self.page_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.create_link(self.message_id, self.story_id, self.section_id, self.paragraph_id,
@@ -29,11 +27,10 @@ class CreateLinkIncomingMessage(IncomingMessage):
 #
 ###########################################################################
 class ChangeAliasNameIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'alias_id',
-        'new_name',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.alias_id = RequiredField()
+        self.new_name = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.change_alias_name(self.message_id, self.alias_id, self.new_name)
@@ -45,10 +42,9 @@ class ChangeAliasNameIncomingMessage(IncomingMessage):
 #
 ###########################################################################
 class DeleteLinkIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'link_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.link_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.delete_link(self.message_id, self.link_id)

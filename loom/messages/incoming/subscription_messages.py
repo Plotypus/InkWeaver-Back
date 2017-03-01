@@ -1,4 +1,5 @@
 from .incoming_message import SubscriptionIncomingMessage
+from .field_types import RequiredField
 
 
 ###########################################################################
@@ -7,16 +8,14 @@ from .incoming_message import SubscriptionIncomingMessage
 #
 ###########################################################################
 class SubscribeToStoryIncomingMessage(SubscriptionIncomingMessage):
-    _required_fields = [
-        'message_id',
-        'story_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.story_id = RequiredField()
 
 
 class UnsubscribeFromStoryIncomingMessage(SubscriptionIncomingMessage):
-    _required_fields = [
-        'message_id',
-    ]
+    def __init__(self):
+        super().__init__()
 
 
 ###########################################################################
@@ -25,13 +24,11 @@ class UnsubscribeFromStoryIncomingMessage(SubscriptionIncomingMessage):
 #
 ###########################################################################
 class SubscribeToWikiIncomingMessage(SubscriptionIncomingMessage):
-    _required_fields = [
-        'message_id',
-        'story_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.story_id = RequiredField()
 
 
 class UnsubscribeFromWikiIncomingMessage(SubscriptionIncomingMessage):
-    _required_fields = [
-        'message_id',
-    ]
+    def __init__(self):
+        super().__init__()

@@ -1,6 +1,5 @@
 from .incoming_message import IncomingMessage
-
-from bson import ObjectId
+from .field_types import RequiredField, OptionalField
 
 
 ###########################################################################
@@ -9,11 +8,10 @@ from bson import ObjectId
 #
 ###########################################################################
 class CreateWikiIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'title',
-        'summary',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.title = RequiredField()
+        self.summary = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.create_wiki(self.message_id, self.title, self.summary)
@@ -25,47 +23,41 @@ class CreateWikiIncomingMessage(IncomingMessage):
 #
 ###########################################################################
 class AddSegmentIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'title',
-        'parent_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.title = RequiredField()
+        self.parent_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.add_segment(self.message_id, self.title, self.parent_id)
 
 
 class AddTemplateHeadingIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'title',
-        'segment_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.title = RequiredField()
+        self.segment_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.add_template_heading(self.message_id, self.title, self.segment_id)
 
 
 class AddPageIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'title',
-        'parent_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.title = RequiredField()
+        self.parent_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.add_page(self.message_id, self.title, self.parent_id)
 
 
 class AddHeadingIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'title',
-        'page_id',
-    ]
-    _optional_fields = [
-        'index'
-    ]
+    def __init__(self):
+        super().__init__()
+        self.title = RequiredField()
+        self.page_id = RequiredField()
+        self.index = OptionalField()
 
     def dispatch(self):
         return self._dispatcher.add_heading(self.message_id, self.title, self.page_id, self.index)
@@ -77,34 +69,31 @@ class AddHeadingIncomingMessage(IncomingMessage):
 #
 ###########################################################################
 class EditWikiIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'wiki_id',
-        'update',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.wiki_id = RequiredField()
+        self.update = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.edit_wiki(self.message_id, self.wiki_id, self.update)
 
 
 class EditSegmentIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'segment_id',
-        'update',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.segment_id = RequiredField()
+        self.update = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.edit_segment(self.message_id, self.segment_id, self.update)
 
 
 class EditTemplateHeadingIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'segment_id',
-        'template_heading_title',
-        'update',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.segment_id = RequiredField()
+        self.template_heading_title = RequiredField()
+        self.update = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.edit_template_heading(self.message_id, self.segment_id, self.template_heading_title,
@@ -112,23 +101,21 @@ class EditTemplateHeadingIncomingMessage(IncomingMessage):
 
 
 class EditPageIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'page_id',
-        'update',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.page_id = RequiredField()
+        self.update = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.edit_page(self.message_id, self.page_id, self.update)
 
 
 class EditHeadingIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'page_id',
-        'heading_title',
-        'update',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.page_id = RequiredField()
+        self.heading_title = RequiredField()
+        self.update = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.edit_heading(self.message_id, self.page_id, self.heading_title, self.update)
@@ -140,50 +127,45 @@ class EditHeadingIncomingMessage(IncomingMessage):
 #
 ###########################################################################
 class GetWikiInformationIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'wiki_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.wiki_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.get_wiki_information(self.message_id, self.wiki_id)
 
 
 class GetWikiHierarchyIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'wiki_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.wiki_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.get_wiki_hierarchy(self.message_id, self.wiki_id)
 
 
 class GetWikiSegmentHierarchyIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'segment_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.segment_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.get_wiki_segment_hierarchy(self.message_id, self.segment_id)
 
 
 class GetWikiSegmentIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'segment_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.segment_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.get_wiki_segment(self.message_id, self.segment_id)
 
 
 class GetWikiPageIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'page_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.page_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.get_wiki_page(self.message_id, self.page_id)
@@ -205,52 +187,47 @@ class DeleteWikiIncomingMessage(IncomingMessage):
 
 
 class DeleteSegmentIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'segment_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.segment_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.delete_segment(self.message_id, self.segment_id)
 
 
 class DeleteTemplateHeadingIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'segment_id',
-        'template_heading_title',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.segment_id = RequiredField()
+        self.template_heading_title = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.delete_template_heading(self.message_id, self.segment_id, self.template_heading_title)
 
 
 class DeletePageIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'page_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.page_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.delete_page(self.message_id, self.page_id)
 
 
 class DeleteHeadingIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'page_id',
-        'heading_title',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.page_id = RequiredField()
+        self.heading_title = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.delete_heading(self.message_id, self.heading_title, self.page_id)
 
 
 class DeleteAliasIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'alias_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.alias_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.delete_alias(self.message_id, self.alias_id)

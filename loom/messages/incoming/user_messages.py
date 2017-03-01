@@ -1,4 +1,5 @@
 from .incoming_message import IncomingMessage
+from .field_types import RequiredField
 
 
 ###########################################################################
@@ -7,27 +8,24 @@ from .incoming_message import IncomingMessage
 #
 ###########################################################################
 class GetUserPreferencesIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-    ]
+    def __init__(self):
+        super().__init__()
 
     def dispatch(self):
         return self._dispatcher.get_user_preferences(self.message_id)
 
 
 class GetUserStoriesIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-    ]
+    def __init__(self):
+        super().__init__()
 
     def dispatch(self):
         return self._dispatcher.get_user_stories(self.message_id)
 
 
 class GetUserWikisIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-    ]
+    def __init__(self):
+        super().__init__()
 
     def dispatch(self):
         return self._dispatcher.get_user_wikis(self.message_id)
@@ -39,41 +37,37 @@ class GetUserWikisIncomingMessage(IncomingMessage):
 #
 ###########################################################################
 class SetUserNameIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'name',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.name = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.set_user_name(self.message_id, self.name)
 
 
 class SetUserEmailIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'email',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.email = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.set_user_email(self.message_id, self.email)
 
 
 class SetUserBioIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'bio',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.bio = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.set_user_bio(self.message_id, self.bio)
 
 
 class SetUserStoryPositionContextIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'story_id',
-        'position_context',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.story_id = RequiredField()
+        self.position_context = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.set_user_story_position_context(self.story_id, self.position_context)
@@ -85,11 +79,10 @@ class SetUserStoryPositionContextIncomingMessage(IncomingMessage):
 #
 ###########################################################################
 class UserLoginIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'username',
-        'password',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.username = RequiredField()
+        self.password = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.user_login(self.message_id, self.username, self.password)
