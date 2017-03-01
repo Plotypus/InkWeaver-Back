@@ -212,6 +212,7 @@ class DeleteSectionIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
         self.story_id = RequiredField()
+        self.section_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.delete_section(self.message_id, self.section_id)

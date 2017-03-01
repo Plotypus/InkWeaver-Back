@@ -177,10 +177,9 @@ class GetWikiPageIncomingMessage(IncomingMessage):
 #
 ###########################################################################
 class DeleteWikiIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'wiki_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.wiki_id = RequiredField()
 
     def dispatch(self):
         return self._dispatcher.delete_wiki(self.message_id, self.wiki_id)
