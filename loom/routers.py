@@ -32,10 +32,10 @@ class Router:
         self.uuid_to_wiki: Dict[UUID, ObjectId] = dict()
         self.uuid_to_handler: Dict[UUID, LoomHandler] = dict()
 
-    def process_incoming(self, handler: LoomHandler, message: JSON, action: str, message_id=None):
-        uuid = handler.uuid
+    def process_incoming(self, handler: LoomHandler, message: JSON, action: str, uuid: UUID, message_id=None):
         # Receive the message and format it into one of our IncomingMessage objects.
         try:
+            # Prepare potential additional arguments.
             user_id = self.uuid_to_user[uuid]
             story_id = self.uuid_to_story.get(uuid)
             wiki_id = self.uuid_to_wiki.get(uuid)
