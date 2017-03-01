@@ -7,6 +7,8 @@ from bson import ObjectId
 
 class OGMEncoder(json.JSONEncoder):
     def default(self, o):
+        if isinstance(o, str):
+            return o
         if isinstance(o, OutgoingMessage):
             # Recur on the body object
             return self.default(vars(o))
@@ -24,4 +26,4 @@ class OGMEncoder(json.JSONEncoder):
             insides = {key: self.default(value) for key, value in o.items()}
             return insides
         else:
-            return o
+            return str(o)
