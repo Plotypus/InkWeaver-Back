@@ -11,13 +11,13 @@ from uuid import uuid4 as generate_uuid
 class GenericHandler(tornado.websocket.WebSocketHandler):
     logger = ws_connections
 
-    @classmethod
-    def encode_json(cls, data):
+    @staticmethod
+    def encode_json(data):
         # TODO: Temporary fix, should use in serialize.
         return json.dumps(data, cls=OGMEncoder).replace("</", "<\\/")
 
-    @classmethod
-    def decode_json(cls, data):
+    @staticmethod
+    def decode_json(data):
         return serialize.decode_string_to_bson(data)
 
     def __init__(self, *args, **kwargs):
