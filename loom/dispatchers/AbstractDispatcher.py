@@ -32,7 +32,7 @@ class AbstractDispatcher(ABC):
     #     pass
 
     @abstractmethod
-    async def set_user_story_position_context(self, user_id, story_id, position_context):
+    async def set_user_story_position_context(self, uuid, message_id, user_id, story_id, position_context):
         pass
 
     @abstractmethod

@@ -116,7 +116,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     # async def set_user_avatar(self, uuid, message_id, avatar):
     #     await self.db_interface.set_user_avatar(self.user_id, avatar)
 
-    async def set_user_story_position_context(self, user_id, story_id, position_context):
+    async def set_user_story_position_context(self, uuid, message_id, user_id, story_id, position_context):
         await self.db_interface.set_story_position_context(user_id, story_id, position_context)
 
     ###########################################################################
