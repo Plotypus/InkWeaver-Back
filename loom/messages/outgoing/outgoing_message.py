@@ -16,3 +16,10 @@ class StoryBroadcastMessage(BroadcastMessage):
 
 class WikiBroadcastMessage(BroadcastMessage):
     pass
+
+
+class OutgoingErrorMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int, error_message: str):
+        self.reply_to_id = reply_to_id
+        self.event = 'error_occurred'
+        self.error_message = error_message
