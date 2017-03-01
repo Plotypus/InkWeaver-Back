@@ -42,6 +42,7 @@ class LoomServer:
         session_manager = self._session_manager if self._session_manager is not None else SessionManager()
         routes = self._routes if self._routes is not None else routing.get_routes()
         settings = {
+            'db_interface':        self._interface,
             'router':              self._router,
             'demo_db_host':        demo_db_host,
             'demo_db_port':        demo_db_port,
