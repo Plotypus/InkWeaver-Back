@@ -111,7 +111,7 @@ class LoomHandler(GenericHandler):
     def send_ready_acknowledgement(self):
         message = {
             'event': 'acknowledged',
-            'uuid': self.uuid,
+            'uuid':  self.uuid,
         }
         self.write_json(message)
 
@@ -123,14 +123,21 @@ class LoomHandler(GenericHandler):
 
     async def process_messages(self):
         async for message in self.messages:
-            message_id = message.get('message_id', None)
             try:
-                # Remove the `action` key/value. It's only needed for dispatch, so the dispatch methods don't use it.
+                identifier = message.pop('identifier')
                 action = message.pop('action')
             except KeyError:
-                self.on_failure(reply_to_id=message_id, reason="`action` field not supplied")
+                self.on_failure(reason="malformed message; all messages require `action` and `identifier` fields")
             else:
-                # Spawn a callback to handle the message, freeing this handler immediately.
-                IOLoop.current().spawn_callback(self.router.process_incoming, self, message, action, message_id)
+                try:
+                    uuid = identifier.get('uuid')
+                    message_id = identifier.get('message_id')
+                    assert uuid == self.encode_json(self.uuid)
+                except KeyError:
+                    self.on_failure(reason="malformed identifier; must have both given `uuid` and `message_id` fields")
+                else:
+                    # Spawn a callback to handle the message, freeing this handler immediately.
+                    IOLoop.current().spawn_callback(self.router.process_incoming, self, message, action, uuid,
+                                                    message_id)
             finally:
                 self.messages.task_done()
