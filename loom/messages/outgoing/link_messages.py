@@ -1,6 +1,7 @@
 from .outgoing_message import StoryBroadcastMessage
 
 from bson import ObjectId
+from uuid import UUID
 
 
 ###########################################################################
@@ -9,9 +10,9 @@ from bson import ObjectId
 #
 ###########################################################################
 class CreateLinkOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, event: str, link_id: ObjectId, story_id: ObjectId, section_id: ObjectId, paragraph_id: ObjectId,
-                 name: str, page_id: ObjectId):
-        self.event = event
+    def __init__(self, uuid: UUID, message_id: int, link_id: ObjectId, story_id: ObjectId, section_id: ObjectId,
+                 paragraph_id: ObjectId, name: str, page_id: ObjectId):
+        super().__init__(uuid, message_id, 'link_created')
         self.link_id = link_id
         self.story_id = story_id
         self.section_id = section_id
@@ -26,8 +27,8 @@ class CreateLinkOutgoingMessage(StoryBroadcastMessage):
 #
 ###########################################################################
 class ChangeAliasNameOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, event: str, alias_id: ObjectId, new_name: str):
-        self.event = event
+    def __init__(self, uuid: UUID, message_id: int, alias_id: ObjectId, new_name: str):
+        super().__init__(uuid, message_id, 'alias_updated')
         self.alias_id = alias_id
         self.new_name = new_name
 
@@ -38,6 +39,6 @@ class ChangeAliasNameOutgoingMessage(StoryBroadcastMessage):
 #
 ###########################################################################
 class DeleteLinkOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, event: str, link_id: ObjectId):
-        self.event = event
+    def __init__(self, uuid: UUID, message_id: int, link_id: ObjectId):
+        super().__init__(uuid, message_id, 'link_deleted')
         self.link_id = link_id

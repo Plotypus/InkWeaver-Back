@@ -1,5 +1,15 @@
+from uuid import UUID
+
+
 class OutgoingMessage:
-    pass
+    class Identifier:
+        def __init__(self, uuid: UUID, message_id: int):
+            self.uuid = uuid
+            self.message_id = message_id
+
+    def __init__(self, uuid: UUID, message_id: int, event: str):
+        self.identifier = OutgoingMessage.Identifier(uuid, message_id)
+        self.event = event
 
 
 class UnicastMessage(OutgoingMessage):
@@ -19,7 +29,6 @@ class WikiBroadcastMessage(BroadcastMessage):
 
 
 class OutgoingErrorMessage(UnicastMessage):
-    def __init__(self, reply_to_id: int, error_message: str):
-        self.reply_to_id = reply_to_id
-        self.event = 'error_occurred'
+    def __init__(self, uuid: UUID, message_id: int, error_message: str):
+        super().__init__(uuid, message_id, 'error_occurred')
         self.error_message = error_message

@@ -1,5 +1,7 @@
 from .outgoing_message import UnicastMessage
 
+from uuid import UUID
+
 
 ###########################################################################
 #
@@ -7,8 +9,8 @@ from .outgoing_message import UnicastMessage
 #
 ###########################################################################
 class GetUserPreferencesOutgoingMessage(UnicastMessage):
-    def __init__(self, reply_to_id: int, username: str, name: str, email: str, bio: str, avatar: str):
-        self.reply_to_id = reply_to_id
+    def __init__(self, uuid: UUID, message_id: int, username: str, name: str, email: str, bio: str, avatar: str):
+        super().__init__(uuid, message_id, 'got_user_preferences')
         self.username = username
         self.name = name
         self.email = email
@@ -17,14 +19,14 @@ class GetUserPreferencesOutgoingMessage(UnicastMessage):
 
     
 class GetUserStoriesOutgoingMessage(UnicastMessage):
-    def __init__(self, reply_to_id: int, stories: list):
-        self.reply_to_id = reply_to_id
+    def __init__(self, uuid: UUID, message_id: int, stories: list):
+        super().__init__(uuid, message_id, 'got_user_stories')
         self.stories = stories
 
     
 class GetUserWikisOutgoingMessage(UnicastMessage):
-    def __init__(self, reply_to_id: int, wikis: list):
-        self.reply_to_id = reply_to_id
+    def __init__(self, uuid: UUID, message_id: int, wikis: list):
+        super().__init__(uuid, message_id, 'got_user_wikis')
         self.wikis = wikis
 
 
@@ -34,18 +36,18 @@ class GetUserWikisOutgoingMessage(UnicastMessage):
 #
 ###########################################################################
 class SetUserNameOutgoingMessage(UnicastMessage):
-    def __init__(self, reply_to_id: int):
-        self.reply_to_id = reply_to_id
+    def __init__(self, uuid: UUID, message_id: int):
+        super().__init__(uuid, message_id, 'user_name_updated')
 
 
 class SetUserEmailOutgoingMessage(UnicastMessage):
-    def __init__(self, reply_to_id: int):
-        self.reply_to_id = reply_to_id
+    def __init__(self, uuid: UUID, message_id: int):
+        super().__init__(uuid, message_id, 'user_email_updated')
 
 
 class SetUserBioOutgoingMessage(UnicastMessage):
-    def __init__(self, reply_to_id: int):
-        self.reply_to_id = reply_to_id
+    def __init__(self, uuid: UUID, message_id: int):
+        super().__init__(uuid, message_id, 'user_bio_updated')
 
 
 ###########################################################################
@@ -54,6 +56,5 @@ class SetUserBioOutgoingMessage(UnicastMessage):
 #
 ###########################################################################
 class UserLoginOutgoingMessage(UnicastMessage):
-    def __init__(self, reply_to_id: int, event: str):
-        self.reply_to_id = reply_to_id
-        self.event = event
+    def __init__(self, uuid: UUID, message_id: int):
+        super().__init__(uuid, message_id, 'logged_in')
