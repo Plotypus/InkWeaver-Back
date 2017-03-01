@@ -94,33 +94,36 @@ class Router:
     def subscribe_to_story(self, story_id: ObjectId, uuid: UUID, message_id: int):
         if uuid in self.uuid_to_story:
             # The user is already subscribed to another story.
-            err_msg = OutgoingErrorMessage(message_id, "Cannot subscribe to multiple stories.")
+            err_msg = OutgoingErrorMessage(uuid, message_id,
+                                           error_message="Cannot subscribe to multiple stories.")
             self.unicast(err_msg)
         else:
             self.story_to_uuids[story_id].add(uuid)
             self.uuid_to_story[uuid] = story_id
-            response = SubscribeToStoryOutgoingMessage(message_id, 'subscribed_to_story')
+            response = SubscribeToStoryOutgoingMessage(uuid, message_id)
             self.unicast(response)
 
     def subscribe_to_wiki(self, wiki_id: ObjectId, uuid: UUID, message_id: int):
         if uuid in self.uuid_to_wiki:
             # The user is already subscribed to another wiki.
-            err_msg = OutgoingErrorMessage(message_id, "Cannot subscribe to multiple wikis.")
+            err_msg = OutgoingErrorMessage(uuid, message_id,
+                                           error_message="Cannot subscribe to multiple wikis.")
             self.unicast(err_msg)
         else:
             self.wiki_to_uuids[wiki_id].add(uuid)
             self.uuid_to_wiki[uuid] = wiki_id
-            response = SubscribeToWikiOutgoingMessage(message_id, 'subscribed_to_wiki')
+            response = SubscribeToWikiOutgoingMessage(uuid, message_id)
             self.unicast(response)
 
     def unsubscribe_from_story(self, uuid: UUID, message_id: int):
         if uuid not in self.uuid_to_story:
             # The user is not currently subscribed to any story.
-            err_msg = OutgoingErrorMessage(message_id, "Cannot unsubscribe from story; no active story subscription.")
+            err_msg = OutgoingErrorMessage(uuid, message_id,
+                                           error_message="Cannot unsubscribe from story; no active story subscription.")
             self.unicast(err_msg)
         else:
             self._unsubscribe_from_story(uuid)
-            response = UnsubscribeFromStoryOutgoingMessage(message_id, 'unsubscribed_from_story')
+            response = UnsubscribeFromStoryOutgoingMessage(uuid, message_id)
             self.unicast(response)
 
     def _unsubscribe_from_story(self, uuid: UUID):
@@ -131,11 +134,12 @@ class Router:
     def unsubscribe_from_wiki(self, uuid: UUID, message_id: int):
         if uuid not in self.uuid_to_wiki:
             # The user is not currently subscribed to any wiki.
-            err_msg = OutgoingErrorMessage(message_id, "Cannot unsubscribe from wiki; no active wiki subscription.")
+            err_msg = OutgoingErrorMessage(uuid, message_id,
+                                           error_message="Cannot unsubscribe from wiki; no active wiki subscription.")
             self.unicast(err_msg)
         else:
             self._unsubscribe_from_wiki(uuid)
-            response = UnsubscribeFromWikiOutgoingMessage(message_id, 'unsubscribed_from_wiki')
+            response = UnsubscribeFromWikiOutgoingMessage(uuid, message_id)
             self.unicast(response)
 
     def _unsubscribe_from_wiki(self, uuid: UUID):
