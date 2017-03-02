@@ -829,11 +829,13 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def _recur_get_section_statistics(self, section_id):
         section = await self.client.get_section(section_id)
+        word_freqs = Counter(section['statistics']['word_frequency'])
         for subsection_id in chain(section['preceding_subsections'],
                                    section['inner_subsections'],
                                    section['succeeding_subsections']):
             subsection_stats = await self._recur_get_section_statistics(subsection_id)
-            section['statistics']['word_frequency'].update(subsection_stats['word_frequency'])
+            word_freqs.update(subsection_stats['word_frequency'])
+            section['statistics']['word_frequency'] = word_freqs
             section['statistics']['word_count'] += subsection_stats['word_count']
         return section['statistics']
 
