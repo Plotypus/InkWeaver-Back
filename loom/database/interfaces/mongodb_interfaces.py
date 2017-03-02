@@ -7,7 +7,7 @@ import nltk
 import re
 
 from bson.objectid import ObjectId
-from collections import Counter
+from collections import Counter, defaultdict
 from itertools import chain
 from os.path import dirname, join as pathjoin
 from string import punctuation
@@ -812,6 +812,26 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def get_paragraph_statistics(self, section_id, paragraph_id):
         return await self.client.get_paragraph_statistics(section_id, paragraph_id)
+
+    async def get_page_frequencies_in_story(self, story_id, wiki_id):
+        wiki = await self.client.get_wiki(wiki_id)
+        segment_id = wiki['segment_id']
+        return await self._get_page_section_frequencies(story_id, segment_id)
+
+    async def _get_page_section_frequencies(self, story_id, segment_id):
+        segment = await self.client.get_segment(segment_id)
+        pages = []
+        for page_id in segment['pages']:
+            page = await self.get_page(page_id)
+            frequencies = defaultdict(int)
+            for reference in filter(lambda ref: ref['story_id'] == story_id, page['references']):
+                key = encode_bson_to_string(reference['section_id'])
+                frequencies[key] += 1
+            pages.append({'page_id': page_id, 'section_frequencies': frequencies})
+        for child_segment_id in segment['segments']:
+            child_pages = await self._get_page_section_frequencies(story_id, child_segment_id)
+            pages.extend(child_pages)
+        return pages
 
 
 class MongoDBTornadoInterface(MongoDBInterface):

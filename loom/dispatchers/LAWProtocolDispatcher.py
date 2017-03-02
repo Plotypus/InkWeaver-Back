@@ -523,3 +523,8 @@ class LAWProtocolDispatcher:
     async def get_paragraph_statistics(self, message_id, section_id, paragraph_id):
         stats = await self.db_interface.get_paragraph_statistics(section_id, paragraph_id)
         return GetParagraphStatisticsOutgoingMessage(message_id, stats)
+
+    @requires_login
+    async def get_page_frequencies(self, message_id, story_id, wiki_id):
+        pages = await self.db_interface.get_page_frequencies_in_story(story_id, wiki_id)
+        return GetPageFrequenciesOutgoingMessage(message_id, pages)

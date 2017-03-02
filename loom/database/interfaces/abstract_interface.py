@@ -334,3 +334,7 @@ class AbstractDBInterface(ABC):
     @abstractmethod
     async def get_paragraph_statistics(self, section_id, paragraph_id):
         pass
+
+    @abstractmethod
+    async def get_page_frequencies_in_story(self, story_id, wiki_id):
+        pass
