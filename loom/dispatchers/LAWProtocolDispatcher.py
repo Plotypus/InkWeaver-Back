@@ -5,6 +5,7 @@ from .messages.outgoing import *
 from loom.database.interfaces import AbstractDBInterface
 
 from decorator import decorator
+from PyDictionary import PyDictionary
 from typing import Dict
 
 JSON = Dict
@@ -60,6 +61,8 @@ class LAWProtocolDispatcher:
         self._db_interface = interface
         self._user_id = user_id
         self._message_factory = IncomingMessageFactory()
+        # First time using the dictionary takes extra time, this avoids the overhead.
+        self._pydictionary = PyDictionary()
 
     @property
     def db_interface(self):
@@ -75,6 +78,10 @@ class LAWProtocolDispatcher:
     @property
     def message_factory(self):
         return self._message_factory
+
+    @property
+    def pydicitonary(self):
+        return self._pydictionary
 
     def format_failure_json(self, reply_to_id=None, reason=None, **fields):
         response = {
@@ -530,5 +537,6 @@ class LAWProtocolDispatcher:
         return GetPageFrequenciesOutgoingMessage(message_id, pages)
 
     @requires_login
-    def get_word_synonyms(self, message_id, word):
-        pass
+    async def get_word_synonyms(self, message_id, word):
+        synonyms = self.pydicitonary.synonym(word)
+        return GetWordSynonymsOutgoingMessage(message_id, synonyms)
