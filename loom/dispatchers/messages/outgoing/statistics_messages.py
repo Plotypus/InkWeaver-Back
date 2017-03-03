@@ -12,6 +12,12 @@ class GetStoryStatisticsOutgoingMessage(OutgoingMessage):
         self.statistics = statistics
 
 
+class GetStoryStatisticsHierarchicalOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int, hierarchy: dict):
+        self.reply_to_id = reply_to_id
+        self.hierarchy = hierarchy
+
+
 class GetSectionStatisticsOutgoingMessage(OutgoingMessage):
     def __init__(self, reply_to_id: int, statistics: dict):
         self.reply_to_id = reply_to_id

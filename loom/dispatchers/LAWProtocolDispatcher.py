@@ -522,6 +522,10 @@ class LAWProtocolDispatcher:
         return GetStoryStatisticsOutgoingMessage(message_id, stats)
 
     @requires_login
+    async def get_story_statistics_hierarchical(self, message_id, story_id):
+        pass
+
+    @requires_login
     async def get_section_statistics(self, message_id, section_id):
         stats = await self.db_interface.get_section_statistics(section_id)
         return GetSectionStatisticsOutgoingMessage(message_id, stats)
