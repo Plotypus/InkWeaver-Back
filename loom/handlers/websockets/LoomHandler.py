@@ -32,7 +32,12 @@ class LoomHandler(GenericHandler):
             self.close()
             return
         self._router = self.settings['router']
+        self.router.connect(self, user_id)
         self.startup()
+
+    def on_close(self):
+        self.router.disconnect(self)
+        super().on_close()
 
     def on_failure(self, reply_to_id=None, reason=None, **fields):
         response = {
@@ -132,6 +137,7 @@ class LoomHandler(GenericHandler):
                 try:
                     uuid = identifier.get('uuid')
                     message_id = identifier.get('message_id')
+                    # TODO: Check this and send a specific error.
                     assert uuid == self.encode_json(self.uuid)
                 except KeyError:
                     self.on_failure(reason="malformed identifier; must have both given `uuid` and `message_id` fields")
