@@ -8,19 +8,23 @@
         "name": "Charles Dickens",
         "email": "cdickens@email.com"
     },
+    "wiki":
+    {
+        "title": "A Christmas Carol Wiki",
+        "summary": "The wiki for A Christmas Carol"
+    },
+    "story":
+    {
+        "title": "A Christmas Carol",
+        "summary": "A Christmas Carol is a novella by Charles Dickens about Ebenezer Scrooge, an old man, who is well-known for his miserly ways.\n On Christmas Eve, Scrooge is visited by a series of ghosts, starting with his old business partner, Jacob Marley. The three spirits which follow, the Ghosts of Christmas Past, Christmas Present and Christmas Yet to Come, show Scrooge how his mean behaviour has affected those around him. At the end of the story he is relieved to discover that there is still time for him to change and we see him transformed into a generous and kind-hearted human being."
+    },
     "dispatch_list":
     [
-        {
-            "message_id": 2,
-            "action": "create_wiki",
-            "title": "A Christmas Carol Wiki",
-            "summary": "The wiki for A Christmas Carol"
-        },
         {
             "message_id": 3,
             "action": "add_segment",
             "title": "Character",
-            "parent_id": "${2.segment_id}"
+            "parent_id": "${wiki.segment_id}"
         },
         {
             "message_id": 4,
@@ -110,13 +114,6 @@
                 "update_type": "set_text",
                 "text": "The Ghost of Christmas Yet to Come symbolizes and resembles Death. This spirit shows Scrooge the aftermath of his death, which ultimately pushes Scrooge to changing his ways."
             }
-        },
-        {
-            "message_id": 10,
-            "action": "create_story",
-            "title": "A Christmas Carol",
-            "wiki_id": "${2.wiki_id}",
-            "summary": "A Christmas Carol is a novella by Charles Dickens about Ebenezer Scrooge, an old man, who is well-known for his miserly ways.\n On Christmas Eve, Scrooge is visited by a series of ghosts, starting with his old business partner, Jacob Marley. The three spirits which follow, the Ghosts of Christmas Past, Christmas Present and Christmas Yet to Come, show Scrooge how his mean behaviour has affected those around him. At the end of the story he is relieved to discover that there is still time for him to change and we see him transformed into a generous and kind-hearted human being."
         },
         {
             "message_id": 11,
