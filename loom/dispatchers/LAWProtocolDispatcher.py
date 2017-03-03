@@ -523,7 +523,8 @@ class LAWProtocolDispatcher:
 
     @requires_login
     async def get_story_statistics_hierarchical(self, message_id, story_id):
-        pass
+        hierarchy = await self.db_interface.get_story_statistics_hierarchical(story_id)
+        return GetStoryStatisticsHierarchicalOutgoingMessage(message_id, hierarchy)
 
     @requires_login
     async def get_section_statistics(self, message_id, section_id):
