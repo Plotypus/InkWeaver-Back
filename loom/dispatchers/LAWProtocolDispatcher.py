@@ -528,3 +528,7 @@ class LAWProtocolDispatcher:
     async def get_page_frequencies(self, message_id, story_id, wiki_id):
         pages = await self.db_interface.get_page_frequencies_in_story(story_id, wiki_id)
         return GetPageFrequenciesOutgoingMessage(message_id, pages)
+
+    @requires_login
+    def get_word_synonyms(self, message_id, word):
+        pass

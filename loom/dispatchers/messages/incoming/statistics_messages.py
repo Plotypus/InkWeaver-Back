@@ -46,3 +46,13 @@ class GetPageFrequenciesIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.get_page_frequencies(self.message_id, self.story_id, self.wiki_id)
+
+
+class GetWordSynonymsIncomingMessage(IncomingMessage):
+    _required_fields = [
+        'message_id',
+        'word',
+    ]
+
+    def dispatch(self):
+        return self._dispatcher.get_word_synonyms(self.message_id, self.word)

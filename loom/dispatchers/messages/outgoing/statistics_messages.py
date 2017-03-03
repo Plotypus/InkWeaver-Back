@@ -28,3 +28,9 @@ class GetPageFrequenciesOutgoingMessage(OutgoingMessage):
     def __init__(self, reply_to_id: int, pages: list):
         self.reply_to_id = reply_to_id
         self.pages = pages
+
+
+class GetWordSynonymsOutgoingMessage(OutgoingMessage):
+    def __init__(self, reply_to_id: int, synonyms: list):
+        self.reply_to_id = reply_to_id
+        self.synonyms = synonyms

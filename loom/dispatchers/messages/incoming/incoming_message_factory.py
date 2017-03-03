@@ -73,6 +73,7 @@ APPROVED_MESSAGES = {
     'get_section_statistics':          GetSectionStatisticsIncomingMessage,
     'get_paragraph_statistics':        GetParagraphStatisticsIncomingMessage,
     'get_page_frequencies':            GetPageFrequenciesIncomingMessage,
+    'get_word_synonyms':               GetWordSynonymsIncomingMessage,
 }
 
 
