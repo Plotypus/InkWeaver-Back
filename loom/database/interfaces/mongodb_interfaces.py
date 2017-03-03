@@ -823,11 +823,29 @@ class MongoDBInterface(AbstractDBInterface):
     ###########################################################################
 
     async def get_story_statistics(self, story_id):
+        # This accumulates the stats at each higher section
         story = await self.client.get_story(story_id)
         stats = await self._recur_get_section_statistics(story['section_id'])
         return stats
 
+    async def get_story_statistics_hierarchical(self, story_id):
+        # Does not accumulate stats from subsections
+        story = await self.client.get_story(story_id)
+        hierarchy = await self._get_section_statistics_hierarchical(story['section_id'])
+        return hierarchy
+
+    async def _get_section_statistics_hierarchical(self, section_id):
+        # Does not accumulate stats from subsections
+        section = await self.client.get_section(section_id)
+        hierarchy = {
+            'section_id': section_id,
+            'sections': [await self._get_section_statistics_hierarchical(sub_id) for sub_id in section['sections']],
+            'statistics': section['statistics'],
+        }
+        return hierarchy
+
     async def _recur_get_section_statistics(self, section_id):
+        # This accumulates the stats at each higher section
         section = await self.client.get_section(section_id)
         word_freqs = Counter(section['statistics']['word_frequency'])
         for subsection_id in chain(section['preceding_subsections'],
@@ -840,6 +858,7 @@ class MongoDBInterface(AbstractDBInterface):
         return section['statistics']
 
     async def get_section_statistics(self, section_id):
+        # This accumulates the stats at each higher section
         return await self._recur_get_section_statistics(section_id)
 
     async def get_paragraph_statistics(self, section_id, paragraph_id):

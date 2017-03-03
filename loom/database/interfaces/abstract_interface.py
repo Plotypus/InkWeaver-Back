@@ -328,6 +328,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_story_statistics_hierarchical(self, story_id):
+        pass
+
+    @abstractmethod
     async def get_section_statistics(self, section_id):
         pass
 
