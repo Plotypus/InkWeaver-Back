@@ -42,9 +42,8 @@ class LAWNotLoggedInError(LAWError):
 #
 ############################################################
 class LAWProtocolDispatcher(AbstractDispatcher):
-    def __init__(self, interface: AbstractDBInterface, user_id=None):
+    def __init__(self, interface: AbstractDBInterface):
         self._db_interface = interface
-        self._user_id = user_id
 
     @property
     def db_interface(self):
