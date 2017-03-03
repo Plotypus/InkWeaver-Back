@@ -838,9 +838,14 @@ class MongoDBInterface(AbstractDBInterface):
         # Does not accumulate stats from subsections
         section = await self.client.get_section(section_id)
         hierarchy = {
-            'section_id': section_id,
-            'sections': [await self._get_section_statistics_hierarchical(sub_id) for sub_id in section['sections']],
-            'statistics': section['statistics'],
+            'section_id':             section_id,
+            'preceding_subsections':  [await self._get_section_statistics_hierarchical(sub_id) for sub_id in
+                                       section['preceding_subsections']],
+            'inner_subsections':      [await self._get_section_statistics_hierarchical(sub_id) for sub_id in
+                                       section['inner_subsections']],
+            'succeeding_subsections': [await self._get_section_statistics_hierarchical(sub_id) for sub_id in
+                                       section['succeeding_subsections']],
+            'statistics':             section['statistics'],
         }
         return hierarchy
 
