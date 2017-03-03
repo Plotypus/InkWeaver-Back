@@ -1,26 +1,22 @@
-from ..incoming_message import IncomingMessage
-
-from bson import ObjectId
+from ..incoming_message import IncomingMessage, RequiredField
 
 
 class AddHeadingWithTextIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'title',
-        'text',
-        'page_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.title = RequiredField()
+        self.text = RequiredField()
+        self.page_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.add_heading_with_text(self.message_id, self.title, self.text, self.page_id)
+        return self._dispatcher.add_heading_with_text(self.uuid, self.message_id, self.title, self.text, self.page_id)
 
 
 class AddTextToSectionIncomingMessage(IncomingMessage):
-    _required_fields = [
-        'message_id',
-        'text',
-        'section_id',
-    ]
+    def __init__(self):
+        super().__init__()
+        self.text = RequiredField()
+        self.section_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.add_text_to_section(self.message_id, self.text, self.section_id)
+        return self._dispatcher.add_text_to_section(self.uuid, self.message_id, self.text, self.section_id)
