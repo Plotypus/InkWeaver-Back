@@ -119,31 +119,31 @@
             "message_id": 11,
             "action": "add_inner_subsection",
             "title": "STAVE ONE--MARLEY'S GHOST",
-            "parent_id": "${10.section_id}"
+            "parent_id": "${story.section_id}"
         },
         {
             "message_id": 12,
             "action": "add_inner_subsection",
             "title": "STAVE TWO--THE FIRST OF THE THREE SPIRITS",
-            "parent_id": "${10.section_id}"
+            "parent_id": "${story.section_id}"
         },
         {
             "message_id": 13,
             "action": "add_inner_subsection",
             "title": "STAVE THREE--THE SECOND OF THE THREE SPIRITS",
-            "parent_id": "${10.section_id}"
+            "parent_id": "${story.section_id}"
         },
         {
             "message_id": 14,
             "action": "add_inner_subsection",
             "title": "STAVE FOUR--THE LAST OF THE SPIRITS",
-            "parent_id": "${10.section_id}"
+            "parent_id": "${story.section_id}"
         },
         {
             "message_id": 15,
             "action": "add_inner_subsection",
             "title": "STAVE FIVE--THE END OF IT",
-            "parent_id": "${10.section_id}"
+            "parent_id": "${story.section_id}"
         },
         {
             "message_id": 16,
@@ -178,7 +178,7 @@
         {
             "message_id": 21,
             "action": "create_link",
-            "story_id": "${10.story_id}",
+            "story_id": "${story.story_id}",
             "section_id": "${11.section_id}",
             "paragraph_id": "${16.paragraph_ids.0}",
             "name": "Scrooge",

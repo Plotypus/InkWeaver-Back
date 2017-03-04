@@ -47,6 +47,9 @@ class DataProcessor:
             'wiki_id': wiki_id,
             'story_id': story_id,
         }
+        self.responses['user'] = await self.dispatcher.db_interface.get_user_preferences(user_id)
+        self.responses['wiki'] = await self.dispatcher.db_interface.get_wiki(wiki_id)
+        self.responses['story'] = await self.dispatcher.db_interface.get_story(story_id)
         for dispatch_item in dispatch_list:
             revised: JSON = {k: self.replace_id(v) for k, v in dispatch_item.items()}
             action = revised.pop('action')
