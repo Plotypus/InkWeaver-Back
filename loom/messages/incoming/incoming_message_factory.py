@@ -96,12 +96,12 @@ class IncomingMessageFactory:
             message_object = self._build_message(message_builder, message, additional_fields)
             message_object.set_dispatcher(dispatcher)
             return message_object
-        raise ValueError
+        raise ValueError(f"no such action: {action}")
 
     @staticmethod
     def _build_message(message_builder, message: dict, additional_fields: dict):
+        message_object = message_builder()
         try:
-            message_object = message_builder()
             message_object.set_values_from_message(message)
         except TypeError as e:
             error_msg = e.args[0]
@@ -120,7 +120,8 @@ class IncomingMessageFactory:
                     else:
                         raise
                 # All fields are satisfied, this won't raise an exception.
-                return message_builder(message)
+                message_object.set_values_from_message(message)
+                return message_object
             raise
         else:
             return message_object
