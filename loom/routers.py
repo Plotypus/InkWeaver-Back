@@ -44,7 +44,7 @@ class Router:
                 additional_args['story_id'] = story_id
             if wiki_id is not None:
                 additional_args['wiki_id'] = wiki_id
-            message_object: IncomingMessage = self.message_factory.build_message(self, action, message, additional_args)
+            message_object: IncomingMessage = self.message_factory.build_message(self.dispatcher, action, message, additional_args)
         # Bad action.
         except ValueError:
             return self.dispatcher.format_failure_json(message_id, f"Action '{action}' not supported.")
@@ -87,8 +87,14 @@ class Router:
 
     def disconnect(self, handler: LoomHandler):
         uuid = handler.uuid
-        self._unsubscribe_from_story(uuid)
-        self._unsubscribe_from_wiki(uuid)
+        try:
+            self._unsubscribe_from_story(uuid)
+        except KeyError:
+            pass
+        try:
+            self._unsubscribe_from_wiki(uuid)
+        except KeyError:
+            pass
         del(self.uuid_to_handler[uuid])
 
     def subscribe_to_story(self, story_id: ObjectId, uuid: UUID, message_id: int):
