@@ -101,7 +101,8 @@ class IncomingMessageFactory:
     @staticmethod
     def _build_message(message_builder, message: dict, additional_fields: dict):
         try:
-            message_object = message_builder(message)
+            message_object = message_builder()
+            message_object.set_values_from_message(message)
         except TypeError as e:
             error_msg = e.args[0]
             if 'Missing fields' in error_msg:
@@ -120,6 +121,7 @@ class IncomingMessageFactory:
                         raise
                 # All fields are satisfied, this won't raise an exception.
                 return message_builder(message)
+            raise
         else:
             return message_object
 
