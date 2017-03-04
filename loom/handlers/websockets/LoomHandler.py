@@ -3,6 +3,7 @@ from .GenericHandler import *
 from tornado.ioloop import IOLoop
 from tornado.queues import Queue
 from typing import Dict
+from uuid import UUID
 
 JSON = Dict
 
@@ -133,12 +134,14 @@ class LoomHandler(GenericHandler):
                 self.on_failure(reason="malformed message; all messages require `action` and `identifier` fields")
             else:
                 try:
-                    uuid = identifier.get('uuid')
+                    uuid = UUID(identifier.get('uuid'))
                     message_id = identifier.get('message_id')
                     # TODO: Check this and send a specific error.
-                    assert uuid == self.encode_json(self.uuid)
+                    assert uuid == self.uuid
                 except KeyError:
                     self.on_failure(reason="malformed identifier; must have both given `uuid` and `message_id` fields")
+                except AssertionError:
+                    self.write_log(f"given UUID {uuid} does not equal correct UUID {self.uuid}")
                 else:
                     # Spawn a callback to handle the message, freeing this handler immediately.
                     IOLoop.current().spawn_callback(self.router.process_incoming, self, message, action, uuid,
