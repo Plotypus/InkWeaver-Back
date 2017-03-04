@@ -1,7 +1,7 @@
 from ..message import Message
 from .field_types import RequiredField, OptionalField
 
-from loom.dispatchers import AbstractDispatcher
+from loom.dispatchers.AbstractDispatcher import AbstractDispatcher
 
 from abc import ABC, abstractmethod
 

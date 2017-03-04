@@ -1,6 +1,6 @@
 from loom import routing
 from loom.database.interfaces import MongoDBTornadoInterface
-from loom.dispatchers import LAWProtocolDispatcher
+from loom.dispatchers.LAWProtocolDispatcher import LAWProtocolDispatcher
 from loom.routers import Router
 from loom.session_manager import SessionManager
 

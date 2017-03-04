@@ -1,4 +1,4 @@
-from loom.dispatchers import LAWProtocolDispatcher
+from loom.dispatchers.LAWProtocolDispatcher import LAWProtocolDispatcher
 from loom.handlers.websockets.LoomHandler import LoomHandler
 from loom.messages.incoming import (
     IncomingMessage, IncomingMessageFactory, SubscriptionIncomingMessage,

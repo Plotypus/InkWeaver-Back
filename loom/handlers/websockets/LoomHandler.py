@@ -1,7 +1,5 @@
 from .GenericHandler import *
 
-from loom.routers import Router
-
 from tornado.ioloop import IOLoop
 from tornado.queues import Queue
 from typing import Dict
@@ -68,7 +66,7 @@ class LoomHandler(GenericHandler):
         return self._messages
 
     @property
-    def router(self) -> Router:
+    def router(self):
         return self._router
 
     def _get_user_id_for_session_id(self, session_id):
