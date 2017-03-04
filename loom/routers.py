@@ -32,7 +32,7 @@ class Router:
         self.uuid_to_wiki: Dict[UUID, ObjectId] = dict()
         self.uuid_to_handler: Dict[UUID, LoomHandler] = dict()
 
-    def process_incoming(self, handler: LoomHandler, message: JSON, action: str, uuid: UUID, message_id=None):
+    async def process_incoming(self, handler: LoomHandler, message: JSON, action: str, uuid: UUID, message_id=None):
         # Receive the message and format it into one of our IncomingMessage objects.
         try:
             # Prepare potential additional arguments.
@@ -70,7 +70,7 @@ class Router:
                 raise RuntimeError(f"unknown instance of SubscriptionIncomingMessage: {message_object}")
         else:
             # Dispatch the incoming message and process the response.
-            response = self.dispatcher.dispatch(message_object, uuid, message_id)
+            response = await message_object.dispatch()
             if isinstance(response, UnicastMessage):
                 self.unicast(response)
             elif isinstance(response, StoryBroadcastMessage):
