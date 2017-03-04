@@ -143,6 +143,9 @@ class LoomHandler(GenericHandler):
                 except AssertionError:
                     self.write_log(f"given UUID {uuid} does not equal correct UUID {self.uuid}")
                 else:
+                    # Update the message.
+                    message['uuid'] = uuid
+                    message['message_id'] = message_id
                     # Spawn a callback to handle the message, freeing this handler immediately.
                     IOLoop.current().spawn_callback(self.router.process_incoming, self, message, action, uuid,
                                                     message_id)
