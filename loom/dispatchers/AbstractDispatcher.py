@@ -7,11 +7,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def get_user_stories(self, uuid, message_id, user_id):
-        pass
-
-    @abstractmethod
-    async def get_user_wikis(self, uuid, message_id, user_id):
+    async def get_user_stories_and_wikis(self, uuid, message_id, user_id):
         pass
 
     @abstractmethod
