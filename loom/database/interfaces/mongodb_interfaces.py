@@ -102,46 +102,41 @@ class MongoDBInterface(AbstractDBInterface):
         preferences = await self.client.get_user_preferences(user_id)
         return preferences
 
-    async def get_user_stories(self, user_id):
-        stories = await self.client.get_user_stories(user_id)
-        story_id_map = {}
-        for story in stories:
-            story_id = story['story_id']
-            last_pos = story['position_context']
-            story_id_map[story_id] = last_pos
-        story_summaries = await self._get_stories_or_wikis_by_ids(user_id, story_id_map.keys(), 'story')
-        for story_summary in story_summaries:
-            story_summary['position_context'] = story_id_map[story_summary['story_id']]
-        return story_summaries
-
-    async def get_user_wikis(self, user_id):
+    async def get_user_stories_and_wikis(self, user_id):
+        story_ids_and_positions = await self.client.get_user_stories(user_id)
         wiki_ids = await self.client.get_user_wiki_ids(user_id)
-        wikis = await self._get_stories_or_wikis_by_ids(user_id, wiki_ids, 'wiki')
-        return wikis
+        wiki_ids_to_titles = {}
+        wikis = []
+        for wiki_id in wiki_ids:
+            wiki = await self.client.get_wiki(wiki_id)
+            wiki_ids_to_titles[wiki_id] = wiki['title']
+            access_level = self._get_current_user_access_level_in_object(user_id, wiki)
+            wikis.append({
+                'wiki_id':      wiki_id,
+                'title':        wiki['title'],
+                'access_level': access_level,
+            })
+        stories = []
+        for story_id_and_pos in story_ids_and_positions:
+            story_id = story_id_and_pos['story_id']
+            last_pos = story_id_and_pos['position_context']
+            story = await self.client.get_story(story_id)
+            access_level = self._get_current_user_access_level_in_object(user_id, story)
+            wiki_title = wiki_ids_to_titles[story['wiki_id']]
+            stories.append({
+                'story_id': story_id,
+                'title': story['title'],
+                'wiki_summary': {'wiki_id': story['wiki_id'], 'title': wiki_title},
+                'access_level': access_level,
+                'position_context': last_pos,
+            })
+        return {'stories': stories, 'wikis': wikis}
 
     @staticmethod
     def _get_current_user_access_level_in_object(user_id, obj):
         for user in obj['users']:
             if user['user_id'] == user_id:
                 return user['access_level']
-
-    async def _get_stories_or_wikis_by_ids(self, user_id, object_ids, object_type):
-        objects = []
-        for object_id in object_ids:
-            if object_type == 'story':
-                obj = await self.client.get_story(object_id)
-            elif object_type == 'wiki':
-                obj = await self.client.get_wiki(object_id)
-            else:
-                raise ValueError("invalid object type: {}".format(object_type))
-            access_level = self._get_current_user_access_level_in_object(user_id, obj)
-            id_key = '{}_id'.format(object_type)
-            objects.append({
-                id_key:         obj['_id'],
-                'title':        obj['title'],
-                'access_level': access_level,
-            })
-        return objects
 
     async def set_user_password(self, user_id, password):
         # TODO: Check the password is not equal to the previous password.
