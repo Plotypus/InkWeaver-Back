@@ -13,6 +13,8 @@ from loom.messages.outgoing import (
 
 from bson.objectid import ObjectId
 from collections import defaultdict
+from tornado.ioloop import IOLoop
+from tornado.queues import Queue
 from uuid import UUID
 
 from typing import Dict, Set
@@ -20,10 +22,19 @@ JSON = Dict
 
 
 class Router:
+    class MessageTuple:
+        def __init__(self, handler: LoomHandler, message: JSON, action: str, uuid: UUID, message_id=None):
+            self.handler = handler
+            self.message = message
+            self.action = action
+            self.uuid = uuid
+            self.message_id = message_id
+
     def __init__(self, interface):
         # Classes used throughout.
         self.dispatcher = LAWProtocolDispatcher(interface)
         self.message_factory = IncomingMessageFactory()
+        self.message_tuples = Queue()
         # Various dictionaries for keeping track of user information.
         self.story_to_uuids: Dict[ObjectId, Set[UUID]] = defaultdict(set)
         self.wiki_to_uuids: Dict[ObjectId, Set[UUID]] = defaultdict(set)
@@ -31,41 +42,54 @@ class Router:
         self.uuid_to_story: Dict[UUID, ObjectId] = dict()
         self.uuid_to_wiki: Dict[UUID, ObjectId] = dict()
         self.uuid_to_handler: Dict[UUID, LoomHandler] = dict()
+        # Begin reading from the queue.
+        IOLoop.current().spawn_callback(self.process_tuples)
 
-    async def process_incoming(self, handler: LoomHandler, message: JSON, action: str, uuid: UUID, message_id=None):
+    async def enqueue_message(self, handler: LoomHandler, message: JSON, action: str, uuid: UUID, message_id=None):
+        message_tuple = Router.MessageTuple(handler, message, action, uuid, message_id)
+        await self.message_tuples.put(message_tuple)
+
+    async def process_tuples(self):
+        async for message_tuple in self.message_tuples:
+            await self.handle_message_tuple(message_tuple)
+            self.message_tuples.task_done()
+
+    async def handle_message_tuple(self, message_tuple: MessageTuple):
         # Receive the message and format it into one of our IncomingMessage objects.
         try:
             # Prepare potential additional arguments.
-            user_id = self.uuid_to_user[uuid]
-            story_id = self.uuid_to_story.get(uuid)
-            wiki_id = self.uuid_to_wiki.get(uuid)
+            user_id = self.uuid_to_user[message_tuple.uuid]
+            story_id = self.uuid_to_story.get(message_tuple.uuid)
+            wiki_id = self.uuid_to_wiki.get(message_tuple.uuid)
             additional_args = {'user_id': user_id}
             if story_id is not None:
                 additional_args['story_id'] = story_id
             if wiki_id is not None:
                 additional_args['wiki_id'] = wiki_id
-            message_object: IncomingMessage = self.message_factory.build_message(self.dispatcher, action, message, additional_args)
+            message_object: IncomingMessage = self.message_factory.build_message(self.dispatcher, message_tuple.action,
+                                                                                 message_tuple.message, additional_args)
         # Bad action.
         except ValueError:
-            return self.dispatcher.format_failure_json(message_id, f"Action '{action}' not supported.")
+            return self.dispatcher.format_failure_json(message_tuple.message_id,
+                                                       f"Action '{message_tuple.action}' not supported.")
         # Bad message format.
         except TypeError as e:
             # TODO: Replace with with a more specific error
             message = e.args[0]
-            return self.dispatcher.format_failure_json(message_id, message)
+            return self.dispatcher.format_failure_json(message_tuple.message_id, message)
         # Check whether the user is already connected to the router.
-        if uuid not in self.uuid_to_handler:
-            self.uuid_to_handler[uuid] = handler
+        if message_tuple.uuid not in self.uuid_to_handler:
+            self.uuid_to_handler[message_tuple.uuid] = message_tuple.handler
         # Check if the new message is meant for subscription.
         if isinstance(message_object, SubscriptionIncomingMessage):
             if isinstance(message_object, SubscribeToStoryIncomingMessage):
-                self.subscribe_to_story(message_object.story_id, uuid, message_id)
+                self.subscribe_to_story(message_object.story_id, message_tuple.uuid, message_tuple.message_id)
             elif isinstance(message_object, SubscribeToWikiIncomingMessage):
-                self.subscribe_to_wiki(message_object.wiki_id, uuid, message_id)
+                self.subscribe_to_wiki(message_object.wiki_id, message_tuple.uuid, message_tuple.message_id)
             elif isinstance(message_object, UnsubscribeFromStoryIncomingMessage):
-                self.unsubscribe_from_story(uuid, message_id)
+                self.unsubscribe_from_story(message_tuple.uuid, message_tuple.message_id)
             elif isinstance(message_object, UnsubscribeFromWikiIncomingMessage):
-                self.unsubscribe_from_wiki(uuid, message_id)
+                self.unsubscribe_from_wiki(message_tuple.uuid, message_tuple.message_id)
             else:
                 raise RuntimeError(f"unknown instance of SubscriptionIncomingMessage: {message_object}")
         else:

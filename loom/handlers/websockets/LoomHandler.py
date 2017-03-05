@@ -1,7 +1,6 @@
 from .GenericHandler import *
 
 from tornado.ioloop import IOLoop
-from tornado.queues import Queue
 from typing import Dict
 from uuid import UUID
 
@@ -53,18 +52,9 @@ class LoomHandler(GenericHandler):
         json_string = self.encode_json(data)
         self.write_message(json_string)
 
-    def initialize_queue(self):
-        self._messages = Queue()
-        IOLoop.current().spawn_callback(self.process_messages)
-
     def startup(self):
-        self.initialize_queue()
         self.ready = True
         self.send_ready_acknowledgement()
-
-    @property
-    def messages(self) -> Queue:
-        return self._messages
 
     @property
     def router(self):
@@ -96,21 +86,16 @@ class LoomHandler(GenericHandler):
 
     def on_message(self, message):
         super().on_message(message)
+        if not self.ready:
+            self.write_log("Dropping message: {}".format(message))
+            return
         # noinspection PyBroadException
         try:
             json_message = self.decode_json(message)
         except Exception:
             self.on_failure(reason="Message received was not valid JSON.", received_message=message)
             return
-        # `on_message` may not be a coroutine (as of Tornado 4.3).
-        # To work around this, we call spawn_callback to start a coroutine.
-        # However, this results in errors not propagating back up.
-        # Side effect: More messages may be received before the one below is fully executed.
-        # See:
-        #   https://stackoverflow.com/questions/35542864/how-to-use-python-3-5-style-async-and-await-in-tornado-for-websockets
-        # And:
-        #   http://stackoverflow.com/questions/33723830/exception-ignored-in-tornado-websocket-on-message-method
-        IOLoop.current().spawn_callback(self.handle_message, json_message)
+        self.route_message(json_message)
 
     def send_ready_acknowledgement(self):
         message = {
@@ -119,35 +104,25 @@ class LoomHandler(GenericHandler):
         }
         self.write_json(message)
 
-    async def handle_message(self, message: JSON):
-        if self.ready:
-            await self.messages.put(message)
+    def route_message(self, message):
+        try:
+            identifier = message.pop('identifier')
+            action = message.pop('action')
+        except KeyError:
+            self.on_failure(reason="malformed message; all messages require `action` and `identifier` fields")
         else:
-            self.write_log("Dropping message: {}".format(message))
-
-    async def process_messages(self):
-        async for message in self.messages:
             try:
-                identifier = message.pop('identifier')
-                action = message.pop('action')
+                uuid = UUID(identifier.get('uuid'))
+                message_id = identifier.get('message_id')
+                # TODO: Check this and send a specific error.
+                assert uuid == self.uuid
             except KeyError:
-                self.on_failure(reason="malformed message; all messages require `action` and `identifier` fields")
+                self.on_failure(reason="malformed identifier; must have both given `uuid` and `message_id` fields")
+            except AssertionError:
+                self.write_log(f"given UUID {uuid} does not equal correct UUID {self.uuid}")
             else:
-                try:
-                    uuid = UUID(identifier.get('uuid'))
-                    message_id = identifier.get('message_id')
-                    # TODO: Check this and send a specific error.
-                    assert uuid == self.uuid
-                except KeyError:
-                    self.on_failure(reason="malformed identifier; must have both given `uuid` and `message_id` fields")
-                except AssertionError:
-                    self.write_log(f"given UUID {uuid} does not equal correct UUID {self.uuid}")
-                else:
-                    # Update the message.
-                    message['uuid'] = uuid
-                    message['message_id'] = message_id
-                    # Spawn a callback to handle the message, freeing this handler immediately.
-                    IOLoop.current().spawn_callback(self.router.process_incoming, self, message, action, uuid,
-                                                    message_id)
-            finally:
-                self.messages.task_done()
+                # Update the message.
+                message['uuid'] = uuid
+                message['message_id'] = message_id
+                # Spawn a callback to handle the message, freeing this handler immediately.
+                IOLoop.current().spawn_callback(self.router.enqueue_message, self, message, action, uuid, message_id)
