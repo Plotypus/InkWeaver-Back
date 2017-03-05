@@ -10,8 +10,7 @@ import re
 APPROVED_MESSAGES = {
     # User Information
     'get_user_preferences':            GetUserPreferencesIncomingMessage,
-    'get_user_stories':                GetUserStoriesIncomingMessage,
-    'get_user_wikis':                  GetUserWikisIncomingMessage,
+    'get_user_stories_and_wikis':      GetUserStoriesAndWikisIncomingMessage,
     'set_user_name':                   SetUserNameIncomingMessage,
     'set_user_email':                  SetUserEmailIncomingMessage,
     'set_user_bio':                    SetUserBioIncomingMessage,

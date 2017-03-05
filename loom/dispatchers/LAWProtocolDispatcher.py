@@ -91,13 +91,11 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                  bio=preferences['bio'],
                                                  avatar=preferences['avatar'])
 
-    async def get_user_stories(self, uuid, message_id, user_id):
-        stories = await self.db_interface.get_user_stories(user_id)
-        return GetUserStoriesOutgoingMessage(uuid, message_id, stories=stories)
-
-    async def get_user_wikis(self, uuid, message_id, user_id):
-        wikis = await self.db_interface.get_user_wikis(user_id)
-        return GetUserWikisOutgoingMessage(uuid, message_id, wikis=wikis)
+    async def get_user_stories_and_wikis(self, uuid, message_id, user_id):
+        response = await self.db_interface.get_user_stories_and_wikis(user_id)
+        return GetUserStoriesAndWikisOutgoingMessage(uuid, message_id,
+                                                     stories=response['stories'],
+                                                     wikis=response['wikis'])
     
     async def set_user_name(self, uuid, message_id, user_id, name):
         await self.db_interface.set_user_name(user_id, name)

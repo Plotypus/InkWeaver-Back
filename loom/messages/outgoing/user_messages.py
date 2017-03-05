@@ -17,16 +17,11 @@ class GetUserPreferencesOutgoingMessage(UnicastMessage):
         self.bio = bio
         self.avatar = avatar
 
-    
-class GetUserStoriesOutgoingMessage(UnicastMessage):
-    def __init__(self, uuid: UUID, message_id: int, *, stories: list):
-        super().__init__(uuid, message_id, 'got_user_stories')
-        self.stories = stories
 
-    
-class GetUserWikisOutgoingMessage(UnicastMessage):
-    def __init__(self, uuid: UUID, message_id: int, *, wikis: list):
-        super().__init__(uuid, message_id, 'got_user_wikis')
+class GetUserStoriesAndWikisOutgoingMessage(UnicastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, stories: list, wikis: list):
+        super().__init__(uuid, message_id, 'got_user_stories_and_wikis')
+        self.stories = stories
         self.wikis = wikis
 
 

@@ -16,22 +16,13 @@ class GetUserPreferencesIncomingMessage(IncomingMessage):
         return self._dispatcher.get_user_preferences(self.uuid, self.message_id, self.user_id)
 
 
-class GetUserStoriesIncomingMessage(IncomingMessage):
+class GetUserStoriesAndWikisIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
         self.user_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_user_stories(self.uuid, self.message_id, self.user_id)
-
-
-class GetUserWikisIncomingMessage(IncomingMessage):
-    def __init__(self):
-        super().__init__()
-        self.user_id = RequiredField()
-
-    def dispatch(self):
-        return self._dispatcher.get_user_wikis(self.uuid, self.message_id, self.user_id)
+        return self._dispatcher.get_user_stories_and_wikis(self.uuid, self.message_id, self.user_id)
 
 
 ###########################################################################
