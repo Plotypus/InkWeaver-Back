@@ -1,4 +1,4 @@
-from loom.dispatchers import DemoDataDispatcher
+from loom.dispatchers.DemoDataDispatcher import DemoDataDispatcher
 from loom.messages import IncomingMessage, OutgoingMessage
 from loom.messages.incoming.demo import DemoIncomingMessageFactory
 from loom.messages.outgoing import GetWikiInformationOutgoingMessage, GetStoryInformationOutgoingMessage
