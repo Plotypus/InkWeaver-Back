@@ -378,9 +378,11 @@ class MongoDBInterface(AbstractDBInterface):
             link_id, page_id, name = await self._create_link_and_replace_text(section_id, paragraph_id, text,
                                                                               start, end)
             links_created.append((link_id, page_id, name))
+            # Strip out the space in the encoding.
+            encoded_link_id = encode_bson_to_string(link_id).replace(' ', '')
             # Add the previous text and link_id to the buffer.
             buffer.append(text[prev_end:start])
-            buffer.append(link_id)
+            buffer.append(encoded_link_id)
             prev_end = end
         # Don't forget to add the rest of the string.
         buffer.append(text[prev_end:])
@@ -394,9 +396,7 @@ class MongoDBInterface(AbstractDBInterface):
         story_id = decode_string_to_bson(story_id)
         page_id = decode_string_to_bson(page_id)
         link_id = await self.create_link(story_id, section_id, paragraph_id, name, page_id)
-        # Strip out the space in the encoding.
-        encoded_link_id = encode_bson_to_string(link_id).replace(' ', '')
-        return encoded_link_id, page_id, name
+        return link_id, page_id, name
 
     async def set_bookmark_name(self, story_id, bookmark_id, new_name):
         await self.client.set_bookmark_name(story_id, bookmark_id, new_name)
