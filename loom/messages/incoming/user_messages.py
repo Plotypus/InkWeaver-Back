@@ -68,4 +68,5 @@ class SetUserStoryPositionContextIncomingMessage(IncomingMessage):
         self.position_context = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.set_user_story_position_context(self.user_id, self.story_id, self.position_context)
+        return self._dispatcher.set_user_story_position_context(self.uuid, self.message_id, self.user_id, self.story_id,
+                                                                self.position_context)
