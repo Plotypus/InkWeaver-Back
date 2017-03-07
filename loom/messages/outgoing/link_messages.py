@@ -10,11 +10,10 @@ from uuid import UUID
 #
 ###########################################################################
 class CreateLinkOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, *, link_id: ObjectId, story_id: ObjectId, section_id: ObjectId,
+    def __init__(self, uuid: UUID, message_id: int, *, link_id: ObjectId, section_id: ObjectId,
                  paragraph_id: ObjectId, name: str, page_id: ObjectId):
         super().__init__(uuid, message_id, 'link_created')
         self.link_id = link_id
-        self.story_id = story_id
         self.section_id = section_id
         self.paragraph_id = paragraph_id
         self.name = name
