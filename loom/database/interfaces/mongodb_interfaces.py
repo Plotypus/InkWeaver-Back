@@ -227,8 +227,10 @@ class MongoDBInterface(AbstractDBInterface):
             # Default the note to None
             await self.client.insert_note_for_paragraph(paragraph_id, None, in_section_id=section_id, at_index=index)
             if text is not None:
-                await self.set_paragraph_text(section_id, text, paragraph_id)
-            return paragraph_id
+                links_created = await self.set_paragraph_text(section_id, text, paragraph_id)
+            else:
+                links_created = []
+            return paragraph_id, links_created
 
     async def add_bookmark(self, name, story_id, section_id, paragraph_id, index=None):
         bookmark_id = ObjectId()
@@ -288,7 +290,7 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.set_section_title(section_id, title)
 
     async def set_paragraph_text(self, section_id, text, paragraph_id):
-        text = await self._find_and_create_links_in_paragraph(section_id, paragraph_id, text)
+        text, links_created = await self._find_and_create_links_in_paragraph(section_id, paragraph_id, text)
         sentences_and_links, word_frequencies = await self.get_links_and_word_counts_from_paragraph(text)
         page_updates = {}
         section_links = []
@@ -330,6 +332,7 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
         await self.client.set_paragraph_statistics(paragraph_id, word_frequencies, sum(word_frequencies.values()),
                                                    section_id)
+        return links_created
 
     @staticmethod
     def _update_link_in_references_with_context(references, link_id, context):
@@ -366,19 +369,22 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def _find_and_create_links_in_paragraph(self, section_id, paragraph_id, text):
         prev_end = 0
+        links_created = []  # (link_id, page_id, name)
         # Buffer used for efficiently joining the string back together.
         buffer = []
         # Iterate through each encoded request and replace with a link_id.
         for match in CREATE_LINK_REGEX.finditer(text):
             start, end = match.span()
-            link_id = await self._create_link_and_replace_text(section_id, paragraph_id, text, start, end)
+            link_id, page_id, name = await self._create_link_and_replace_text(section_id, paragraph_id, text,
+                                                                              start, end)
+            links_created.append((link_id, page_id, name))
             # Add the previous text and link_id to the buffer.
             buffer.append(text[prev_end:start])
             buffer.append(link_id)
             prev_end = end
         # Don't forget to add the rest of the string.
         buffer.append(text[prev_end:])
-        return ''.join(buffer)
+        return ''.join(buffer), links_created
 
     async def _create_link_and_replace_text(self, section_id, paragraph_id, text, start, end):
         # Get the match and split it into story_id, page_id, and name.
@@ -390,7 +396,7 @@ class MongoDBInterface(AbstractDBInterface):
         link_id = await self.create_link(story_id, section_id, paragraph_id, name, page_id)
         # Strip out the space in the encoding.
         encoded_link_id = encode_bson_to_string(link_id).replace(' ', '')
-        return encoded_link_id
+        return encoded_link_id, page_id, name
 
     async def set_bookmark_name(self, story_id, bookmark_id, new_name):
         await self.client.set_bookmark_name(story_id, bookmark_id, new_name)
