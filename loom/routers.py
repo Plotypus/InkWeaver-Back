@@ -93,16 +93,16 @@ class Router:
             else:
                 raise RuntimeError(f"unknown instance of SubscriptionIncomingMessage: {message_object}")
         else:
-            # Dispatch the incoming message and process the response.
-            response = await message_object.dispatch()
-            if isinstance(response, UnicastMessage):
-                self.unicast(response)
-            elif isinstance(response, StoryBroadcastMessage):
-                self.broadcast_to_story(story_id, response)
-            elif isinstance(response, WikiBroadcastMessage):
-                self.broadcast_to_wiki(wiki_id, response)
-            else:
-                raise RuntimeError(f"unknown instance of OutgoingMessage: {response}")
+            # Dispatch the incoming message and process the responses.
+            async for response in message_object.dispatch():
+                if isinstance(response, UnicastMessage):
+                    self.unicast(response)
+                elif isinstance(response, StoryBroadcastMessage):
+                    self.broadcast_to_story(story_id, response)
+                elif isinstance(response, WikiBroadcastMessage):
+                    self.broadcast_to_wiki(wiki_id, response)
+                else:
+                    raise RuntimeError(f"unknown instance of OutgoingMessage: {response}")
 
     def connect(self, handler: LoomHandler, user_id: ObjectId):
         uuid = handler.uuid
