@@ -322,7 +322,9 @@ class MongoDBClient:
             filter={'_id': user_id},
             update={
                 '$pull': {
-                    'stories': story_id
+                    'stories': {
+                        'story_id': story_id
+                    }
                 }
             }
         )
