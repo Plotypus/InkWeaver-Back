@@ -692,20 +692,26 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_story_wiki(story_id, new_wiki_id)
         # Recursively delete all segments in the wiki.
         segment_id = wiki['segment_id']
-        await self.delete_segment(segment_id)
+        deleted_link_ids = await self.delete_segment(segment_id)
         # Delete the wiki proper.
         await self.client.delete_wiki(wiki_id)
+        return deleted_link_ids
 
     async def delete_segment(self, segment_id):
-        await self.recur_delete_segment_and_subsegments(segment_id)
+        deleted_link_ids = await self.recur_delete_segment_and_subsegments(segment_id)
+        return deleted_link_ids
 
     async def recur_delete_segment_and_subsegments(self, segment_id):
         segment = await self.client.get_segment(segment_id)
+        deleted_link_ids = []
         for subsegment_id in segment['segments']:
-            await self.recur_delete_segment_and_subsegments(subsegment_id)
+            segment_deleted_link_ids = await self.recur_delete_segment_and_subsegments(subsegment_id)
+            deleted_link_ids.extend(segment_deleted_link_ids)
         for page_id in segment['pages']:
-            await self.delete_page(page_id)
+            page_deleted_link_ids = await self.delete_page(page_id)
+            deleted_link_ids.extend(page_deleted_link_ids)
         await self.client.delete_segment(segment_id)
+        return deleted_link_ids
 
     async def delete_template_heading(self, title, segment_id):
         try:
@@ -717,9 +723,12 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def delete_page(self, page_id):
         page = await self.client.get_page(page_id)
+        deleted_link_ids = []
         for alias_id in page['aliases'].values():
-            await self._delete_alias_no_replace(alias_id)
+            page_deleted_link_ids = await self._delete_alias_no_replace(alias_id)
+            deleted_link_ids.extend(page_deleted_link_ids)
         await self.client.delete_page(page_id)
+        return deleted_link_ids
 
     async def delete_heading(self, heading_title: str, page_id: ObjectId):
         await self.client.delete_heading(heading_title, page_id)
@@ -791,13 +800,14 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def delete_alias(self, alias_id: ObjectId):
         alias = await self.get_alias(alias_id)
-        await self._delete_alias_no_replace(alias_id)
+        deleted_link_ids = await self._delete_alias_no_replace(alias_id)
         alias_name = alias['name']
         page_id = alias['page_id']
         page = await self.client.get_page(page_id)
         # Alias with page title deleted, need to recreate primary alias
         if page is not None and not await self._page_title_is_alias(page):
             await self._create_alias(page_id, alias_name)
+        return deleted_link_ids
 
     async def _delete_alias_no_replace(self, alias_id: ObjectId):
         alias = await self.get_alias(alias_id)
@@ -807,6 +817,7 @@ class MongoDBInterface(AbstractDBInterface):
         page_id = alias['page_id']
         await self.client.remove_alias_from_page(alias_name, page_id)
         await self.client.delete_alias(alias_id)
+        return alias['links']
 
     async def _create_alias(self, page_id: ObjectId, name: str):
         alias_id = await self.client.create_alias(name, page_id)

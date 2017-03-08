@@ -409,11 +409,15 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                          headings=page['headings'])
 
     async def delete_wiki(self, uuid, message_id, user_id, wiki_id):
-        await self.db_interface.delete_wiki(user_id, wiki_id)
+        deleted_link_ids = await self.db_interface.delete_wiki(user_id, wiki_id)
+        for link_id in deleted_link_ids:
+            yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
         yield DeleteWikiOutgoingMessage(uuid, message_id, wiki_id=wiki_id)
 
     async def delete_segment(self, uuid, message_id, segment_id):
-        await self.db_interface.delete_segment(segment_id)
+        deleted_link_ids = await self.db_interface.delete_segment(segment_id)
+        for link_id in deleted_link_ids:
+            yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
         yield DeleteSegmentOutgoingMessage(uuid, message_id, segment_id=segment_id)
 
     async def delete_template_heading(self, uuid, message_id, segment_id, template_heading_title):
@@ -423,7 +427,9 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                    template_heading_title=template_heading_title)
 
     async def delete_page(self, uuid, message_id, page_id):
-        await self.db_interface.delete_page(page_id)
+        deleted_link_ids = await self.db_interface.delete_page(page_id)
+        for link_id in deleted_link_ids:
+            yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
         yield DeletePageOutgoingMessage(uuid, message_id, page_id=page_id)
 
     async def delete_heading(self, uuid, message_id, heading_title, page_id):
