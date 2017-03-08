@@ -67,9 +67,9 @@ class DataProcessor:
             revised: JSON = {k: self.replace_id(v) for k, v in dispatch_item.items()}
             action = revised.pop('action')
             message: IncomingMessage = self.message_factory.build_message(self.dispatcher, action, revised, additional_args)
-            response: OutgoingMessage = await message.dispatch()
-            if message.message_id is not None:
-                self.responses[str(message.message_id)] = response
+            async for response in message.dispatch():
+                if message.message_id is not None:
+                    self.responses[str(message.message_id)] = response
 
     id_regex = re.compile(r'\$\{([^}]+)\}')
 
