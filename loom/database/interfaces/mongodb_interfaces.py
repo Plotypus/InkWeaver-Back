@@ -102,46 +102,41 @@ class MongoDBInterface(AbstractDBInterface):
         preferences = await self.client.get_user_preferences(user_id)
         return preferences
 
-    async def get_user_stories(self, user_id):
-        stories = await self.client.get_user_stories(user_id)
-        story_id_map = {}
-        for story in stories:
-            story_id = story['story_id']
-            last_pos = story['position_context']
-            story_id_map[story_id] = last_pos
-        story_summaries = await self._get_stories_or_wikis_by_ids(user_id, story_id_map.keys(), 'story')
-        for story_summary in story_summaries:
-            story_summary['position_context'] = story_id_map[story_summary['story_id']]
-        return story_summaries
-
-    async def get_user_wikis(self, user_id):
+    async def get_user_stories_and_wikis(self, user_id):
+        story_ids_and_positions = await self.client.get_user_stories(user_id)
         wiki_ids = await self.client.get_user_wiki_ids(user_id)
-        wikis = await self._get_stories_or_wikis_by_ids(user_id, wiki_ids, 'wiki')
-        return wikis
+        wiki_ids_to_titles = {}
+        wikis = []
+        for wiki_id in wiki_ids:
+            wiki = await self.client.get_wiki(wiki_id)
+            wiki_ids_to_titles[wiki_id] = wiki['title']
+            access_level = self._get_current_user_access_level_in_object(user_id, wiki)
+            wikis.append({
+                'wiki_id':      wiki_id,
+                'title':        wiki['title'],
+                'access_level': access_level,
+            })
+        stories = []
+        for story_id_and_pos in story_ids_and_positions:
+            story_id = story_id_and_pos['story_id']
+            last_pos = story_id_and_pos['position_context']
+            story = await self.client.get_story(story_id)
+            access_level = self._get_current_user_access_level_in_object(user_id, story)
+            wiki_title = wiki_ids_to_titles[story['wiki_id']]
+            stories.append({
+                'story_id': story_id,
+                'title': story['title'],
+                'wiki_summary': {'wiki_id': story['wiki_id'], 'title': wiki_title},
+                'access_level': access_level,
+                'position_context': last_pos,
+            })
+        return {'stories': stories, 'wikis': wikis}
 
     @staticmethod
     def _get_current_user_access_level_in_object(user_id, obj):
         for user in obj['users']:
             if user['user_id'] == user_id:
                 return user['access_level']
-
-    async def _get_stories_or_wikis_by_ids(self, user_id, object_ids, object_type):
-        objects = []
-        for object_id in object_ids:
-            if object_type == 'story':
-                obj = await self.client.get_story(object_id)
-            elif object_type == 'wiki':
-                obj = await self.client.get_wiki(object_id)
-            else:
-                raise ValueError("invalid object type: {}".format(object_type))
-            access_level = self._get_current_user_access_level_in_object(user_id, obj)
-            id_key = '{}_id'.format(object_type)
-            objects.append({
-                id_key:         obj['_id'],
-                'title':        obj['title'],
-                'access_level': access_level,
-            })
-        return objects
 
     async def set_user_password(self, user_id, password):
         # TODO: Check the password is not equal to the previous password.
@@ -232,8 +227,10 @@ class MongoDBInterface(AbstractDBInterface):
             # Default the note to None
             await self.client.insert_note_for_paragraph(paragraph_id, None, in_section_id=section_id, at_index=index)
             if text is not None:
-                await self.set_paragraph_text(section_id, text, paragraph_id)
-            return paragraph_id
+                links_created = await self.set_paragraph_text(section_id, text, paragraph_id)
+            else:
+                links_created = []
+            return paragraph_id, links_created
 
     async def add_bookmark(self, name, story_id, section_id, paragraph_id, index=None):
         bookmark_id = ObjectId()
@@ -293,7 +290,7 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.set_section_title(section_id, title)
 
     async def set_paragraph_text(self, section_id, text, paragraph_id):
-        text = await self._find_and_create_links_in_paragraph(section_id, paragraph_id, text)
+        text, links_created = await self._find_and_create_links_in_paragraph(section_id, paragraph_id, text)
         sentences_and_links, word_frequencies = await self.get_links_and_word_counts_from_paragraph(text)
         page_updates = {}
         section_links = []
@@ -335,6 +332,7 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
         await self.client.set_paragraph_statistics(paragraph_id, word_frequencies, sum(word_frequencies.values()),
                                                    section_id)
+        return links_created
 
     @staticmethod
     def _update_link_in_references_with_context(references, link_id, context):
@@ -371,19 +369,24 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def _find_and_create_links_in_paragraph(self, section_id, paragraph_id, text):
         prev_end = 0
+        links_created = []  # (link_id, page_id, name)
         # Buffer used for efficiently joining the string back together.
         buffer = []
         # Iterate through each encoded request and replace with a link_id.
         for match in CREATE_LINK_REGEX.finditer(text):
             start, end = match.span()
-            link_id = await self._create_link_and_replace_text(section_id, paragraph_id, text, start, end)
+            link_id, page_id, name = await self._create_link_and_replace_text(section_id, paragraph_id, text,
+                                                                              start, end)
+            links_created.append((link_id, page_id, name))
+            # Strip out the space in the encoding.
+            encoded_link_id = encode_bson_to_string(link_id).replace(' ', '')
             # Add the previous text and link_id to the buffer.
             buffer.append(text[prev_end:start])
-            buffer.append(link_id)
+            buffer.append(encoded_link_id)
             prev_end = end
         # Don't forget to add the rest of the string.
         buffer.append(text[prev_end:])
-        return ''.join(buffer)
+        return ''.join(buffer), links_created
 
     async def _create_link_and_replace_text(self, section_id, paragraph_id, text, start, end):
         # Get the match and split it into story_id, page_id, and name.
@@ -393,9 +396,7 @@ class MongoDBInterface(AbstractDBInterface):
         story_id = decode_string_to_bson(story_id)
         page_id = decode_string_to_bson(page_id)
         link_id = await self.create_link(story_id, section_id, paragraph_id, name, page_id)
-        # Strip out the space in the encoding.
-        encoded_link_id = encode_bson_to_string(link_id).replace(' ', '')
-        return encoded_link_id
+        return link_id, page_id, name
 
     async def set_bookmark_name(self, story_id, bookmark_id, new_name):
         await self.client.set_bookmark_name(story_id, bookmark_id, new_name)
@@ -691,20 +692,26 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_story_wiki(story_id, new_wiki_id)
         # Recursively delete all segments in the wiki.
         segment_id = wiki['segment_id']
-        await self.delete_segment(segment_id)
+        deleted_link_ids = await self.delete_segment(segment_id)
         # Delete the wiki proper.
         await self.client.delete_wiki(wiki_id)
+        return deleted_link_ids
 
     async def delete_segment(self, segment_id):
-        await self.recur_delete_segment_and_subsegments(segment_id)
+        deleted_link_ids = await self.recur_delete_segment_and_subsegments(segment_id)
+        return deleted_link_ids
 
     async def recur_delete_segment_and_subsegments(self, segment_id):
         segment = await self.client.get_segment(segment_id)
+        deleted_link_ids = []
         for subsegment_id in segment['segments']:
-            await self.recur_delete_segment_and_subsegments(subsegment_id)
+            segment_deleted_link_ids = await self.recur_delete_segment_and_subsegments(subsegment_id)
+            deleted_link_ids.extend(segment_deleted_link_ids)
         for page_id in segment['pages']:
-            await self.delete_page(page_id)
+            page_deleted_link_ids = await self.delete_page(page_id)
+            deleted_link_ids.extend(page_deleted_link_ids)
         await self.client.delete_segment(segment_id)
+        return deleted_link_ids
 
     async def delete_template_heading(self, title, segment_id):
         try:
@@ -716,9 +723,12 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def delete_page(self, page_id):
         page = await self.client.get_page(page_id)
+        deleted_link_ids = []
         for alias_id in page['aliases'].values():
-            await self._delete_alias_no_replace(alias_id)
+            page_deleted_link_ids = await self._delete_alias_no_replace(alias_id)
+            deleted_link_ids.extend(page_deleted_link_ids)
         await self.client.delete_page(page_id)
+        return deleted_link_ids
 
     async def delete_heading(self, heading_title: str, page_id: ObjectId):
         await self.client.delete_heading(heading_title, page_id)
@@ -790,13 +800,14 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def delete_alias(self, alias_id: ObjectId):
         alias = await self.get_alias(alias_id)
-        await self._delete_alias_no_replace(alias_id)
+        deleted_link_ids = await self._delete_alias_no_replace(alias_id)
         alias_name = alias['name']
         page_id = alias['page_id']
         page = await self.client.get_page(page_id)
         # Alias with page title deleted, need to recreate primary alias
         if page is not None and not await self._page_title_is_alias(page):
             await self._create_alias(page_id, alias_name)
+        return deleted_link_ids
 
     async def _delete_alias_no_replace(self, alias_id: ObjectId):
         alias = await self.get_alias(alias_id)
@@ -806,6 +817,7 @@ class MongoDBInterface(AbstractDBInterface):
         page_id = alias['page_id']
         await self.client.remove_alias_from_page(alias_name, page_id)
         await self.client.delete_alias(alias_id)
+        return alias['links']
 
     async def _create_alias(self, page_id: ObjectId, name: str):
         alias_id = await self.client.create_alias(name, page_id)

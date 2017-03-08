@@ -61,9 +61,9 @@ class MongoDBClient:
     def __repr__(self):
         return f'<{type(self)}|{self.host}:{self.port}>'
 
-    def log(self, message, log_level=LogLevel.INFO):
+    def log(self, message, log_level=LogLevel.DEBUG):
         if isinstance(log_level, LogLevel):
-            log_level = log_level.value
+            log_level = log_level
         self.logger.log(log_level, f'{repr(self)} {message}')
 
     @property
@@ -322,7 +322,9 @@ class MongoDBClient:
             filter={'_id': user_id},
             update={
                 '$pull': {
-                    'stories': story_id
+                    'stories': {
+                        'story_id': story_id
+                    }
                 }
             }
         )

@@ -1,5 +1,5 @@
-from loom.dispatchers.messages.incoming import *
-from loom.dispatchers.messages import IncomingMessageFactory
+from loom.messages.incoming import *
+from loom.messages import IncomingMessageFactory
 
 import pytest
 

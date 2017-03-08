@@ -1,19 +1,20 @@
 from .link_messages import *
 from .statistics_messages import *
 from .story_messages import *
+from .subscription_messages import *
 from .user_messages import *
 from .wiki_messages import *
+
+import re
 
 APPROVED_MESSAGES = {
     # User Information
     'get_user_preferences':            GetUserPreferencesIncomingMessage,
-    'get_user_stories':                GetUserStoriesIncomingMessage,
-    'get_user_wikis':                  GetUserWikisIncomingMessage,
+    'get_user_stories_and_wikis':      GetUserStoriesAndWikisIncomingMessage,
     'set_user_name':                   SetUserNameIncomingMessage,
     'set_user_email':                  SetUserEmailIncomingMessage,
     'set_user_bio':                    SetUserBioIncomingMessage,
     'set_user_story_position_context': SetUserStoryPositionContextIncomingMessage,
-    'user_login':                      UserLoginIncomingMessage,
 
     # Stories
     'create_story':                    CreateStoryIncomingMessage,
@@ -61,7 +62,6 @@ APPROVED_MESSAGES = {
     'delete_heading':                  DeleteHeadingIncomingMessage,
 
     # Links
-    'create_link':                     CreateLinkIncomingMessage,
     'delete_link':                     DeleteLinkIncomingMessage,
 
     # Aliases
@@ -73,6 +73,12 @@ APPROVED_MESSAGES = {
     'get_section_statistics':          GetSectionStatisticsIncomingMessage,
     'get_paragraph_statistics':        GetParagraphStatisticsIncomingMessage,
     'get_page_frequencies':            GetPageFrequenciesIncomingMessage,
+
+    # Subscriptions
+    'subscribe_to_story':              SubscribeToStoryIncomingMessage,
+    'unsubscribe_from_story':          UnsubscribeFromStoryIncomingMessage,
+    'subscribe_to_wiki':               SubscribeToWikiIncomingMessage,
+    'unsubscribe_from_wiki':           UnsubscribeFromWikiIncomingMessage,
 }
 
 
@@ -84,10 +90,39 @@ class IncomingMessageFactory:
     def approved_messages(self):
         return self._approved_messages
 
-    def build_message(self, dispatcher, action: str, message: dict):
+    def build_message(self, dispatcher, action: str, message: dict, additional_fields: dict):
         message_builder = self.approved_messages.get(action)
         if message_builder is not None:
-            message_object = message_builder(message)
+            message_object = self._build_message(message_builder, message, additional_fields)
             message_object.set_dispatcher(dispatcher)
             return message_object
-        raise ValueError
+        raise ValueError(f"no such action: {action}")
+
+    @staticmethod
+    def _build_message(message_builder, message: dict, additional_fields: dict):
+        message_object = message_builder()
+        try:
+            message_object.set_values_from_message(message)
+        except TypeError as e:
+            error_msg = e.args[0]
+            if 'Missing fields' in error_msg:
+                # Missing fields come back in the form: ['field 1', 'field 2', ...]
+                error_fields = re.search(r'\[(.*?)\]', error_msg).group(1)
+                # Replace single quotes around each field and split into a list
+                missing_fields = error_fields.replace("'", '').split(', ')
+                # Try to fulfill missing fields using the additional fields.
+                for missing_field in missing_fields:
+                    field = additional_fields.get(missing_field)
+                    # Check to see if the missing field is supplied in the additional fields.
+                    if field is not None:
+                        message[missing_field] = field
+                    # If the field is not, we won't find it and can raise the error again.
+                    else:
+                        raise
+                # All fields are satisfied, this won't raise an exception.
+                message_object.set_values_from_message(message)
+                return message_object
+            raise
+        else:
+            return message_object
+

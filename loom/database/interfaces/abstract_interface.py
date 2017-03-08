@@ -46,11 +46,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_user_stories(self, user_id):
-        pass
-
-    @abstractmethod
-    async def get_user_wikis(self, user_id):
+    async def get_user_stories_and_wikis(self, user_id):
         pass
 
     @abstractmethod

@@ -1,12 +1,8 @@
 from .GenericHandler import *
 
-from loom.database.interfaces import AbstractDBInterface  # For type hinting.
-from loom.dispatchers import *
-
-from bson import ObjectId
 from tornado.ioloop import IOLoop
-from tornado.queues import Queue
 from typing import Dict
+from uuid import UUID
 
 JSON = Dict
 
@@ -33,8 +29,13 @@ class LoomHandler(GenericHandler):
             self.on_failure(reason="Could not successfully open connection.")
             self.close()
             return
-        self._dispatcher = LAWProtocolDispatcher(self.db_interface, user_id)
+        self._router = self.settings['router']
+        self.router.connect(self, user_id)
         self.startup()
+
+    def on_close(self):
+        self.router.disconnect(self)
+        super().on_close()
 
     def on_failure(self, reply_to_id=None, reason=None, **fields):
         response = {
@@ -44,37 +45,20 @@ class LoomHandler(GenericHandler):
         if reply_to_id is not None:
             response['reply_to_id'] = reply_to_id
         response.update(fields)
-        json = self.encode_json(response)
-        self.write_message(json)
+        json_response = self.encode_json(response)
+        self.write_message(json_response)
 
     def write_json(self, data):
         json_string = self.encode_json(data)
         self.write_message(json_string)
 
-    def initialize_queue(self):
-        self._messages = Queue()
-        IOLoop.current().spawn_callback(self.process_messages)
-
     def startup(self):
-        self.initialize_queue()
         self.ready = True
         self.send_ready_acknowledgement()
 
     @property
-    def dispatcher(self) -> LAWProtocolDispatcher:
-        return self._dispatcher
-
-    @property
-    def db_interface(self) -> AbstractDBInterface:
-        try:
-            return self._db_interface
-        except AttributeError:
-            self._db_interface = self.settings['db_interface']
-            return self._db_interface
-
-    @property
-    def messages(self) -> Queue:
-        return self._messages
+    def router(self):
+        return self._router
 
     def _get_user_id_for_session_id(self, session_id):
         session_manager = self.settings['session_manager']
@@ -101,51 +85,44 @@ class LoomHandler(GenericHandler):
     ############################################################
 
     def on_message(self, message):
-        # TODO: Remove this.
         super().on_message(message)
+        if not self.ready:
+            self.write_log("Dropping message: {}".format(message))
+            return
+        # noinspection PyBroadException
         try:
-            json = self.decode_json(message)
-        except:
+            json_message = self.decode_json(message)
+        except Exception:
             self.on_failure(reason="Message received was not valid JSON.", received_message=message)
             return
-        # `on_message` may not be a coroutine (as of Tornado 4.3).
-        # To work around this, we call spawn_callback to start a coroutine.
-        # However, this results in errors not propagating back up.
-        # Side effect: More messages may be received before the one below is fully executed.
-        # See:
-        #   https://stackoverflow.com/questions/35542864/how-to-use-python-3-5-style-async-and-await-in-tornado-for-websockets
-        # And:
-        #   http://stackoverflow.com/questions/33723830/exception-ignored-in-tornado-websocket-on-message-method
-        IOLoop.current().spawn_callback(self.handle_message, json)
+        self.route_message(json_message)
 
     def send_ready_acknowledgement(self):
         message = {
-            'event': 'acknowledged'
+            'event': 'acknowledged',
+            'uuid':  self.uuid,
         }
         self.write_json(message)
 
-    async def handle_message(self, message: JSON):
-        if self.ready:
-            await self.messages.put(message)
+    def route_message(self, message):
+        try:
+            identifier = message.pop('identifier')
+            action = message.pop('action')
+        except KeyError:
+            self.on_failure(reason="malformed message; all messages require `action` and `identifier` fields")
         else:
-            self.write_log("Dropping message: {}".format(message))
-
-    async def process_messages(self):
-        async for message in self.messages:
-            message_id = message.get('message_id', None)
             try:
-                # Remove the `action` key/value. It's only needed for dispatch, so the dispatch methods don't use it.
-                action = message.pop('action')
+                uuid = UUID(identifier.get('uuid'))
+                message_id = identifier.get('message_id')
+                # TODO: Check this and send a specific error.
+                assert uuid == self.uuid
             except KeyError:
-                self.on_failure(reply_to_id=message_id, reason="`action` field not supplied")
+                self.on_failure(reason="malformed identifier; must have both given `uuid` and `message_id` fields")
+            except AssertionError:
+                self.write_log(f"given UUID {uuid} does not equal correct UUID {self.uuid}")
             else:
-                try:
-                    json_result = await self.dispatcher.dispatch(message, action, message_id)
-                    self.write_json(json_result)
-                except LAWUnimplementedError:
-                    err_message = "invalid `action`: {}".format(action)
-                    self.on_failure(reply_to_id=message_id, reason=err_message)
-                except LAWBadArgumentsError as e:
-                    self.on_failure(reply_to_id=message_id, reason=e.message)
-            finally:
-                self.messages.task_done()
+                # Update the message.
+                message['uuid'] = uuid
+                message['message_id'] = message_id
+                # Spawn a callback to handle the message, freeing this handler immediately.
+                IOLoop.current().spawn_callback(self.router.enqueue_message, self, message, action, uuid, message_id)

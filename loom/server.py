@@ -1,5 +1,7 @@
 from loom import routing
 from loom.database.interfaces import MongoDBTornadoInterface
+from loom.dispatchers.LAWProtocolDispatcher import LAWProtocolDispatcher
+from loom.routers import Router
 from loom.session_manager import SessionManager
 
 import base64
@@ -11,13 +13,21 @@ from os import urandom
 from tornado.httpserver import HTTPServer
 
 class LoomServer:
-    def __init__(self, interface=None, session_manager=None, routes=None):
+    def __init__(self, interface=None, session_manager=None, routes=None, dispatcher=None, router=None):
         self._interface = interface
         self._session_manager = session_manager
         self._routes = routes
+        self._dispatcher = dispatcher
+        self._router = router
 
     def create_db_interface(self, db_name, db_host, db_port, db_user=None, db_pass=None):
         self._interface = MongoDBTornadoInterface(db_name, db_host, db_port, db_user, db_pass)
+
+    def create_dispatcher(self):
+        self._dispatcher = LAWProtocolDispatcher(self._interface)
+
+    def create_router(self):
+        self._router = Router(self._interface)
 
     def install_demo_endpoint(self, demo_db_data_file):
         routing.install_demo_endpoint(demo_db_data_file)
@@ -25,10 +35,15 @@ class LoomServer:
     def start_server(self, demo_db_host, demo_db_port, demo_db_prefix, port, ssl_cert, ssl_key, login_origin):
         if self._interface is None:
             raise RuntimeError("cannot start server without creating a database interface")
+        if self._dispatcher is None:
+            self.create_dispatcher()
+        if self._router is None:
+            self.create_router()
         session_manager = self._session_manager if self._session_manager is not None else SessionManager()
         routes = self._routes if self._routes is not None else routing.get_routes()
         settings = {
             'db_interface':        self._interface,
+            'router':              self._router,
             'demo_db_host':        demo_db_host,
             'demo_db_port':        demo_db_port,
             'demo_db_prefix':      demo_db_prefix,

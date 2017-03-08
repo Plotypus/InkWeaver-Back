@@ -1,6 +1,5 @@
 from .demo_messages import *
-
-from loom.dispatchers.messages import IncomingMessageFactory
+from ..incoming_message_factory import IncomingMessageFactory
 
 DEMO_MESSAGES = {
     'add_heading_with_text': AddHeadingWithTextIncomingMessage,

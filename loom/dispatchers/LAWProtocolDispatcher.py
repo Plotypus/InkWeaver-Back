@@ -1,13 +1,8 @@
-import loom.serialize
+from .AbstractDispatcher import AbstractDispatcher
 
-from .messages import IncomingMessageFactory
-from .messages.outgoing import *
 from loom.database.interfaces import AbstractDBInterface
-
-from decorator import decorator
-from typing import Dict
-
-JSON = Dict
+from loom.messages import IncomingMessage
+from loom.messages.outgoing import *
 
 
 class LAWError(Exception):
@@ -40,76 +35,46 @@ class LAWNotLoggedInError(LAWError):
     """
     pass
 
+
 ############################################################
 #
 # LAWProtocolDispatcher Decorators
 #
 ############################################################
-
-
-@decorator
-def requires_login(func, *args, **kwargs):
-    self = args[0]
-    if self.user_id is None:
-        raise LAWNotLoggedInError
-    return func(*args, **kwargs)
-
-
-class LAWProtocolDispatcher:
-    def __init__(self, interface: AbstractDBInterface, user_id=None):
+class LAWProtocolDispatcher(AbstractDispatcher):
+    def __init__(self, interface: AbstractDBInterface):
         self._db_interface = interface
-        self._user_id = user_id
-        self._message_factory = IncomingMessageFactory()
 
     @property
     def db_interface(self):
         return self._db_interface
 
-    @property
-    def user_id(self):
-        return self._user_id
-
-    def set_user_id(self, new_user_id):
-        self._user_id = new_user_id
-
-    @property
-    def message_factory(self):
-        return self._message_factory
-
-    def format_failure_json(self, reply_to_id=None, reason=None, **fields):
+    @staticmethod
+    def format_failure_json(uuid, message_id, reason=None, **fields):
         response = {
-            'success': False,
-            'reason':  reason,
+            'success':    False,
+            'reason':     reason,
+            'identifier': {
+                'uuid':       uuid,
+                'message_id': message_id,
+            }
         }
-        if reply_to_id is not None:
-            response['reply_to_id'] = reply_to_id
         response.update(fields)
         return response
 
-    async def dispatch(self, message: JSON, action: str, message_id=None):
-        # Receive the message and format it into one of our IncomingMessage objects.
-        try:
-            message_object = self.message_factory.build_message(self, action, message)
-        # Bad action.
-        except ValueError:
-            return self.format_failure_json(message_id, f"Action '{action}' not supported.")
-        # Bad message format.
-        except TypeError as e:
-            # TODO: Replace with with a more specific error
-            message = e.args[0]
-            return self.format_failure_json(message_id, message)
+    async def dispatch(self, message: IncomingMessage, uuid: UUID, message_id=None):
         # Dispatch the IncomingMessage.
         try:
-            return await message_object.dispatch()
+            return await message.dispatch()
         except LAWError as e:
-            return self.format_failure_json(message_id, str(e))
+            return self.format_failure_json(uuid, message_id, str(e))
         except Exception as e:
             # TODO: Replace this with a generic message for production.
             # General exceptions store messages as the first argument in their `.args` property.
             message = type(e).__name__
             if e.args:
                 message += ": {}".format(e.args[0])
-            return self.format_failure_json(message_id, message)
+            return self.format_failure_json(uuid, message_id, message)
 
     ###########################################################################
     #
@@ -117,53 +82,42 @@ class LAWProtocolDispatcher:
     #
     ###########################################################################
 
-    @requires_login
-    async def get_user_preferences(self, message_id):
-        preferences = await self.db_interface.get_user_preferences(self.user_id)
-        return GetUserPreferencesOutgoingMessage(message_id, **preferences)
+    async def get_user_preferences(self, uuid, message_id, user_id):
+        preferences = await self.db_interface.get_user_preferences(user_id)
+        yield GetUserPreferencesOutgoingMessage(uuid, message_id,
+                                                username=preferences['username'],
+                                                name=preferences['name'],
+                                                email=preferences['email'],
+                                                bio=preferences['bio'],
+                                                avatar=preferences['avatar'])
 
-    @requires_login
-    async def get_user_stories(self, message_id):
-        stories = await self.db_interface.get_user_stories(self.user_id)
-        return GetUserStoriesOutgoingMessage(message_id, stories)
+    async def get_user_stories_and_wikis(self, uuid, message_id, user_id):
+        response = await self.db_interface.get_user_stories_and_wikis(user_id)
+        yield GetUserStoriesAndWikisOutgoingMessage(uuid, message_id,
+                                                    stories=response['stories'],
+                                                    wikis=response['wikis'])
 
-    @requires_login
-    async def get_user_wikis(self, message_id):
-        wikis = await self.db_interface.get_user_wikis(self.user_id)
-        return GetUserWikisOutgoingMessage(message_id, wikis)
-    
-    @requires_login
-    async def set_user_name(self, message_id, name):
-        await self.db_interface.set_user_name(self.user_id, name)
-        return SetUserNameOutgoingMessage(message_id)
+    async def set_user_name(self, uuid, message_id, user_id, name):
+        await self.db_interface.set_user_name(user_id, name)
+        yield SetUserNameOutgoingMessage(uuid, message_id)
 
-    @requires_login
-    async def set_user_email(self, message_id, email):
-        await self.db_interface.set_user_email(self.user_id, email)
-        return SetUserEmailOutgoingMessage(message_id)
+    async def set_user_email(self, uuid, message_id, user_id, email):
+        await self.db_interface.set_user_email(user_id, email)
+        yield SetUserEmailOutgoingMessage(uuid, message_id)
 
-    @requires_login
-    async def set_user_bio(self, message_id, bio):
-        await self.db_interface.set_user_bio(self.user_id, bio)
-        return SetUserBioOutgoingMessage(message_id)
+    async def set_user_bio(self, uuid, message_id, user_id, bio):
+        await self.db_interface.set_user_bio(user_id, bio)
+        yield SetUserBioOutgoingMessage(uuid, message_id)
 
     # TODO: Implement this.
-    # async def set_user_avatar(self, message_id, avatar):
+    # async def set_user_avatar(self, uuid, message_id, avatar):
     #     await self.db_interface.set_user_avatar(self.user_id, avatar)
 
-    @requires_login
-    async def set_user_story_position_context(self, story_id, position_context):
-        await self.db_interface.set_story_position_context(self.user_id, story_id, position_context)
-    
-    async def user_login(self, message_id, username, password):
-        if self.user_id is not None:
-            return self.format_failure_json(message_id, "Already logged in.")
-        if await self.db_interface.password_is_valid_for_username(username, password):
-            self._user_id = await self.db_interface.get_user_id_for_username(username)
-            event = 'logged_in'
-        else:
-            event = 'denied'
-        return UserLoginOutgoingMessage(message_id, event)
+    async def set_user_story_position_context(self, uuid, message_id, user_id, story_id, position_context):
+        await self.db_interface.set_story_position_context(user_id, story_id, position_context)
+        # Async equivalent to `return None`
+        return
+        yield
 
     ###########################################################################
     #
@@ -171,140 +125,161 @@ class LAWProtocolDispatcher:
     #
     ###########################################################################
 
-    @requires_login
-    async def create_story(self, message_id, title, wiki_id, summary):
-        story_id = await self.db_interface.create_story(self.user_id, title, summary, wiki_id)
+    async def create_story(self, uuid, message_id, user_id, title, wiki_id, summary):
+        story_id = await self.db_interface.create_story(user_id, title, summary, wiki_id)
         story = await self.db_interface.get_story(story_id)
-        message = {
-            'story_id':     story_id,
-            'story_title':  story['title'],
-            'section_id':   story['section_id'],
-            'wiki_id':      story['wiki_id'],
-            'users':        story['users'],
-        }
-        return CreateStoryOutgoingMessage(message_id, **message)
+        yield CreateStoryOutgoingMessage(uuid, message_id,
+                                         story_title=story['title'],
+                                         story_id=story_id,
+                                         section_id=story['section_id'],
+                                         wiki_id=story['wiki_id'],
+                                         users=story['users'])
 
-    @requires_login
-    async def add_preceding_subsection(self, message_id, title, parent_id, index=None):
+    async def add_preceding_subsection(self, uuid, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_preceding_subsection(title, parent_id, index)
-        return AddPrecedingSubsectionOutgoingMessage("preceding_subsection_added", subsection_id, title, parent_id,
-                                                     index)
+        yield AddPrecedingSubsectionOutgoingMessage(uuid, message_id,
+                                                    section_id=subsection_id,
+                                                    title=title,
+                                                    parent_id=parent_id,
+                                                    index=index)
 
-    @requires_login
-    async def add_inner_subsection(self, message_id, title, parent_id, index=None):
+    async def add_inner_subsection(self, uuid, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_inner_subsection(title, parent_id, index)
-        return AddInnerSubsectionOutgoingMessage("inner_subsection_added", subsection_id, title, parent_id, index)
+        yield AddInnerSubsectionOutgoingMessage(uuid, message_id,
+                                                section_id=subsection_id,
+                                                title=title,
+                                                parent_id=parent_id,
+                                                index=index)
 
-    @requires_login
-    async def add_succeeding_subsection(self, message_id, title, parent_id, index=None):
+    async def add_succeeding_subsection(self, uuid, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_succeeding_subsection(title, parent_id, index)
-        return AddSucceedingSubsectionOutgoingMessage("succeeding_subsection_added", subsection_id, title, parent_id,
-                                                      index)
+        yield AddSucceedingSubsectionOutgoingMessage(uuid, message_id,
+                                                     section_id=subsection_id,
+                                                     title=title,
+                                                     parent_id=parent_id,
+                                                     index=index)
 
-    @requires_login
-    async def add_paragraph(self, message_id, section_id, text, succeeding_paragraph_id=None):
-        paragraph_id = await self.db_interface.add_paragraph(section_id, text, succeeding_paragraph_id)
-        return AddParagraphOutgoingMessage("paragraph_added", paragraph_id, section_id, text, succeeding_paragraph_id)
+    async def add_paragraph(self, uuid, message_id, section_id, text, succeeding_paragraph_id=None):
+        paragraph_id, links_created = await self.db_interface.add_paragraph(section_id, text, succeeding_paragraph_id)
+        for link_id, page_id, name in links_created:
+            yield CreateLinkOutgoingMessage(uuid, message_id,
+                                            link_id=link_id,
+                                            section_id=section_id,
+                                            paragraph_id=paragraph_id,
+                                            name=name,
+                                            page_id=page_id)
+        yield AddParagraphOutgoingMessage(uuid, message_id,
+                                          paragraph_id=paragraph_id,
+                                          section_id=section_id,
+                                          text=text,
+                                          succeeding_paragraph_id=succeeding_paragraph_id)
 
-    @requires_login
-    async def add_bookmark(self, message_id, name, story_id, section_id, paragraph_id, index=None):
+    async def add_bookmark(self, uuid, message_id, name, story_id, section_id, paragraph_id, index=None):
         bookmark_id = await self.db_interface.add_bookmark(name, story_id, section_id, paragraph_id, index)
-        return AddBookmarkOutgoingMessage("bookmark_added", bookmark_id, story_id, section_id, paragraph_id, index)
+        yield AddBookmarkOutgoingMessage(uuid, message_id,
+                                         bookmark_id=bookmark_id,
+                                         story_id=story_id,
+                                         section_id=section_id,
+                                         paragraph_id=paragraph_id,
+                                         index=index)
 
-    @requires_login
-    async def edit_story(self, message_id, story_id, update):
+    async def edit_story(self, uuid, message_id, story_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_story_title(story_id, title)
-            return EditStoryOutgoingMessage("story_updated", story_id, update)
+            yield EditStoryOutgoingMessage(uuid, message_id,
+                                           story_id=story_id,
+                                           update=update)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
-    @requires_login
-    async def edit_paragraph(self, message_id, section_id, update, paragraph_id):
+    async def edit_paragraph(self, uuid, message_id, section_id, update, paragraph_id):
         if update['update_type'] == 'set_text':
             text = update['text']
-            await self.db_interface.set_paragraph_text(section_id, paragraph_id=paragraph_id, text=text)
-            return EditParagraphOutgoingMessage("paragraph_updated", section_id, update, paragraph_id)
+            links_created = await self.db_interface.set_paragraph_text(section_id, paragraph_id=paragraph_id, text=text)
+            for link_id, page_id, name in links_created:
+                yield CreateLinkOutgoingMessage(uuid, message_id,
+                                                link_id=link_id,
+                                                section_id=section_id,
+                                                paragraph_id=paragraph_id,
+                                                name=name,
+                                                page_id=page_id)
+            yield EditParagraphOutgoingMessage(uuid, message_id,
+                                               section_id=section_id,
+                                               update=update,
+                                               paragraph_id=paragraph_id)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
-    @requires_login
-    async def edit_section_title(self, message_id, section_id, new_title):
+    async def edit_section_title(self, uuid, message_id, section_id, new_title):
         await self.db_interface.set_section_title(section_id, new_title)
-        return EditSectionTitleOutgoingMessage("section_title_updated", section_id, new_title)
+        yield EditSectionTitleOutgoingMessage(uuid, message_id,
+                                              section_id=section_id,
+                                              new_title=new_title)
 
-    @requires_login
-    async def edit_bookmark(self, message_id, story_id, bookmark_id, update):
+    async def edit_bookmark(self, uuid, message_id, story_id, bookmark_id, update):
         if update['update_type'] == 'set_name':
             name = update['name']
             await self.db_interface.set_bookmark_name(story_id, bookmark_id, name)
-            return EditBookmarkOutgoingMessage("bookmark_updated", story_id, bookmark_id, update)
+            yield EditBookmarkOutgoingMessage(uuid, message_id,
+                                              story_id=story_id,
+                                              bookmark_id=bookmark_id,
+                                              update=update)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
-    @requires_login
-    async def set_note(self, message_id, section_id, paragraph_id, note):
+    async def set_note(self, uuid, message_id, section_id, paragraph_id, note):
         await self.db_interface.set_note(section_id, paragraph_id, note)
-        return SetNoteOutgoingMessage("note_updated", section_id, paragraph_id, note)
+        yield SetNoteOutgoingMessage(uuid, message_id,
+                                     section_id=section_id,
+                                     paragraph_id=paragraph_id,
+                                     note=note)
 
-    @requires_login
-    async def get_story_information(self, message_id, story_id):
+    async def get_story_information(self, uuid, message_id, story_id):
         story = await self.db_interface.get_story(story_id)
-        message = {
-            'story_title':  story['title'],
-            'section_id':   story['section_id'],
-            'wiki_id':      story['wiki_id'],
-            'users':        story['users'],
-        }
-        return GetStoryInformationOutgoingMessage(message_id, **message)
+        yield GetStoryInformationOutgoingMessage(uuid, message_id,
+                                                 story_title=story['title'],
+                                                 section_id=story['section_id'],
+                                                 wiki_id=story['wiki_id'],
+                                                 users=story['users'])
 
-    @requires_login
-    async def get_story_bookmarks(self, message_id, story_id):
+    async def get_story_bookmarks(self, uuid, message_id, story_id):
         bookmarks = await self.db_interface.get_story_bookmarks(story_id)
-        return GetStoryBookmarksOutgoingMessage(message_id, bookmarks)
+        yield GetStoryBookmarksOutgoingMessage(uuid, message_id, bookmarks=bookmarks)
 
-    @requires_login
-    async def get_story_hierarchy(self, message_id, story_id):
+    async def get_story_hierarchy(self, uuid, message_id, story_id):
         hierarchy = await self.db_interface.get_story_hierarchy(story_id)
-        return GetStoryHierarchyOutgoingMessage(message_id, hierarchy)
+        yield GetStoryHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy)
 
-    @requires_login
-    async def get_section_hierarchy(self, message_id, section_id):
+    async def get_section_hierarchy(self, uuid, message_id, section_id):
         hierarchy = await self.db_interface.get_section_hierarchy(section_id)
-        return GetSectionHierarchyOutgoingMessage(message_id, hierarchy)
+        yield GetSectionHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy)
 
-    @requires_login
-    async def get_section_content(self, message_id, section_id):
+    async def get_section_content(self, uuid, message_id, section_id):
         paragraphs = await self.db_interface.get_section_content(section_id)
         content = [{'text': paragraph['text'], 'paragraph_id': paragraph['_id'], 'note': paragraph['note']}
                    for paragraph in paragraphs]
-        return GetSectionContentOutgoingMessage(message_id, content)
+        yield GetSectionContentOutgoingMessage(uuid, message_id, content=content)
 
-    @requires_login
-    async def delete_story(self, message_id, story_id):
+    async def delete_story(self, uuid, message_id, story_id):
         await self.db_interface.delete_story(story_id)
-        return DeleteStoryOutgoingMessage("story_deleted", story_id)
+        yield DeleteStoryOutgoingMessage(uuid, message_id, story_id=story_id)
 
-    @requires_login
-    async def delete_section(self, message_id, section_id):
+    async def delete_section(self, uuid, message_id, section_id):
         await self.db_interface.delete_section(section_id)
-        return DeleteSectionOutgoingMessage("section_deleted", section_id)
+        yield DeleteSectionOutgoingMessage(uuid, message_id, section_id=section_id)
 
-    @requires_login
-    async def delete_paragraph(self, message_id, section_id, paragraph_id):
+    async def delete_paragraph(self, uuid, message_id, section_id, paragraph_id):
         await self.db_interface.delete_paragraph(section_id, paragraph_id)
-        return DeleteParagraphOutgoingMessage("paragraph_deleted", section_id, paragraph_id)
+        yield DeleteParagraphOutgoingMessage(uuid, message_id, section_id=section_id, paragraph_id=paragraph_id)
 
-    @requires_login
-    async def delete_note(self, message_id, section_id, paragraph_id):
+    async def delete_note(self, uuid, message_id, section_id, paragraph_id):
         await self.db_interface.delete_note(section_id, paragraph_id)
-        return DeleteNoteOutgoingMessage("note_deleted", section_id, paragraph_id)
+        yield DeleteNoteOutgoingMessage(uuid, message_id, section_id=section_id, paragraph_id=paragraph_id)
 
-    @requires_login
-    async def delete_bookmark(self, message_id, bookmark_id):
+    async def delete_bookmark(self, uuid, message_id, bookmark_id):
         await self.db_interface.delete_bookmark(bookmark_id)
-        return DeleteBookmarkOutgoingMessage("bookmark_deleted", bookmark_id)
+        yield DeleteBookmarkOutgoingMessage(uuid, message_id, bookmark_id=bookmark_id)
 
     ###########################################################################
     #
@@ -312,164 +287,154 @@ class LAWProtocolDispatcher:
     #
     ###########################################################################
 
-    @requires_login
-    async def create_wiki(self, message_id, title, summary):
-        wiki_id = await self.db_interface.create_wiki(self.user_id, title, summary)
+    async def create_wiki(self, uuid, message_id, user_id, title, summary):
+        wiki_id = await self.db_interface.create_wiki(user_id, title, summary)
         wiki = await self.db_interface.get_wiki(wiki_id)
-        message = {
-            'wiki_id':      wiki_id,
-            'wiki_title':   wiki['title'],
-            'segment_id':   wiki['segment_id'],
-            'users':        wiki['users'],
-            'summary':      wiki['summary'],
-        }
-        return CreateWikiOutgoingMessage(message_id, **message)
+        yield CreateWikiOutgoingMessage(uuid, message_id,
+                                        wiki_title=wiki['title'],
+                                        wiki_id=wiki_id,
+                                        segment_id=wiki['segment_id'],
+                                        users=wiki['users'],
+                                        summary=wiki['summary'])
 
-    @requires_login
-    async def add_segment(self, message_id, title, parent_id):
+    async def add_segment(self, uuid, message_id, title, parent_id):
         segment_id = await self.db_interface.add_child_segment(title, parent_id)
-        return AddSegmentOutgoingMessage("segment_added", segment_id, title, parent_id)
+        yield AddSegmentOutgoingMessage(uuid, message_id, segment_id=segment_id, title=title, parent_id=parent_id)
 
-    @requires_login
-    async def add_template_heading(self, message_id, title, segment_id):
+    async def add_template_heading(self, uuid, message_id, title, segment_id):
         await self.db_interface.add_template_heading(title, segment_id)
-        return AddTemplateHeadingOutgoingMessage("template_heading_added", title, segment_id)
+        yield AddTemplateHeadingOutgoingMessage(uuid, message_id, title=title, segment_id=segment_id)
 
-    @requires_login
-    async def add_page(self, message_id, title, parent_id):
+    async def add_page(self, uuid, message_id, title, parent_id):
         page_id = await self.db_interface.create_page(title, parent_id)
-        return AddPageOutgoingMessage("page_added", page_id, title, parent_id)
+        yield AddPageOutgoingMessage(uuid, message_id, page_id=page_id, title=title, parent_id=parent_id)
 
-    @requires_login
-    async def add_heading(self, message_id, title, page_id, index=None):
+    async def add_heading(self, uuid, message_id, title, page_id, index=None):
         await self.db_interface.add_heading(title, page_id, index)
-        return AddHeadingOutgoingMessage("heading_added", title, page_id, index)
+        yield AddHeadingOutgoingMessage(uuid, message_id, title=title, page_id=page_id, index=index)
 
-    @requires_login
-    async def edit_wiki(self, message_id, wiki_id, update):
+    async def edit_wiki(self, uuid, message_id, wiki_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_wiki_title(title, wiki_id)
-            return EditWikiOutgoingMessage("wiki_updated", wiki_id, update)
+            yield EditWikiOutgoingMessage(uuid, message_id, wiki_id=wiki_id, update=update)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
-    @requires_login
-    async def edit_segment(self, message_id, segment_id, update):
+    async def edit_segment(self, uuid, message_id, segment_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_segment_title(title, segment_id)
-            return EditSegmentOutgoingMessage("segment_updated", segment_id, update)
+            yield EditSegmentOutgoingMessage(uuid, message_id, segment_id=segment_id, update=update)
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
-    @requires_login
-    async def edit_template_heading(self, message_id, segment_id, template_heading_title, update):
+    async def edit_template_heading(self, uuid, message_id, segment_id, template_heading_title, update):
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_template_heading_title(old_title=template_heading_title, new_title=title,
                                                                segment_id=segment_id)
-            return EditTemplateHeadingOutgoingMessage("template_heading_updated", segment_id, template_heading_title,
-                                                      update)
+            yield EditTemplateHeadingOutgoingMessage(uuid, message_id,
+                                                     segment_id=segment_id,
+                                                     template_heading_title=template_heading_title,
+                                                     update=update)
         elif update['update_type'] == 'set_text':
             text = update['text']
             await self.db_interface.set_template_heading_text(template_heading_title, text, segment_id)
-            return EditTemplateHeadingOutgoingMessage("template_heading_updated", segment_id, template_heading_title,
-                                                      update)
+            yield EditTemplateHeadingOutgoingMessage(uuid, message_id,
+                                                     segment_id=segment_id,
+                                                     template_heading_title=template_heading_title,
+                                                     update=update)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
-    @requires_login
-    async def edit_page(self, message_id, page_id, update):
+    async def edit_page(self, uuid, message_id, page_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_page_title(title, page_id)
-            return EditPageOutgoingMessage("page_updated", page_id, update)
+            yield EditPageOutgoingMessage(uuid, message_id, page_id=page_id, update=update)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
-    @requires_login
-    async def edit_heading(self, message_id, page_id, heading_title, update):
+    async def edit_heading(self, uuid, message_id, page_id, heading_title, update):
         if update['update_type'] == 'set_title':
             title = update['title']
             await self.db_interface.set_heading_title(old_title=heading_title, new_title=title, page_id=page_id)
-            return EditHeadingOutgoingMessage("heading_updated", page_id, heading_title, update)
+            yield EditHeadingOutgoingMessage(uuid, message_id,
+                                             page_id=page_id,
+                                             heading_title=heading_title,
+                                             update=update)
         elif update['update_type'] == 'set_text':
             text = update['text']
             await self.db_interface.set_heading_text(heading_title, text, page_id)
-            return EditHeadingOutgoingMessage("heading_updated", page_id, heading_title, update)
+            yield EditHeadingOutgoingMessage(uuid, message_id,
+                                             page_id=page_id,
+                                             heading_title=heading_title,
+                                             update=update)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
-    @requires_login
-    async def get_wiki_information(self, message_id, wiki_id):
+    async def get_wiki_information(self, uuid, message_id, wiki_id):
         wiki = await self.db_interface.get_wiki(wiki_id)
-        message = {
-            'wiki_title':   wiki['title'],
-            'segment_id':   wiki['segment_id'],
-            'users':        wiki['users'],
-            'summary':      wiki['summary'],
-        }
-        return GetWikiInformationOutgoingMessage(message_id, **message)
+        yield GetWikiInformationOutgoingMessage(uuid, message_id,
+                                                wiki_title=wiki['title'],
+                                                segment_id=wiki['segment_id'],
+                                                users=wiki['users'],
+                                                summary=wiki['summary'])
 
-    @requires_login
-    async def get_wiki_hierarchy(self, message_id, wiki_id):
+    async def get_wiki_hierarchy(self, uuid, message_id, wiki_id):
         hierarchy = await self.db_interface.get_wiki_hierarchy(wiki_id)
         link_table = hierarchy.pop('links')
-        return GetWikiHierarchyOutgoingMessage(message_id, hierarchy, link_table)
+        yield GetWikiHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy, link_table=link_table)
 
-    @requires_login
-    async def get_wiki_segment_hierarchy(self, message_id, segment_id):
+    async def get_wiki_segment_hierarchy(self, uuid, message_id, segment_id):
         hierarchy = await self.db_interface.get_segment_hierarchy(segment_id)
         link_table = hierarchy.pop('links')
-        return GetWikiSegmentHierarchyOutgoingMessage(message_id, hierarchy, link_table)
+        yield GetWikiSegmentHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy, link_table=link_table)
 
-    @requires_login
-    async def get_wiki_segment(self, message_id, segment_id):
+    async def get_wiki_segment(self, uuid, message_id, segment_id):
         segment = await self.db_interface.get_segment(segment_id)
-        message = {
-            'title':                segment['title'],
-            'segments':             segment['segments'],
-            'pages':                segment['pages'],
-            'template_headings':    segment['template_headings'],
-        }
-        return GetWikiSegmentOutgoingMessage(message_id, **message)
+        yield GetWikiSegmentOutgoingMessage(uuid, message_id,
+                                            title=segment['title'],
+                                            segments=segment['segments'],
+                                            pages=segment['pages'],
+                                            template_headings=segment['template_headings'])
 
-    @requires_login
-    async def get_wiki_page(self, message_id, page_id):
+    async def get_wiki_page(self, uuid, message_id, page_id):
         page = await self.db_interface.get_page(page_id)
-        message = {
-            'title':        page['title'],
-            'aliases':      page['aliases'],
-            'references':   page['references'],
-            'headings':     page['headings'],
-        }
-        return GetWikiPageOutgoingMessage(message_id, **message)
+        yield GetWikiPageOutgoingMessage(uuid, message_id,
+                                         title=page['title'],
+                                         aliases=page['aliases'],
+                                         references=page['references'],
+                                         headings=page['headings'])
 
-    @requires_login
-    async def delete_wiki(self, message_id, wiki_id):
-        await self.db_interface.delete_wiki(self.user_id, wiki_id)
-        return DeleteWikiOutgoingMessage("wiki_deleted", wiki_id)
-        
-    @requires_login
-    async def delete_segment(self, message_id, segment_id):
-        await self.db_interface.delete_segment(segment_id)
-        return DeleteSegmentOutgoingMessage("segment_deleted", segment_id)
+    async def delete_wiki(self, uuid, message_id, user_id, wiki_id):
+        deleted_link_ids = await self.db_interface.delete_wiki(user_id, wiki_id)
+        for link_id in deleted_link_ids:
+            yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
+        yield DeleteWikiOutgoingMessage(uuid, message_id, wiki_id=wiki_id)
 
-    @requires_login
-    async def delete_template_heading(self, message_id, segment_id, template_heading_title):
+    async def delete_segment(self, uuid, message_id, segment_id):
+        deleted_link_ids = await self.db_interface.delete_segment(segment_id)
+        for link_id in deleted_link_ids:
+            yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
+        yield DeleteSegmentOutgoingMessage(uuid, message_id, segment_id=segment_id)
+
+    async def delete_template_heading(self, uuid, message_id, segment_id, template_heading_title):
         await self.db_interface.delete_template_heading(template_heading_title, segment_id)
-        return DeleteTemplateHeadingOutgoingMessage("template_heading_deleted", segment_id, template_heading_title)
+        yield DeleteTemplateHeadingOutgoingMessage(uuid, message_id,
+                                                   segment_id=segment_id,
+                                                   template_heading_title=template_heading_title)
 
-    @requires_login
-    async def delete_page(self, message_id, page_id):
-        await self.db_interface.delete_page(page_id)
-        return DeletePageOutgoingMessage("page_deleted", page_id)
+    async def delete_page(self, uuid, message_id, page_id):
+        deleted_link_ids = await self.db_interface.delete_page(page_id)
+        for link_id in deleted_link_ids:
+            yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
+        yield DeletePageOutgoingMessage(uuid, message_id, page_id=page_id)
 
-    @requires_login
-    async def delete_heading(self, message_id, heading_title, page_id):
+    async def delete_heading(self, uuid, message_id, heading_title, page_id):
         await self.db_interface.delete_heading(heading_title, page_id)
-        return DeleteHeadingOutgoingMessage("heading_deleted", page_id, heading_title)
+        yield DeleteHeadingOutgoingMessage(uuid, message_id, page_id=page_id, heading_title=heading_title)
 
     ###########################################################################
     #
@@ -477,15 +442,9 @@ class LAWProtocolDispatcher:
     #
     ###########################################################################
 
-    @requires_login
-    async def create_link(self, message_id, story_id, section_id, paragraph_id, name, page_id):
-        link_id = await self.db_interface.create_link(story_id, section_id, paragraph_id, name, page_id)
-        return CreateLinkOutgoingMessage("link_created", link_id, story_id, section_id, paragraph_id, name, page_id)
-
-    @requires_login
-    async def delete_link(self, message_id, link_id):
+    async def delete_link(self, uuid, message_id, link_id):
         await self.db_interface.delete_link(link_id)
-        return DeleteLinkOutgoingMessage("link_deleted", link_id)
+        yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
 
     ###########################################################################
     #
@@ -493,15 +452,13 @@ class LAWProtocolDispatcher:
     #
     ###########################################################################
 
-    @requires_login
-    async def change_alias_name(self, message_id, alias_id, new_name):
+    async def change_alias_name(self, uuid, message_id, alias_id, new_name):
         await self.db_interface.change_alias_name(alias_id, new_name)
-        return ChangeAliasNameOutgoingMessage("alias_updated", alias_id, new_name)
+        yield ChangeAliasNameOutgoingMessage(uuid, message_id, alias_id=alias_id, new_name=new_name)
 
-    @requires_login
-    async def delete_alias(self, message_id, alias_id):
+    async def delete_alias(self, uuid, message_id, alias_id):
         await self.db_interface.delete_alias(alias_id)
-        return DeleteAliasOutgoingMessage("alias_deleted", alias_id)
+        yield DeleteAliasOutgoingMessage(uuid, message_id, alias_id=alias_id)
 
     ###########################################################################
     #
@@ -509,20 +466,17 @@ class LAWProtocolDispatcher:
     #
     ###########################################################################
 
-    @requires_login
-    async def get_story_statistics(self, message_id, story_id):
+    async def get_story_statistics(self, uuid, message_id, story_id):
         stats = await self.db_interface.get_story_statistics(story_id)
-        return GetStoryStatisticsOutgoingMessage(message_id, stats)
+        yield GetStoryStatisticsOutgoingMessage(uuid, message_id, statistics=stats)
 
-    @requires_login
-    async def get_section_statistics(self, message_id, section_id):
+    async def get_section_statistics(self, uuid, message_id, section_id):
         stats = await self.db_interface.get_section_statistics(section_id)
-        return GetSectionStatisticsOutgoingMessage(message_id, stats)
+        yield GetSectionStatisticsOutgoingMessage(uuid, message_id, statistics=stats)
 
-    @requires_login
-    async def get_paragraph_statistics(self, message_id, section_id, paragraph_id):
+    async def get_paragraph_statistics(self, uuid, message_id, section_id, paragraph_id):
         stats = await self.db_interface.get_paragraph_statistics(section_id, paragraph_id)
-        return GetParagraphStatisticsOutgoingMessage(message_id, stats)
+        yield GetParagraphStatisticsOutgoingMessage(uuid, message_id, statistics=stats)
 
     @requires_login
     async def get_page_frequencies(self, message_id, story_id, wiki_id):
