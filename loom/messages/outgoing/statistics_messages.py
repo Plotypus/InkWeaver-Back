@@ -24,3 +24,9 @@ class GetParagraphStatisticsOutgoingMessage(UnicastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, statistics: dict):
         super().__init__(uuid, message_id, 'got_paragraph_statistics')
         self.statistics = statistics
+
+
+class GetPageFrequenciesOutgoingMessage(UnicastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, pages: list):
+        super().__init__(uuid, message_id, 'got_page_frequencies')
+        self.pages = pages
