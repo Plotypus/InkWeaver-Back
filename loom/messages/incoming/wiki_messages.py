@@ -15,7 +15,7 @@ class CreateWikiIncomingMessage(IncomingMessage):
         self.summary = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.create_wiki(self.uuid, self.message_id, self.title, self.summary)
+        return self._dispatcher.create_wiki(self.uuid, self.message_id, self.user_id, self.title, self.summary)
 
 
 ###########################################################################
