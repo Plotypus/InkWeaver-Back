@@ -67,12 +67,13 @@ class AddParagraphOutgoingMessage(StoryBroadcastMessage):
 
 class AddBookmarkOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, bookmark_id: ObjectId, story_id: ObjectId, section_id: ObjectId,
-                 paragraph_id: ObjectId, index=None):
+                 paragraph_id: ObjectId, name: str, index=None):
         super().__init__(uuid, message_id, 'bookmark_added')
         self.bookmark_id = bookmark_id
         self.story_id = story_id
         self.section_id = section_id
         self.paragraph_id = paragraph_id
+        self.name = name
         self.index = index
 
 

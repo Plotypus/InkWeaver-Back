@@ -181,6 +181,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                          story_id=story_id,
                                          section_id=section_id,
                                          paragraph_id=paragraph_id,
+                                         name=name,
                                          index=index)
 
     async def edit_story(self, uuid, message_id, story_id, update):
