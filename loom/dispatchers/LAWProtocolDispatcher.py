@@ -181,6 +181,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                          story_id=story_id,
                                          section_id=section_id,
                                          paragraph_id=paragraph_id,
+                                         name=name,
                                          index=index)
 
     async def edit_story(self, uuid, message_id, story_id, update):
@@ -480,6 +481,6 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         stats = await self.db_interface.get_paragraph_statistics(section_id, paragraph_id)
         yield GetParagraphStatisticsOutgoingMessage(uuid, message_id, statistics=stats)
 
-    async def get_page_frequencies(self, message_id, story_id, wiki_id):
+    async def get_page_frequencies(self, uuid, message_id, story_id, wiki_id):
         pages = await self.db_interface.get_page_frequencies_in_story(story_id, wiki_id)
-        return GetPageFrequenciesOutgoingMessage(message_id, pages)
+        yield GetPageFrequenciesOutgoingMessage(uuid, message_id, pages=pages)

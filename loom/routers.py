@@ -70,13 +70,20 @@ class Router:
                                                                                  message_tuple.message, additional_args)
         # Bad action.
         except ValueError:
-            return self.dispatcher.format_failure_json(message_tuple.message_id,
-                                                       f"Action '{message_tuple.action}' not supported.")
+            # Should write the message?
+            error_message = self.dispatcher.format_failure_json(message_tuple.message_id,
+                                                                f"Action '{message_tuple.action}' not supported.")
+            self.unicast_error(message_tuple, error_message)
+            return
+
         # Bad message format.
         except TypeError as e:
             # TODO: Replace with with a more specific error
             message = e.args[0]
-            return self.dispatcher.format_failure_json(message_tuple.message_id, message)
+            error_message = self.dispatcher.format_failure_json(message_tuple.message_id, message)
+            self.unicast_error(message_tuple, error_message)
+            return
+
         # Check whether the user is already connected to the router.
         if message_tuple.uuid not in self.uuid_to_handler:
             self.uuid_to_handler[message_tuple.uuid] = message_tuple.handler
@@ -191,3 +198,8 @@ class Router:
         for uuid in self.wiki_to_uuids[wiki_id]:
             handler = self.uuid_to_handler[uuid]
             handler.write_json(message)
+
+    def unicast_error(self, message_tuple: MessageTuple, error_msg: str):
+        uuid = message_tuple.uuid
+        handler = self.uuid_to_handler[uuid]
+        handler.write_json(error_msg)
