@@ -211,7 +211,18 @@ class MongoDBClient:
             }
         )
         user_id = user['_id']
-        self.log(f'get_user_id_for_username {{{username}}}; inserted ID {{{user_id}}}')
+        self.log(f'get_user_id_for_username {{{username}}}; user ID {{{user_id}}}')
+        return user_id
+
+    async def get_user_id_for_email(self, email: str) -> ObjectId:
+        user = await self.users.find_one(
+            filter={'email': email},
+            projection={
+                '_id': 1,
+            }
+        )
+        user_id = user['_id']
+        self.log(f'get_user_id_for_email {{{email}}}; user ID {{{user_id}}}')
         return user_id
 
     async def add_story_to_user(self, user_id: ObjectId, story_id: ObjectId):
