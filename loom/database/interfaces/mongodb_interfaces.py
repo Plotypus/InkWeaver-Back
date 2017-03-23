@@ -74,9 +74,9 @@ class MongoDBInterface(AbstractDBInterface):
     ###########################################################################
 
     async def create_user(self, username, password, name, email, bio=None):
-        if await self.client.get_user_id_for_username(username) is not None:
+        if await self.client.username_exists(username):
             raise ValueError('Username is already taken.')
-        if await self.client.get_user_id_for_email(email) is not None:
+        if await self.client.email_exists(email):
             raise ValueError('Email is already taken.')
         password_hash = super().hash_password(password)
         inserted_id = await self.client.create_user(
