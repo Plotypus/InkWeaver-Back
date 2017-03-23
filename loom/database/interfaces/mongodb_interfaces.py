@@ -73,15 +73,18 @@ class MongoDBInterface(AbstractDBInterface):
     #
     ###########################################################################
 
-    async def create_user(self, username, password, name, email):
-        # TODO: Check the username is not currently in use.
+    async def create_user(self, username, password, name, email, bio=None):
+        if await self.client.username_exists(username):
+            raise ValueError('Username is already taken.')
+        if await self.client.email_exists(email):
+            raise ValueError('Email is already taken.')
         password_hash = super().hash_password(password)
         inserted_id = await self.client.create_user(
             username=username,
             password_hash=password_hash,
             name=name,
             email=email,
-            bio=None,
+            bio=bio,
             avatar=None
         )
         return inserted_id

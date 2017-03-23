@@ -2,19 +2,8 @@ from .GenericHandler import GenericHandler
 
 from loom.database.interfaces import AbstractDBInterface
 
+
 class LoginHandler(GenericHandler):
-    def set_default_headers(self):
-        login_origin = self.settings['login_origin']
-        self.set_header('Access-Control-Allow-Origin', login_origin)
-        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
-        self.set_header('Access-Control-Allow-Credentials', 'true')
-        self.set_header('Access-Control-Allow-Headers', 'content-type')
-
-    async def options(self):
-        self.write_log('OPTIONS', self.request.uri, 204)
-        self.set_status(204)
-        self.finish()
-
     async def post(self):
         data = self.decode_json(self.request.body)
         username = data.get('username')

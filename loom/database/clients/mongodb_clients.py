@@ -211,8 +211,22 @@ class MongoDBClient:
             }
         )
         user_id = user['_id']
-        self.log(f'get_user_id_for_username {{{username}}}; inserted ID {{{user_id}}}')
+        self.log(f'get_user_id_for_username {{{username}}}; user ID {{{user_id}}}')
         return user_id
+
+    async def username_exists(self, username: str) -> bool:
+        user = await self.users.find_one(
+            filter={'username': username}
+        )
+        self.log(f'username_exists {{{username}}}')
+        return user is not None
+
+    async def email_exists(self, email: str) -> bool:
+        user = await self.users.find_one(
+            filter={'email': email}
+        )
+        self.log(f'email_exists {{{email}}}')
+        return user is not None
 
     async def add_story_to_user(self, user_id: ObjectId, story_id: ObjectId):
         update_result: UpdateResult = await self.users.update_one(
