@@ -2,6 +2,7 @@ from .GenericHandler import GenericHandler
 
 from loom.database.interfaces import AbstractDBInterface
 
+
 class LoginHandler(GenericHandler):
     async def post(self):
         data = self.decode_json(self.request.body)
