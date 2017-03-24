@@ -528,45 +528,28 @@ class MongoDBInterface(AbstractDBInterface):
         return wiki
 
     async def get_wiki_hierarchy(self, wiki_id):
-        # TODO: Build wiki link table
         wiki = await self.get_wiki(wiki_id)
         segment_id = wiki['segment_id']
         return await self.get_segment_hierarchy(segment_id)
 
     async def get_segment_hierarchy(self, segment_id):
-        # TODO: Build wiki link table
         segment = await self.client.get_segment(segment_id)
         hierarchy = {
             'title':      segment['title'],
             'segment_id': segment_id,
-            'segments':   [],  #[await self.get_segment_hierarchy(seg_id) for seg_id in segment['segments']],
-            'pages':      [],  #[await self.get_page_for_hierarchy(page_id) for page_id in segment['pages']],
-            # 'links':      {},
-            'links':      [],
+            'segments':   [],
+            'pages':      [],
         }
         segments = hierarchy['segments']
-        links = hierarchy['links']
         pages = hierarchy['pages']
         # Iterate through the segments, popping out the `links` field and inserting them into the top-level `links`.
         for segment_id in segment['segments']:
             inner_segment = await self.get_segment_hierarchy(segment_id)
-            links.extend(inner_segment.pop('links'))
             segments.append(inner_segment)
         # Iterate through the pages, pulling the links from the aliases inside of each.
         for page_id in segment['pages']:
             page = await self.get_page_for_hierarchy(page_id)
-            aliases = page.pop('aliases')
             pages.append(page)
-            for name, alias_id in aliases.items():
-                alias = await self.client.get_alias(alias_id)
-                for link_id in alias['links']:
-                    link = {
-                        'link_id': link_id,
-                        'name':    name,
-                        'page_id': page_id
-                    }
-                    links.append(link)
-                    # links[link_id] = {'name': name, 'page_id': page_id}
         return hierarchy
 
     async def get_page_for_hierarchy(self, page_id):
@@ -574,7 +557,6 @@ class MongoDBInterface(AbstractDBInterface):
         return {
             'title':   page['title'],
             'page_id': page_id,
-            'aliases': page['aliases'],
         }
 
     async def get_segment(self, segment_id):
