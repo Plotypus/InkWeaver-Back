@@ -2,6 +2,12 @@ from .incoming_message import IncomingMessage
 from .field_types import RequiredField
 
 
+class UserSignOutIncomingMessage(IncomingMessage):
+    def dispatch(self):
+        # This dispatch function should never be called.
+        raise NotImplementedError
+
+
 ###########################################################################
 #
 # Get Messages
