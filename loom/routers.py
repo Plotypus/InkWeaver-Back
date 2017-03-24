@@ -3,7 +3,7 @@ from loom.handlers.websockets.LoomHandler import LoomHandler
 from loom.messages.incoming import (
     IncomingMessage, IncomingMessageFactory, SubscriptionIncomingMessage,
     SubscribeToStoryIncomingMessage, SubscribeToWikiIncomingMessage,
-    UnsubscribeFromStoryIncomingMessage, UnsubscribeFromWikiIncomingMessage,
+    UnsubscribeFromStoryIncomingMessage, UnsubscribeFromWikiIncomingMessage, UserSignOutIncomingMessage
 )
 from loom.messages.outgoing import (
     UnicastMessage, StoryBroadcastMessage, WikiBroadcastMessage, OutgoingErrorMessage,
@@ -99,6 +99,8 @@ class Router:
                 self.unsubscribe_from_wiki(message_tuple.uuid, message_tuple.message_id)
             else:
                 raise RuntimeError(f"unknown instance of SubscriptionIncomingMessage: {message_object}")
+        elif isinstance(message_object, UserSignOutIncomingMessage):
+            self.disconnect(message_tuple.handler)
         else:
             # Dispatch the incoming message and process the responses.
             async for response in message_object.dispatch():
