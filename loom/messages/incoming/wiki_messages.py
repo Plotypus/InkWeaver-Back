@@ -136,6 +136,15 @@ class GetWikiInformationIncomingMessage(IncomingMessage):
         return self._dispatcher.get_wiki_information(self.uuid, self.message_id, self.wiki_id)
 
 
+class GetWikiAliasListIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.wiki_id = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.get_wiki_alias_list(self.uuid, self.message_id, self.wiki_id)
+
+
 class GetWikiHierarchyIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()

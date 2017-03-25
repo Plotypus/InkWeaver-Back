@@ -527,6 +527,36 @@ class MongoDBInterface(AbstractDBInterface):
         wiki = await self.client.get_wiki(wiki_id)
         return wiki
 
+    async def get_wiki_alias_list(self, wiki_id):
+        wiki = await self.get_wiki(wiki_id)
+        segment_id = wiki['segment_id']
+        return await self._get_segment_alias_list(segment_id)
+
+    async def _get_segment_alias_list(self, segment_id):
+        segment = await self.client.get_segment(segment_id)
+        # Get all the alias information for the pages at the current level.
+        segment_alias_list = []
+        for page_id in segment['pages']:
+            for alias_entry in await self._get_page_alias_list(page_id):
+                segment_alias_list.append(alias_entry)
+        # Then add all child segments' page alias lists to the current list, keeping it flat.
+        for segment_id in segment['segments']:
+            for page_aliases in await self._get_segment_alias_list(segment_id):
+                segment_alias_list.append(page_aliases)
+        return segment_alias_list
+
+    async def _get_page_alias_list(self, page_id):
+        page = await self.client.get_page(page_id)
+        alias_list = []
+        for alias_name, alias_id in page['aliases'].items():
+            alias = await self.client.get_alias(alias_id)
+            alias_list.append({
+                'alias_name':   alias_name,
+                'page_id':      page_id,
+                'link_ids':     alias['links'],
+            })
+        return alias_list
+
     async def get_wiki_hierarchy(self, wiki_id):
         wiki = await self.get_wiki(wiki_id)
         segment_id = wiki['segment_id']
@@ -548,11 +578,11 @@ class MongoDBInterface(AbstractDBInterface):
             segments.append(inner_segment)
         # Iterate through the pages, pulling the links from the aliases inside of each.
         for page_id in segment['pages']:
-            page = await self.get_page_for_hierarchy(page_id)
+            page = await self._get_page_for_hierarchy(page_id)
             pages.append(page)
         return hierarchy
 
-    async def get_page_for_hierarchy(self, page_id):
+    async def _get_page_for_hierarchy(self, page_id):
         page = await self.client.get_page(page_id)
         return {
             'title':   page['title'],
