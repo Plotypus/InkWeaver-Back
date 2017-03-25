@@ -202,6 +202,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_wiki_alias_list(self, wiki_id):
+        pass
+
+    @abstractmethod
     async def get_wiki_hierarchy(self, wiki_id):
         pass
 

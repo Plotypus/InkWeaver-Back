@@ -383,15 +383,17 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                 users=wiki['users'],
                                                 summary=wiki['summary'])
 
+    async def get_wiki_alias_list(self, uuid, message_id, wiki_id):
+        alias_list = await self.db_interface.get_wiki_alias_list(wiki_id)
+        yield GetWikiAliasListOutgoingMessage(uuid, message_id, alias_list=alias_list)
+
     async def get_wiki_hierarchy(self, uuid, message_id, wiki_id):
         hierarchy = await self.db_interface.get_wiki_hierarchy(wiki_id)
-        link_table = hierarchy.pop('links')
-        yield GetWikiHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy, link_table=link_table)
+        yield GetWikiHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy)
 
     async def get_wiki_segment_hierarchy(self, uuid, message_id, segment_id):
         hierarchy = await self.db_interface.get_segment_hierarchy(segment_id)
-        link_table = hierarchy.pop('links')
-        yield GetWikiSegmentHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy, link_table=link_table)
+        yield GetWikiSegmentHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy)
 
     async def get_wiki_segment(self, uuid, message_id, segment_id):
         segment = await self.db_interface.get_segment(segment_id)

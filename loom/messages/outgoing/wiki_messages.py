@@ -112,19 +112,23 @@ class GetWikiInformationOutgoingMessage(UnicastMessage):
         self.users = users
         self.summary = summary
 
+
+class GetWikiAliasListOutgoingMessage(UnicastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, alias_list: list):
+        super().__init__(uuid, message_id, 'got_wiki_alias_list')
+        self.alias_list = alias_list
+
     
 class GetWikiHierarchyOutgoingMessage(UnicastMessage):
-    def __init__(self, uuid: UUID, message_id: int, *, hierarchy: dict, link_table: list):
+    def __init__(self, uuid: UUID, message_id: int, *, hierarchy: dict):
         super().__init__(uuid, message_id, 'got_wiki_hierarchy')
         self.hierarchy = hierarchy
-        self.link_table = link_table
 
     
 class GetWikiSegmentHierarchyOutgoingMessage(UnicastMessage):
-    def __init__(self, uuid: UUID, message_id: int, *, hierarchy: dict, link_table: list):
+    def __init__(self, uuid: UUID, message_id: int, *, hierarchy: dict):
         super().__init__(uuid, message_id, 'got_wiki_segment_hierarchy')
         self.hierarchy = hierarchy
-        self.link_table = link_table
     
     
 class GetWikiSegmentOutgoingMessage(UnicastMessage):
