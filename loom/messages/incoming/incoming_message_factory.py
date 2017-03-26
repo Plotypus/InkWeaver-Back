@@ -54,6 +54,7 @@ APPROVED_MESSAGES = {
     'edit_page':                       EditPageIncomingMessage,
     'edit_heading':                    EditHeadingIncomingMessage,
     'get_wiki_information':            GetWikiInformationIncomingMessage,
+    'get_wiki_alias_list':             GetWikiAliasListIncomingMessage,
     'get_wiki_hierarchy':              GetWikiHierarchyIncomingMessage,
     'get_wiki_segment_hierarchy':      GetWikiSegmentHierarchyIncomingMessage,
     'get_wiki_segment':                GetWikiSegmentIncomingMessage,
