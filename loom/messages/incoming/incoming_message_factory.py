@@ -8,6 +8,9 @@ from .wiki_messages import *
 import re
 
 APPROVED_MESSAGES = {
+    # Sign out
+    'sign_out':                        UserSignOutIncomingMessage,
+    
     # User Information
     'get_user_preferences':            GetUserPreferencesIncomingMessage,
     'get_user_stories_and_wikis':      GetUserStoriesAndWikisIncomingMessage,
