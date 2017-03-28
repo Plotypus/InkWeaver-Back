@@ -199,3 +199,16 @@ class DeleteBookmarkOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, bookmark_id: ObjectId):
         super().__init__(uuid, message_id, 'bookmark_deleted')
         self.bookmark_id = bookmark_id
+
+
+###########################################################################
+#
+# Move Messages
+#
+###########################################################################
+class MoveSubsectionOutgoingMessage(StoryBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId, to_parent_id: ObjectId, to_index: int):
+        super().__init__(uuid, message_id, 'subsection_moved')
+        self.section_id = section_id
+        self.to_parent_id = to_parent_id
+        self.to_index = to_index

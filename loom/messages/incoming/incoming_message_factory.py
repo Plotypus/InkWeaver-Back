@@ -41,6 +41,7 @@ APPROVED_MESSAGES = {
     'delete_paragraph':                DeleteParagraphIncomingMessage,
     'delete_note':                     DeleteNoteIncomingMessage,
     'delete_bookmark':                 DeleteBookmarkIncomingMessage,
+    'move_subsection':                 MoveSubsectionIncomingMessage,
 
     # Wikis
     'create_wiki':                     CreateWikiIncomingMessage,
