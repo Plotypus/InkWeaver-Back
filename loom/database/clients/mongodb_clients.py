@@ -169,7 +169,6 @@ class MongoDBClient:
                           bio: str,
                           avatar=None,
                           _id=None) -> ObjectId:
-        # TODO: Implement statistics.
         user = {
             'username':      username,
             'password_hash': password_hash,
@@ -351,10 +350,9 @@ class MongoDBClient:
     async def create_story(self,
                            title: str,
                            wiki_id: ObjectId,
-                           user_description,  # TODO: Decide what this is.
+                           user_description,
                            section_id: ObjectId,
                            _id=None) -> ObjectId:
-        # TODO: Implement statistics and settings.
         story = {
             'title':      title,
             'wiki_id':    wiki_id,
@@ -372,7 +370,6 @@ class MongoDBClient:
         return result.inserted_id
 
     async def create_section(self, title: str, _id=None) -> ObjectId:
-        # TODO: Implement statistics.
         section = {
             'title':                  title,
             'content':                list(),  # content is a list of "paragraph objects"
@@ -745,7 +742,6 @@ class MongoDBClient:
     ###########################################################################
 
     async def create_wiki(self, title: str, user_description, summary: str, segment_id: ObjectId, _id=None) -> ObjectId:
-        # TODO: Implement statistics and settings.
         wiki = {
             'title':      title,
             'users':      [user_description],
@@ -761,7 +757,6 @@ class MongoDBClient:
         return result.inserted_id
 
     async def create_segment(self, title: str, template_headings=None, _id=None) -> ObjectId:
-        # TODO: Implement statistics.
         segment = {
             'title':             title,
             'segments':          list(),
