@@ -847,7 +847,7 @@ class MongoDBClient:
         self.assert_update_one_was_successful(update_result)
         self.log(f'insert_heading {{{title}}} to page {{{page_id}}} at index {{{at_index}}}')
 
-    async def set_wiki_title(self, new_title:str, wiki_id: ObjectId):
+    async def set_wiki_title(self, new_title: str, wiki_id: ObjectId):
         update_result: UpdateResult = await self.wikis.update_one(
             filter={'_id': wiki_id},
             update={
