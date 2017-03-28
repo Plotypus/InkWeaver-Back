@@ -251,3 +251,44 @@ class DeleteBookmarkIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.delete_bookmark(self.uuid, self.message_id, self.bookmark_id)
+
+
+###########################################################################
+#
+# Move Messages
+#
+###########################################################################
+class MoveSubsectionAsPrecedingIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.section_id = RequiredField()
+        self.to_parent_id = RequiredField()
+        self.to_index = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.move_section_as_preceding(self.uuid, self.message_id, self.section_id,
+                                                          self.to_parent_id, self.to_index)
+
+
+class MoveSubsectionAsInnerIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.section_id = RequiredField()
+        self.to_parent_id = RequiredField()
+        self.to_index = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.move_section_as_inner(self.uuid, self.message_id, self.section_id, self.to_parent_id,
+                                                      self.to_index)
+
+
+class MoveSubsectionAsSucceedingIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.section_id = RequiredField()
+        self.to_parent_id = RequiredField()
+        self.to_index = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.move_section_as_succeeding(self.uuid, self.message_id, self.section_id,
+                                                           self.to_parent_id, self.to_index)

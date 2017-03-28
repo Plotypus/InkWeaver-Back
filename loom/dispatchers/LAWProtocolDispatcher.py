@@ -282,6 +282,39 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         await self.db_interface.delete_bookmark(bookmark_id)
         yield DeleteBookmarkOutgoingMessage(uuid, message_id, bookmark_id=bookmark_id)
 
+    async def move_subsection_as_preceding(self, uuid, message_id, section_id, to_parent_id, to_index):
+        try:
+            await self.db_interface.move_subsection_as_preceding(section_id, to_parent_id, to_index)
+        except ValueError:
+            # Raised when trying to move section into a descendant.
+            # TODO: Handle this scenario
+            pass
+        else:
+            yield MoveSubsectionAsPrecedingOutgoingMessage(uuid, message_id, section_id=section_id,
+                                                           to_parent_id=to_parent_id, to_index=to_index)
+
+    async def move_subsection_as_inner(self, uuid, message_id, section_id, to_parent_id, to_index):
+        try:
+            await self.db_interface.move_subsection_as_inner(section_id, to_parent_id, to_index)
+        except ValueError:
+            # Raised when trying to move section into a descendant.
+            # TODO: Handle this scenario
+            pass
+        else:
+            yield MoveSubsectionAsInnerOutgoingMessage(uuid, message_id, section_id=section_id,
+                                                       to_parent_id=to_parent_id, to_index=to_index)
+
+    async def move_subsection_as_succeeding(self, uuid, message_id, section_id, to_parent_id, to_index):
+        try:
+            await self.db_interface.move_subsection_as_succeeding(section_id, to_parent_id, to_index)
+        except ValueError:
+            # Raised when trying to move section into a descendant.
+            # TODO: Handle this scenario
+            pass
+        else:
+            yield MoveSubsectionAsSucceedingOutgoingMessage(uuid, message_id, section_id=section_id,
+                                                            to_parent_id=to_parent_id, to_index=to_index)
+
     ###########################################################################
     #
     # Wiki Methods

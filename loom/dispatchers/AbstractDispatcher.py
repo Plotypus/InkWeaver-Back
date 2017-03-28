@@ -116,6 +116,18 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
+    async def move_subsection_as_preceding(self, uuid, message_id, section_id, to_parent_id, to_index):
+        pass
+
+    @abstractmethod
+    async def move_subsection_as_inner(self, uuid, message_id, section_id, to_parent_id, to_index):
+        pass
+
+    @abstractmethod
+    async def move_subsection_as_succeeding(self, uuid, message_id, section_id, to_parent_id, to_index):
+        pass
+
+    @abstractmethod
     async def create_wiki(self, uuid, message_id, user_id, title, summary):
         pass
 

@@ -41,6 +41,9 @@ APPROVED_MESSAGES = {
     'delete_paragraph':                DeleteParagraphIncomingMessage,
     'delete_note':                     DeleteNoteIncomingMessage,
     'delete_bookmark':                 DeleteBookmarkIncomingMessage,
+    'move_subsection_as_preceding':    MoveSubsectionAsPrecedingIncomingMessage,
+    'move_subsection_as_inner':        MoveSubsectionAsInnerIncomingMessage,
+    'move_subsection_as_succeeding':   MoveSubsectionAsSucceedingIncomingMessage,
 
     # Wikis
     'create_wiki':                     CreateWikiIncomingMessage,

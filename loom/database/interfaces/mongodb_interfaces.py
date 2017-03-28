@@ -446,6 +446,47 @@ class MongoDBInterface(AbstractDBInterface):
     async def delete_bookmark(self, bookmark_id):
         await self.client.delete_bookmark_by_id(bookmark_id)
 
+    async def move_subsection_as_preceding(self, section_id, to_parent_id, to_index):
+        if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
+            raise ValueError
+        try:
+            await self.client.remove_section_from_parent(section_id)
+            await self.client.insert_preceding_subsection(section_id, to_section_id=to_parent_id, at_index=to_index)
+        except ClientError:
+            # TODO: Deal with this.
+            pass
+
+    async def move_subsection_as_inner(self, section_id, to_parent_id, to_index):
+        if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
+            raise ValueError
+        try:
+            await self.client.remove_section_from_parent(section_id)
+            await self.client.insert_inner_subsection(section_id, to_section_id=to_parent_id, at_index=to_index)
+        except ClientError:
+            # TODO: Deal with this.
+            pass
+
+    async def move_subsection_as_succeeding(self, section_id, to_parent_id, to_index):
+        if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
+            raise ValueError
+        try:
+            await self.client.remove_section_from_parent(section_id)
+            await self.client.insert_succeeding_subsection(section_id, to_section_id=to_parent_id, at_index=to_index)
+        except ClientError:
+            # TODO: Deal with this.
+            pass
+
+    async def _section_is_ancestor_of_candidate(self, section_id, candidate_section_id):
+        if section_id == candidate_section_id:
+            return True
+        section = await self.client.get_section(section_id)
+        for subsection_id in chain(section['preceding_subsections'],
+                                   section['inner_subsections'],
+                                   section['succeeding_subsections']):
+            if await self._section_is_ancestor_of_candidate(subsection_id, candidate_section_id):
+                return True
+        return False
+
     ###########################################################################
     #
     # Wiki Methods
