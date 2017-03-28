@@ -41,6 +41,11 @@ class BadValueError(InterfaceError):
         self.value = value
 
 
+class FailedUpdateError(InterfaceError):
+    def __init__(self, *, query: str):
+        super().__init__('unable to complete update', query=query)
+
+
 class MongoDBInterface(AbstractDBInterface):
     def __init__(self, db_client_class: ClassVar, db_name, db_host, db_port, db_user=None, db_pass=None):
         if not issubclass(db_client_class, MongoDBClient):
@@ -294,8 +299,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_story_title(story_id, title)
             await self.client.set_section_title(story['section_id'], title)
         except ClientError:
-            # TODO: Deal with this
-            raise
+            raise FailedUpdateError(query='set_story_title')
         else:
             # TODO: Should this return something?
             pass
@@ -464,8 +468,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.remove_section_from_parent(section_id)
             await self.client.insert_preceding_subsection(section_id, to_section_id=to_parent_id, at_index=to_index)
         except ClientError:
-            # TODO: Deal with this.
-            pass
+            raise FailedUpdateError(query='move_subsection_as_preceding')
 
     async def move_subsection_as_inner(self, section_id, to_parent_id, to_index):
         if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
@@ -474,8 +477,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.remove_section_from_parent(section_id)
             await self.client.insert_inner_subsection(section_id, to_section_id=to_parent_id, at_index=to_index)
         except ClientError:
-            # TODO: Deal with this.
-            pass
+            raise FailedUpdateError(query='move_subsection_as_inner')
 
     async def move_subsection_as_succeeding(self, section_id, to_parent_id, to_index):
         if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
@@ -484,8 +486,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.remove_section_from_parent(section_id)
             await self.client.insert_succeeding_subsection(section_id, to_section_id=to_parent_id, at_index=to_index)
         except ClientError:
-            # TODO: Deal with this.
-            pass
+            raise FailedUpdateError(query='move_subsection_as_succeeding')
 
     async def _section_is_ancestor_of_candidate(self, section_id, candidate_section_id):
         if section_id == candidate_section_id:
@@ -554,8 +555,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.append_template_heading_to_segment(title, segment_id)
         except ClientError:
-            # TODO: Deal with this.
-            raise
+            raise FailedUpdateError(query='add_template_heading')
         else:
             # TODO: Should this return something?
             pass
@@ -569,8 +569,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.insert_heading(title, page_id, index)
         except ClientError:
-            # TODO: Deal with this.
-            raise
+            raise FailedUpdateError(query='add_heading')
         else:
             # TODO: Should this return something?
             pass
@@ -678,8 +677,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_wiki_title(title, wiki_id)
             await self.client.set_segment_title(title, wiki['segment_id'])
         except ClientError:
-            # TODO: Deal with this
-            raise
+            raise FailedUpdateError(query='set_wiki_title')
         else:
             # TODO: Should this return something?
             pass
@@ -688,8 +686,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.set_segment_title(title, segment_id)
         except ClientError:
-            # TODO: Deal with this
-            raise
+            raise FailedUpdateError(query='set_segment_title')
         else:
             # TODO: Should this return something?
             pass
@@ -728,8 +725,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.set_heading_title(old_title, new_title, page_id)
         except ClientError:
-            # TODO: Deal with this
-            raise
+            raise FailedUpdateError(query='set_heading_title')
         else:
             # TODO: Should this return something?
             pass
@@ -738,8 +734,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.set_heading_text(title, text, page_id)
         except ClientError:
-            # TODO: Deal with this
-            raise
+            raise FailedUpdateError(query='set_heading_text')
         else:
             # TODO: Should this return something?
             pass
