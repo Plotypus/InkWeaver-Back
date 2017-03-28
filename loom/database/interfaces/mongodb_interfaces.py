@@ -109,26 +109,43 @@ class MongoDBInterface(AbstractDBInterface):
     async def password_is_valid_for_username(self, username, password):
         try:
             stored_hash = await self.client.get_password_hash_for_username(username)
-        except NoMatchError:
+        except ClientError:
             return False
         else:
             return super().verify_hash(password, stored_hash)
 
     async def get_user_id_for_username(self, username):
-        user_id = await self.client.get_user_id_for_username(username)
-        return user_id
+        try:
+            user_id = await self.client.get_user_id_for_username(username)
+        except ClientError:
+            raise BadValueError(query='get_user_id_for_username', value=username)
+        else:
+            return user_id
 
     async def get_user_preferences(self, user_id):
-        preferences = await self.client.get_user_preferences(user_id)
-        return preferences
+        try:
+            preferences = await self.client.get_user_preferences(user_id)
+        except ClientError:
+            raise BadValueError(query='get_user_preferences', value=user_id)
+        else:
+            return preferences
 
     async def get_user_stories_and_wikis(self, user_id):
-        story_ids_and_positions = await self.client.get_user_stories(user_id)
-        wiki_ids = await self.client.get_user_wiki_ids(user_id)
+        try:
+            story_ids_and_positions = await self.client.get_user_stories(user_id)
+        except ClientError:
+            raise BadValueError(query='get_user_stories_and_wikis', value=user_id)
+        try:
+            wiki_ids = await self.client.get_user_wiki_ids(user_id)
+        except ClientError:
+            raise BadValueError(query='get_user_stories_and_wikis', value=user_id)
         wiki_ids_to_titles = {}
         wikis = []
         for wiki_id in wiki_ids:
-            wiki = await self.client.get_wiki(wiki_id)
+            try:
+                wiki = await self.client.get_wiki(wiki_id)
+            except ClientError:
+                raise BadValueError(query='get_user_stories_and_wikis', value=wiki_id)
             wiki_ids_to_titles[wiki_id] = wiki['title']
             access_level = self._get_current_user_access_level_in_object(user_id, wiki)
             wikis.append({
@@ -140,7 +157,10 @@ class MongoDBInterface(AbstractDBInterface):
         for story_id_and_pos in story_ids_and_positions:
             story_id = story_id_and_pos['story_id']
             last_pos = story_id_and_pos['position_context']
-            story = await self.client.get_story(story_id)
+            try:
+                story = await self.client.get_story(story_id)
+            except ClientError:
+                raise BadValueError(query='get_user_stories_and_wikis', value=story_id)
             access_level = self._get_current_user_access_level_in_object(user_id, story)
             wiki_title = wiki_ids_to_titles[story['wiki_id']]
             stories.append({
@@ -163,24 +183,42 @@ class MongoDBInterface(AbstractDBInterface):
         # Maybe even check that it's not too similar, like:
         #   https://security.stackexchange.com/questions/53481/does-facebook-store-plain-text-passwords
         password_hash = super().hash_password(password)
-        await self.client.set_user_password_hash(user_id, password_hash)
+        try:
+            await self.client.set_user_password_hash(user_id, password_hash)
+        except ClientError:
+            raise FailedUpdateError(query='set_user_password')
 
     async def set_user_name(self, user_id, name):
-        await self.client.set_user_name(user_id, name)
+        try:
+            await self.client.set_user_name(user_id, name)
+        except ClientError:
+            raise FailedUpdateError(query='set_user_name')
 
     async def set_user_email(self, user_id, email):
         # TODO: Check user doesn't use an email that somebody else is using.
         # TODO: Check email address is properly formed.
-        await self.client.set_user_email(user_id, email)
+        try:
+            await self.client.set_user_email(user_id, email)
+        except ClientError:
+            raise FailedUpdateError(query='set_user_email')
 
     async def set_user_bio(self, user_id, bio):
-        await self.client.set_user_bio(user_id, bio)
+        try:
+            await self.client.set_user_bio(user_id, bio)
+        except ClientError:
+            raise FailedUpdateError(query='set_user_bio')
 
     async def set_user_avatar(self, user_id, avatar):
-        await self.client.set_user_avatar(user_id, avatar)
+        try:
+            await self.client.set_user_avatar(user_id, avatar)
+        except ClientError:
+            raise FailedUpdateError(query='set_user_avatar')
 
     async def set_story_position_context(self, user_id, story_id, position_context):
-        await self.client.set_user_story_position_context(user_id, story_id, position_context)
+        try:
+            await self.client.set_user_story_position_context(user_id, story_id, position_context)
+        except ClientError:
+            raise FailedUpdateError(query='set_story_position_context')
 
     ###########################################################################
     #
@@ -189,17 +227,26 @@ class MongoDBInterface(AbstractDBInterface):
     ###########################################################################
 
     async def create_story(self, user_id, title, summary, wiki_id) -> ObjectId:
-        user = await self.get_user_preferences(user_id)
+        try:
+            user = await self.get_user_preferences(user_id)
+        except BadValueError:
+            # TODO: Or should this raise its own error with 'create_story' as the query
+            raise
         user_description = {
             'user_id':      user_id,
             'name':         user['name'],
             'access_level': 'owner',
         }
         section_id = await self.create_section(title)
+        # TODO: Come back to this.
         await self.add_paragraph(section_id, summary)
         inserted_id = await self.client.create_story(title, wiki_id, user_description, section_id)
-        await self.client.add_story_to_user(user_id, inserted_id)
-        return inserted_id
+        try:
+            await self.client.add_story_to_user(user_id, inserted_id)
+        except ClientError:
+            raise FailedUpdateError(query='create_story')
+        else:
+            return inserted_id
 
     async def create_section(self, title) -> ObjectId:
         inserted_id = await self.client.create_section(title)
@@ -234,46 +281,78 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def add_paragraph(self, section_id, text, succeeding_paragraph_id=None):
         try:
+            paragraph_ids = await self.client.get_paragraph_ids(section_id)
+        except ClientError:
+            raise BadValueError(query='add_paragraph', value=section_id)
+        try:
             if not succeeding_paragraph_id:
                 index = None
             else:
-                paragraph_ids = await self.client.get_paragraph_ids(section_id)
                 index = paragraph_ids.index(succeeding_paragraph_id)
         except ValueError:
             raise BadValueError(query='add_paragraph', value=succeeding_paragraph_id)
-        else:
-            paragraph_id = ObjectId()
+        paragraph_id = ObjectId()
+        try:
             await self.client.insert_paragraph(paragraph_id, '', to_section_id=section_id, at_index=index)
+        except ClientError:
+            raise FailedUpdateError(query='add_paragraph')
+        try:
             await self.client.insert_links_for_paragraph(paragraph_id, list(), in_section_id=section_id, at_index=index)
-            # Default the note to None
+        except ClientError:
+            raise FailedUpdateError(query='add_paragraph')
+        # Default the note to None
+        try:
             await self.client.insert_note_for_paragraph(paragraph_id, in_section_id=section_id, note=None,
                                                         at_index=index)
-            if text is not None:
-                links_created = await self.set_paragraph_text(section_id, text, paragraph_id)
-            else:
-                links_created = []
-            return paragraph_id, links_created
+        except ClientError:
+            raise FailedUpdateError(query='add_paragraph')
+        if text is not None:
+            # TODO: Come back to this.
+            links_created = await self.set_paragraph_text(section_id, text, paragraph_id)
+        else:
+            links_created = []
+        return paragraph_id, links_created
 
     async def add_bookmark(self, name, story_id, section_id, paragraph_id, index=None):
         bookmark_id = ObjectId()
-        await self.client.insert_bookmark(bookmark_id, story_id, section_id, paragraph_id, name, index)
-        return bookmark_id
+        try:
+            await self.client.insert_bookmark(bookmark_id, story_id, section_id, paragraph_id, name, index)
+        except ClientError:
+            raise FailedUpdateError(query='add_bookmark')
+        else:
+            return bookmark_id
 
     async def get_story(self, story_id):
-        story = await self.client.get_story(story_id)
-        return story
+        try:
+            story = await self.client.get_story(story_id)
+        except ClientError:
+            raise BadValueError(query='get_story', value=story_id)
+        else:
+            return story
 
     async def get_story_bookmarks(self, story_id):
-        story = await self.client.get_story(story_id)
-        return story['bookmarks']
+        try:
+            story = await self.client.get_story(story_id)
+        except ClientError:
+            raise BadValueError(query='get_story_bookmarks', value=story_id)
+        else:
+            return story['bookmarks']
 
     async def get_story_hierarchy(self, story_id):
-        story = await self.get_story(story_id)
+        try:
+            story = await self.get_story(story_id)
+        except ClientError:
+            raise BadValueError(query='get_story_hierarchy', value=story_id)
         section_id = story['section_id']
+        # TODO: Come back to this.
         return await self.get_section_hierarchy(section_id)
 
     async def get_section_hierarchy(self, section_id):
-        section = await self.client.get_section(section_id)
+        try:
+            section = await self.client.get_section(section_id)
+        except ClientError:
+            raise BadValueError(query='get_section_hierarchy', value=section_id)
+        # TODO: Come back to this.
         hierarchy = {
             'title':      section['title'],
             'section_id': section_id,
@@ -287,7 +366,10 @@ class MongoDBInterface(AbstractDBInterface):
         return hierarchy
 
     async def get_section_content(self, section_id):
-        section = await self.client.get_section(section_id)
+        try:
+            section = await self.client.get_section(section_id)
+        except ClientError:
+            raise BadValueError(query='get_section_content', value=section_id)
         paragraphs = []
         for db_paragraph, db_note in zip(section['content'], section['notes']):
             def join_dictionaries_and_return(paragraph, note):
@@ -297,17 +379,27 @@ class MongoDBInterface(AbstractDBInterface):
         return paragraphs
 
     async def set_story_title(self, story_id, title):
-        story = await self.client.get_story(story_id)
+        try:
+            story = await self.client.get_story(story_id)
+        except ClientError:
+            raise BadValueError(query='set_story_title', value=story_id)
         try:
             await self.client.set_story_title(story_id, title)
+        except ClientError:
+            raise FailedUpdateError(query='set_story_title')
+        try:
             await self.client.set_section_title(story['section_id'], title)
         except ClientError:
             raise FailedUpdateError(query='set_story_title')
 
     async def set_section_title(self, section_id, title):
-        await self.client.set_section_title(section_id, title)
+        try:
+            await self.client.set_section_title(section_id, title)
+        except ClientError:
+            raise FailedUpdateError(query='set_section_title')
 
     async def set_paragraph_text(self, section_id, text, paragraph_id):
+        # TODO: Come back to this
         text, links_created = await self._find_and_create_links_in_paragraph(section_id, paragraph_id, text)
         sentences_and_links, word_frequencies = await self.get_links_and_word_counts_from_paragraph(text)
         page_updates = {}
@@ -361,6 +453,7 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def get_links_and_word_counts_from_paragraph(self, paragraph_text):
         # TODO: Support languages other than English.
+        # TODO: Come back to this.
         sentences = nltk.sent_tokenize(paragraph_text)
         word_counts = Counter()
         results = []
@@ -386,6 +479,7 @@ class MongoDBInterface(AbstractDBInterface):
         return results, word_counts
 
     async def _find_and_create_links_in_paragraph(self, section_id, paragraph_id, text):
+        # TODO: Come back to this.
         prev_end = 0
         links_created = []  # (link_id, page_id, name)
         # Buffer used for efficiently joining the string back together.
@@ -407,6 +501,7 @@ class MongoDBInterface(AbstractDBInterface):
         return ''.join(buffer), links_created
 
     async def _create_link_and_replace_text(self, section_id, paragraph_id, text, start, end):
+        # TODO: Come back to this.
         # Get the match and split it into story_id, page_id, and name.
         tokens = text[start:end].split('|')[1:4]
         story_id, page_id, name = tuple(tokens)
@@ -417,73 +512,142 @@ class MongoDBInterface(AbstractDBInterface):
         return link_id, page_id, name
 
     async def set_bookmark_name(self, story_id, bookmark_id, new_name):
-        await self.client.set_bookmark_name(story_id, bookmark_id, new_name)
+        try:
+            await self.client.set_bookmark_name(story_id, bookmark_id, new_name)
+        except ClientError:
+            raise FailedUpdateError(query='set_bookmark_name')
 
     async def set_note(self, section_id, paragraph_id, text):
-        await self.client.set_note(section_id, paragraph_id, text)
+        try:
+            await self.client.set_note(section_id, paragraph_id, text)
+        except ClientError:
+            raise FailedUpdateError(query='set_note')
 
     async def delete_story(self, story_id):
-        story = await self.get_story(story_id)
+        try:
+            story = await self.get_story(story_id)
+        except ClientError:
+            raise BadValueError(query='delete_story', value=story_id)
         section_id = story['section_id']
+        # TODO: Come back to this.
         await self.recur_delete_section_and_subsections(section_id)
         for user in story['users']:
             user_id = user['user_id']
-            await self.client.remove_story_from_user(user_id, story_id)
-        await self.client.delete_story(story_id)
+            try:
+                await self.client.remove_story_from_user(user_id, story_id)
+            except ClientError:
+                raise FailedUpdateError(query='delete_story')
+        try:
+            await self.client.delete_story(story_id)
+        except:
+            raise FailedUpdateError(query='delete_story')
 
     async def delete_section(self, section_id):
+        # TODO: Come back to this.
         await self.recur_delete_section_and_subsections(section_id)
 
     async def recur_delete_section_and_subsections(self, section_id):
-        section = await self.client.get_section(section_id)
+        try:
+            section = await self.client.get_section(section_id)
+        except ClientError:
+            raise BadValueError(query='recur_delete_section_and_subsections', value=section_id)
         for subsection_id in chain(section['preceding_subsections'],
                                    section['inner_subsections'],
                                    section['succeeding_subsections']):
+            # TODO: Come back to this
             await self.recur_delete_section_and_subsections(subsection_id)
         for link_summary in section['links']:
             link_ids = link_summary['links']
             for link_id in link_ids:
+                # TODO: Come back to this.
                 await self.delete_link(link_id)
-        await self.client.delete_section(section['_id'])
-        await self.client.delete_bookmark_by_section_id(section_id)
+        try:
+            await self.client.delete_section(section['_id'])
+        except ClientError:
+            raise FailedUpdateError(query='recur_delete_sections_and_subsections')
+        try:
+            await self.client.delete_bookmark_by_section_id(section_id)
+        except ClientError:
+            raise FailedUpdateError(query='recur_delete_sections_and_subsections')
 
     async def delete_paragraph(self, section_id, paragraph_id):
-        link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
+        try:
+            link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
+        except ClientError:
+            # TODO: Come back to this.
+            raise BadValueError(query='delete_paragraph', value=...)
         for link_id in link_ids:
+            # TODO: Come back to this.
             await self.delete_link(link_id)
-        await self.client.delete_paragraph(section_id, paragraph_id)
-        await self.client.delete_bookmark_by_paragraph_id(paragraph_id)
+        try:
+            await self.client.delete_paragraph(section_id, paragraph_id)
+        except ClientError:
+            raise FailedUpdateError(query='delete_paragraph')
+        try:
+            await self.client.delete_bookmark_by_paragraph_id(paragraph_id)
+        except ClientError:
+            raise FailedUpdateError(query='delete_paragraph')
 
     async def delete_note(self, section_id, paragraph_id):
         # To delete a note, we simply set it as an empty-string.
-        await self.client.set_note(section_id, paragraph_id, '')
+        try:
+            await self.client.set_note(section_id, paragraph_id, '')
+        except ClientError:
+            raise FailedUpdateError(query='delete_note')
 
     async def delete_bookmark(self, bookmark_id):
-        await self.client.delete_bookmark_by_id(bookmark_id)
+        try:
+            await self.client.delete_bookmark_by_id(bookmark_id)
+        except ClientError:
+            raise FailedUpdateError(query='delete_bookmark')
 
     async def move_subsection_as_preceding(self, section_id, to_parent_id, to_index):
-        if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
-            raise ValueError
+        try:
+            if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
+                # TODO: Should these just be ValueErrors?
+                raise BadValueError(query='move_subsection_as_preceding', value=to_parent_id)
+        except ClientError:
+            # TODO: Should this raise its own error or pass along the error from the call?
+            pass
         try:
             await self.client.remove_section_from_parent(section_id)
+        except ClientError:
+            raise FailedUpdateError(query='move_subsection_as_preceding')
+        try:
             await self.client.insert_preceding_subsection(section_id, to_section_id=to_parent_id, at_index=to_index)
         except ClientError:
             raise FailedUpdateError(query='move_subsection_as_preceding')
 
     async def move_subsection_as_inner(self, section_id, to_parent_id, to_index):
-        if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
-            raise ValueError
+        try:
+            if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
+                # TODO: Should these just be ValueErrors?
+                raise BadValueError(query='move_subsection_as_inner', value=to_parent_id)
+        except ClientError:
+            # TODO: Should this raise its own error or pass along the error from the call?
+            pass
         try:
             await self.client.remove_section_from_parent(section_id)
+        except ClientError:
+            raise FailedUpdateError(query='move_subsection_as_inner')
+        try:
             await self.client.insert_inner_subsection(section_id, to_section_id=to_parent_id, at_index=to_index)
         except ClientError:
             raise FailedUpdateError(query='move_subsection_as_inner')
 
     async def move_subsection_as_succeeding(self, section_id, to_parent_id, to_index):
-        if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
-            raise ValueError
+        try:
+            if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
+                # TODO: Should these just be ValueErrors?
+                raise BadValueError(query='move_subsection_as_succeeding', value=to_parent_id)
+        except ClientError:
+            # TODO: Should this raise its own error or pass along the error from the call?
+            pass
         try:
             await self.client.remove_section_from_parent(section_id)
+        except ClientError:
+            raise FailedUpdateError(query='move_subsection_as_succeeding')
+        try:
             await self.client.insert_succeeding_subsection(section_id, to_section_id=to_parent_id, at_index=to_index)
         except ClientError:
             raise FailedUpdateError(query='move_subsection_as_succeeding')
@@ -491,7 +655,10 @@ class MongoDBInterface(AbstractDBInterface):
     async def _section_is_ancestor_of_candidate(self, section_id, candidate_section_id):
         if section_id == candidate_section_id:
             return True
-        section = await self.client.get_section(section_id)
+        try:
+            section = await self.client.get_section(section_id)
+        except ClientError:
+            raise BadValueError(query='_section_is_ancestor_of_candidate', value=section_id)
         for subsection_id in chain(section['preceding_subsections'],
                                    section['inner_subsections'],
                                    section['succeeding_subsections']):
