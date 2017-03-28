@@ -206,6 +206,9 @@ class MongoDBClient:
                 '_id': 1,
             }
         )
+        if user is None:
+            self.log(f'get_user_id_for_username {{{username}}} FAILED')
+            raise NoMatchError
         user_id = user['_id']
         self.log(f'get_user_id_for_username {{{username}}}; user ID {{{user_id}}}')
         return user_id
@@ -302,6 +305,9 @@ class MongoDBClient:
                 'avatar':   1,
             }
         )
+        if result is None:
+            self.log(f'get_user_preferences for user {{{user_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_user_preferences for user {{{user_id}}}')
         return result
 
@@ -313,6 +319,9 @@ class MongoDBClient:
                 'stories': 1,
             }
         )
+        if result is None:
+            self.log(f'get_user_stories for user {{{user_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_user_stories for user {{{user_id}}}')
         return result['stories']
 
@@ -324,6 +333,9 @@ class MongoDBClient:
                 'wikis': 1,
             }
         )
+        if result is None:
+            self.log(f'get_user_wiki_ids for user {{{user_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_user_wiki_ids for user {{{user_id}}}')
         return result['wikis']
 
@@ -594,11 +606,17 @@ class MongoDBClient:
 
     async def get_story(self, story_id: ObjectId) -> Dict:
         result = await self.stories.find_one({'_id': story_id})
+        if result is None:
+            self.log(f'get_story {{{story_id}}}  FAILED')
+            raise NoMatchError
         self.log(f'get_story {{{story_id}}}')
         return result
 
     async def get_section(self, section_id: ObjectId) -> Dict:
         result = await self.sections.find_one({'_id': section_id})
+        if result is None:
+            self.log(f'get_section {{{section_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_section {{{section_id}}}')
         return result
 
@@ -610,6 +628,9 @@ class MongoDBClient:
                 '_id': 0,
             }
         )
+        if projected_section is None:
+            self.log(f'get_section_statistics {{{section_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_section_statistics {{{section_id}}}')
         return projected_section['statistics']
 
@@ -630,6 +651,9 @@ class MongoDBClient:
                 '_id': 0,
             }
         )
+        if projected_section is None:
+            self.log(f'get_paragraph_text {{{paragraph_id}}} in section {{{section_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_paragraph_text {{{paragraph_id}}} in section {{{section_id}}}')
         return projected_section['content'][0]['text']
 
@@ -641,6 +665,9 @@ class MongoDBClient:
                 '_id': 0,
             }
         )
+        if projected_section is None:
+            self.log(f'get_paragraph_statistics {{{paragraph_id}}} in section {{{section_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_paragraph_statistics {{{paragraph_id}}} in section {{{section_id}}}')
         return projected_section['content'][0]['statistics']
 
@@ -952,16 +979,25 @@ class MongoDBClient:
 
     async def get_wiki(self, wiki_id: ObjectId) -> Dict:
         result = await self.wikis.find_one({'_id': wiki_id})
+        if result is None:
+            self.log(f'get_wiki {{{wiki_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_wiki {{{wiki_id}}}')
         return result
 
     async def get_segment(self, segment_id: ObjectId) -> Dict:
         result = await self.segments.find_one({'_id': segment_id})
+        if result is None:
+            self.log(f'get_segment {{{segment_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_segment {{{segment_id}}}')
         return result
 
     async def get_page(self, page_id: ObjectId) -> Dict:
         result = await self.pages.find_one({'_id': page_id})
+        if result is None:
+            self.log(f'get_page {{{page_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_page {{{page_id}}}')
         return result
 
@@ -970,6 +1006,9 @@ class MongoDBClient:
             '_id':                     segment_id,
             'template_headings.title': title
         })
+        if result is None:
+            self.log(f'get_template_heading {{{title}}} in segment {{{segment_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_template_heading {{{title}}} in segment {{{segment_id}}}')
         return result
 
@@ -978,6 +1017,9 @@ class MongoDBClient:
             '_id':            page_id,
             'headings.title': title
         })
+        if result is None:
+            self.log(f'get_heading {{{title}}} in page {{{page_id}}}')
+            raise NoMatchError
         self.log(f'get_heading {{{title}}} in page {{{page_id}}}')
         return result
 
@@ -988,6 +1030,9 @@ class MongoDBClient:
         )
         results = []
         async for result in result_cursor:
+            if result is None:
+                self.log(f'get_summaries_of_stories_using_wiki {{{wiki_id}}} FAILED')
+                raise NoMatchError
             results.append(result)
         self.log(f'get_summaries_of_stories_using_wiki {{{wiki_id}}}')
         return results
@@ -1100,6 +1145,9 @@ class MongoDBClient:
 
     async def get_link(self, link_id: ObjectId):
         result = await self.links.find_one({'_id': link_id})
+        if result is None:
+            self.log(f'get_link {{{link_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_link {{{link_id}}}')
         return result
 
@@ -1108,6 +1156,9 @@ class MongoDBClient:
             filter={'_id': section_id, 'links.paragraph_id': paragraph_id},
             projection={'links.links': 1, '_id': 0}
         )
+        if section_projection is None:
+            self.log(f'get_links_in_paragraph {{{paragraph_id}}} in section {{{section_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_links_in_paragraph {{{paragraph_id}}} in section {{{section_id}}}')
         return section_projection['links'][0]['links']
 
@@ -1254,6 +1305,9 @@ class MongoDBClient:
 
     async def get_alias(self, alias_id: ObjectId):
         result = await self.aliases.find_one({'_id': alias_id})
+        if result is None:
+            self.log(f'get_alias FAILED')
+            raise NoMatchError
         self.log(f'get_alias {{{alias_id}}}')
         return result
 
@@ -1286,6 +1340,9 @@ class MongoDBClient:
             filter={'_id': page_id},
             projection={'_id': 0, 'aliases': 1}
         )
+        if result is None:
+            self.log(f'get_aliases_from_page {{{page_id}}} FAILED')
+            raise NoMatchError
         self.log(f'get_aliases_from_page {{{page_id}}}')
         return None if result is None else result['aliases']
 
