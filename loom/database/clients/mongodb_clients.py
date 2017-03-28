@@ -657,8 +657,8 @@ class MongoDBClient:
         self.assert_delete_one_was_successful(delete_result)
         self.log(f'delete_story {{{story_id}}}')
 
-    async def delete_section(self, section_id: ObjectId):
-        parent_update_result: UpdateResult = await self.sections.update_many(
+    async def remove_section_from_parent(self, section_id: ObjectId):
+        update_result: UpdateResult = await self.sections.update_many(
             filter={},
             update={
                 '$pull': {
@@ -668,7 +668,10 @@ class MongoDBClient:
                 }
             }
         )
-        # self.assert_update_one_was_successful(parent_update_result)
+        self.log(f'remove_section_from_parent {{{section_id}}}')
+
+    async def delete_section(self, section_id: ObjectId):
+        await self.remove_section_from_parent(section_id)
         delete_result: DeleteResult = await self.sections.delete_one(
             filter={'_id': section_id}
         )
