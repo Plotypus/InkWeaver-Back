@@ -35,6 +35,12 @@ class InterfaceError(Exception):
         self.query = query
 
 
+class BadValueError(InterfaceError):
+    def __init__(self, *, query: str, value):
+        super().__init__('bad value supplied', query=query)
+        self.value = value
+
+
 class MongoDBInterface(AbstractDBInterface):
     def __init__(self, db_client_class: ClassVar, db_name, db_host, db_port, db_user=None, db_pass=None):
         if not issubclass(db_client_class, MongoDBClient):
@@ -227,8 +233,7 @@ class MongoDBInterface(AbstractDBInterface):
                 paragraph_ids = await self.client.get_paragraph_ids(section_id)
                 index = paragraph_ids.index(succeeding_paragraph_id)
         except ValueError:
-            # TODO: Handle case when client provides bad paragraph_id
-            raise
+            raise BadValueError(query='add_paragraph', value=succeeding_paragraph_id)
         else:
             paragraph_id = ObjectId()
             await self.client.insert_paragraph(paragraph_id, '', to_section_id=section_id, at_index=index)
