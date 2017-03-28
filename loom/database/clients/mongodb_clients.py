@@ -133,7 +133,8 @@ class MongoDBClient:
     async def drop_database(self):
         await self.client.drop_database(self.database)
 
-    async def drop_collection(self, collection: AgnosticCollection):
+    @staticmethod
+    async def drop_collection(collection: AgnosticCollection):
         await collection.drop()
 
     async def drop_all_collections(self):
