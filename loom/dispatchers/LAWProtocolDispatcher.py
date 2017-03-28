@@ -282,6 +282,11 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         await self.db_interface.delete_bookmark(bookmark_id)
         yield DeleteBookmarkOutgoingMessage(uuid, message_id, bookmark_id=bookmark_id)
 
+    async def move_subsection(self, uuid, message_id, section_id, to_parent_id, to_index):
+        await self.db_interface.move_subsection(section_id, to_parent_id, to_index)
+        yield MoveSubsectionOutgoingMessage(uuid, message_id, section_id=section_id, to_parent_id=to_parent_id,
+                                            to_index=to_index)
+
     ###########################################################################
     #
     # Wiki Methods
