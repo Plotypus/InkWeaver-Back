@@ -446,9 +446,23 @@ class MongoDBInterface(AbstractDBInterface):
     async def delete_bookmark(self, bookmark_id):
         await self.client.delete_bookmark_by_id(bookmark_id)
 
-    async def move_subsection(self, section_id, to_parent_id, to_index):
+    async def move_subsection_as_preceding(self, section_id, to_parent_id, to_index):
         try:
-            await self.client.move_subsection(section_id, to_parent_id, to_index)
+            pass
+        except ClientError:
+            # TODO: Deal with this.
+            pass
+
+    async def move_subsection_as_inner(self, section_id, to_parent_id, to_index):
+        try:
+            pass
+        except ClientError:
+            # TODO: Deal with this.
+            pass
+
+    async def move_subsection_as_succeeding(self, section_id, to_parent_id, to_index):
+        try:
+            pass
         except ClientError:
             # TODO: Deal with this.
             pass

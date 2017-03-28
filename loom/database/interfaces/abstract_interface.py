@@ -168,7 +168,15 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def move_subsection(self, section_id, to_parent_id, to_index):
+    async def move_subsection_as_preceding(self, section_id, to_parent_id, to_index):
+        pass
+
+    @abstractmethod
+    async def move_subsection_as_inner(self, section_id, to_parent_id, to_index):
+        pass
+
+    @abstractmethod
+    async def move_subsection_as_succeeding(self, section_id, to_parent_id, to_index):
         pass
 
     ###########################################################################
