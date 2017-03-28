@@ -448,21 +448,24 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def move_subsection_as_preceding(self, section_id, to_parent_id, to_index):
         try:
-            pass
+            await self.client.delete_section(section_id)
+            await self.client.insert_preceding_subsection(section_id, to_section_id=to_parent_id, at_index=to_index)
         except ClientError:
             # TODO: Deal with this.
             pass
 
     async def move_subsection_as_inner(self, section_id, to_parent_id, to_index):
         try:
-            pass
+            await self.client.delete_section(section_id)
+            await self.client.insert_inner_subsection(section_id, to_section_id=to_parent_id, at_index=to_index)
         except ClientError:
             # TODO: Deal with this.
             pass
 
     async def move_subsection_as_succeeding(self, section_id, to_parent_id, to_index):
         try:
-            pass
+            await self.client.delete_section(section_id)
+            await self.client.insert_succeeding_subsection(section_id, to_section_id=to_parent_id, at_index=to_index)
         except ClientError:
             # TODO: Deal with this.
             pass
