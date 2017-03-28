@@ -453,7 +453,7 @@ class MongoDBClient:
         self.assert_update_was_successful(update_result)
         self.log(f'insert_paragraph {{{paragraph_id}}} to section {{{to_section_id}}} at index {{{at_index}}}')
 
-    async def insert_note_for_paragraph(self, paragraph_id: ObjectId, note: str, in_section_id, at_index=None):
+    async def insert_note_for_paragraph(self, paragraph_id: ObjectId, in_section_id, note=None, at_index=None):
         inner_parameters = self._insertion_parameters({
             'paragraph_id': paragraph_id,
             'note': note,

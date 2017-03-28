@@ -245,7 +245,8 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.insert_paragraph(paragraph_id, '', to_section_id=section_id, at_index=index)
             await self.client.insert_links_for_paragraph(paragraph_id, list(), in_section_id=section_id, at_index=index)
             # Default the note to None
-            await self.client.insert_note_for_paragraph(paragraph_id, None, in_section_id=section_id, at_index=index)
+            await self.client.insert_note_for_paragraph(paragraph_id, in_section_id=section_id, note=None,
+                                                        at_index=index)
             if text is not None:
                 links_created = await self.set_paragraph_text(section_id, text, paragraph_id)
             else:
