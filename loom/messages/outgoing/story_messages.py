@@ -206,9 +206,25 @@ class DeleteBookmarkOutgoingMessage(StoryBroadcastMessage):
 # Move Messages
 #
 ###########################################################################
-class MoveSubsectionOutgoingMessage(StoryBroadcastMessage):
+class MoveSubsectionAsPrecedingOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId, to_parent_id: ObjectId, to_index: int):
-        super().__init__(uuid, message_id, 'subsection_moved')
+        super().__init__(uuid, message_id, 'subsection_moved_as_preceding')
+        self.section_id = section_id
+        self.to_parent_id = to_parent_id
+        self.to_index = to_index
+
+
+class MoveSubsectionAsInnerOutgoingMessage(StoryBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId, to_parent_id: ObjectId, to_index: int):
+        super().__init__(uuid, message_id, 'subsection_moved_as_inner')
+        self.section_id = section_id
+        self.to_parent_id = to_parent_id
+        self.to_index = to_index
+
+
+class MoveSubsectionAsSucceedingOutgoingMessage(StoryBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId, to_parent_id: ObjectId, to_index: int):
+        super().__init__(uuid, message_id, 'subsection_moved_as_succeeding')
         self.section_id = section_id
         self.to_parent_id = to_parent_id
         self.to_index = to_index
