@@ -167,6 +167,10 @@ class AbstractDBInterface(ABC):
     async def delete_bookmark(self, bookmark_id):
         pass
 
+    @abstractmethod
+    async def move_subsection(self, section_id, to_parent_id, to_index):
+        pass
+
     ###########################################################################
     #
     # Wiki Methods

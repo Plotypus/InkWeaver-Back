@@ -446,6 +446,13 @@ class MongoDBInterface(AbstractDBInterface):
     async def delete_bookmark(self, bookmark_id):
         await self.client.delete_bookmark_by_id(bookmark_id)
 
+    async def move_subsection(self, section_id, to_parent_id, to_index):
+        try:
+            await self.client.move_subsection(section_id, to_parent_id, to_index)
+        except ClientError:
+            # TODO: Deal with this.
+            pass
+
     ###########################################################################
     #
     # Wiki Methods
