@@ -677,17 +677,13 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.set_template_heading_title(old_title, new_title, segment_id)
         except ClientError:
-            raise
-        else:
-            pass
+            raise FailedUpdateError(query='set_template_heading_title')
 
     async def set_template_heading_text(self, title, text, segment_id):
         try:
             await self.client.set_template_heading_text(title, text, segment_id)
         except ClientError:
-            raise
-        else:
-            pass
+            raise FailedUpdateError(query='set_template_heading_text')
 
     async def set_page_title(self, new_title, page_id):
         page = await self.client.get_page(page_id)
@@ -754,9 +750,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.delete_template_heading(title, segment_id)
         except ClientError:
-            raise
-        else:
-            pass
+            raise BadValueError(query='delete_template_heading', value=title)
 
     async def delete_page(self, page_id):
         page = await self.client.get_page(page_id)
