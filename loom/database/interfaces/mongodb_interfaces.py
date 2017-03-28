@@ -526,7 +526,7 @@ class MongoDBInterface(AbstractDBInterface):
         template_headings = parent_segment['template_headings']
         page_id = await self.client.create_page(title, template_headings)
         # Create an alias for the page with the title as the alias name
-        alias_id = await self._create_alias(page_id, title)
+        await self._create_alias(page_id, title)
         try:
             await self.client.append_page_to_parent_segment(page_id, in_parent_segment)
         except ClientError:
