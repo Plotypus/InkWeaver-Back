@@ -29,6 +29,12 @@ def generate_link_format_regex():
     return re.compile(pattern)
 
 
+class InterfaceError(Exception):
+    def __init__(self, message: str, *, query: str):
+        self.message = message
+        self.query = query
+
+
 class MongoDBInterface(AbstractDBInterface):
     def __init__(self, db_client_class: ClassVar, db_name, db_host, db_port, db_user=None, db_pass=None):
         if not issubclass(db_client_class, MongoDBClient):
