@@ -394,9 +394,9 @@ class MongoDBClient:
         return result.inserted_id
 
     @staticmethod
-    def _insertion_parameters(object, position=None):
+    def _insertion_parameters(obj, position=None):
         inner_parameters = {
-            '$each': [object],
+            '$each': [obj],
         }
         if position is not None:
             inner_parameters['$position'] = position
