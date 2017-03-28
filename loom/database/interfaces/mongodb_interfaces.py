@@ -18,6 +18,7 @@ nltk.data.path.insert(0, pathjoin(dirname(dirname(dirname(__file__))), 'nltk_dat
 
 CREATE_LINK_REGEX = re.compile(r'{#\|(.*?)\|#}')
 
+
 def generate_link_format_regex():
     o = ObjectId()
     inner_regex = r'[a-f\d]{24}'
