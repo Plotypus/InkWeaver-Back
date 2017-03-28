@@ -387,6 +387,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
             title = update['title']
             await self.db_interface.set_page_title(title, page_id)
             yield EditPageOutgoingMessage(uuid, message_id, page_id=page_id, update=update)
+            # TODO: Also yield an AliasNameChanged message.
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
@@ -491,6 +492,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def change_alias_name(self, uuid, message_id, alias_id, new_name):
         await self.db_interface.change_alias_name(alias_id, new_name)
         yield ChangeAliasNameOutgoingMessage(uuid, message_id, alias_id=alias_id, new_name=new_name)
+        # TODO: Also yield message for recreated original alias name
 
     async def delete_alias(self, uuid, message_id, alias_id):
         deleted_link_ids = await self.db_interface.delete_alias(alias_id)

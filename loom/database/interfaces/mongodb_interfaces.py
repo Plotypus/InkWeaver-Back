@@ -23,7 +23,6 @@ def generate_link_format_regex():
     o = ObjectId()
     inner_regex = r'[a-f\d]{24}'
     bson_string = encode_bson_to_string(o)
-    # TODO: Temporary fix.
     # Strip the whitespace in the encoding and allow one or more spaces.
     # Note: re.escape also escapes spaces, which is why the replace looks for '\\ '.
     pattern = re.escape(bson_string).replace(str(o), inner_regex).replace('\\ ', r'\s*')
@@ -170,6 +169,8 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.set_user_name(user_id, name)
 
     async def set_user_email(self, user_id, email):
+        # TODO: Check user doesn't use an email that somebody else is using.
+        # TODO: Check email address is properly formed.
         await self.client.set_user_email(user_id, email)
 
     async def set_user_bio(self, user_id, bio):
@@ -302,9 +303,6 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_section_title(story['section_id'], title)
         except ClientError:
             raise FailedUpdateError(query='set_story_title')
-        else:
-            # TODO: Should this return something?
-            pass
 
     async def set_section_title(self, section_id, title):
         await self.client.set_section_title(section_id, title)
@@ -552,29 +550,21 @@ class MongoDBInterface(AbstractDBInterface):
         heading = await self.client.get_template_heading(title, segment_id)
         # Template heading already exists within the segment
         if heading is not None:
-            # TODO: Deal with this
-            return
+            raise BadValueError(query='add_template_heading', value=title)
         try:
             await self.client.append_template_heading_to_segment(title, segment_id)
         except ClientError:
             raise FailedUpdateError(query='add_template_heading')
-        else:
-            # TODO: Should this return something?
-            pass
 
     async def add_heading(self, title, page_id, index=None):
         heading = await self.client.get_heading(title, page_id)
         # Heading already exists within the page
         if heading is not None:
-            # TODO: Deal with this
-            return
+            raise BadValueError(query='add_heading', value=title)
         try:
             await self.client.insert_heading(title, page_id, index)
         except ClientError:
             raise FailedUpdateError(query='add_heading')
-        else:
-            # TODO: Should this return something?
-            pass
 
     async def get_wiki(self, wiki_id):
         wiki = await self.client.get_wiki(wiki_id)
@@ -669,10 +659,6 @@ class MongoDBInterface(AbstractDBInterface):
             'title':     page['title'],
         }
 
-    async def get_heading(self, heading_id):
-        # TODO: Do this.
-        pass
-
     async def set_wiki_title(self, title, wiki_id):
         wiki = await self.client.get_wiki(wiki_id)
         try:
@@ -680,18 +666,12 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_segment_title(title, wiki['segment_id'])
         except ClientError:
             raise FailedUpdateError(query='set_wiki_title')
-        else:
-            # TODO: Should this return something?
-            pass
 
     async def set_segment_title(self, title, segment_id):
         try:
             await self.client.set_segment_title(title, segment_id)
         except ClientError:
             raise FailedUpdateError(query='set_segment_title')
-        else:
-            # TODO: Should this return something?
-            pass
 
     async def set_template_heading_title(self, old_title, new_title, segment_id):
         try:
@@ -722,24 +702,17 @@ class MongoDBInterface(AbstractDBInterface):
         heading = await self.client.get_heading(new_title, page_id)
         # Heading already exists within the page
         if heading is not None:
-            # TODO: Deal with this
-            return
+            raise BadValueError(query='set_heading_title', value=new_title)
         try:
             await self.client.set_heading_title(old_title, new_title, page_id)
         except ClientError:
             raise FailedUpdateError(query='set_heading_title')
-        else:
-            # TODO: Should this return something?
-            pass
 
     async def set_heading_text(self, title, text, page_id):
         try:
             await self.client.set_heading_text(title, text, page_id)
         except ClientError:
             raise FailedUpdateError(query='set_heading_text')
-        else:
-            # TODO: Should this return something?
-            pass
 
     async def delete_wiki(self, user_id, wiki_id):
         # TODO: Is this the best way to handle this? Should all stories use one new wiki? Should this be an option?
@@ -821,7 +794,6 @@ class MongoDBInterface(AbstractDBInterface):
         return await self.client.get_link(link_id)
 
     async def delete_link(self, link_id):
-        # TODO: Should an alias be deleted if no more links are tied to it?
         link = await self.get_link(link_id)
         alias_id = link['alias_id']
         page_id = link['page_id']
@@ -833,7 +805,7 @@ class MongoDBInterface(AbstractDBInterface):
         link = await self.get_link(link_id)
         context = link['context']
         text = await self.client.get_paragraph_text(context['section_id'], context['paragraph_id'])
-        # TODO: Updated link encoding -> need to update here.
+        # Strip spaces to handle the front-end's poor life choices regarding link IDs.
         serialized_link = encode_bson_to_string(link_id).replace(' ', '')
         updated_text = text.replace(serialized_link, replacement_text)
         await self.set_paragraph_text(context['section_id'], updated_text, context['paragraph_id'])
@@ -856,7 +828,6 @@ class MongoDBInterface(AbstractDBInterface):
         page = await self.client.get_page(page_id)
         # Alias with page title renamed, need to recreate primary alias
         if not await self._page_title_is_alias(page):
-            # TODO: Or do we rename the page here as well?
             await self._create_alias(page_id, old_name)
 
     async def get_alias(self, alias_id: ObjectId):
@@ -888,7 +859,8 @@ class MongoDBInterface(AbstractDBInterface):
         await self.client.insert_alias_to_page(page_id, name, alias_id)
         return alias_id
 
-    async def _page_title_is_alias(self, page):
+    @staticmethod
+    async def _page_title_is_alias(page):
         title = page['title']
         return page['aliases'].get(title) is not None
 
