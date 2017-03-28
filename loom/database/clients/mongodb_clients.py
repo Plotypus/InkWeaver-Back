@@ -639,6 +639,9 @@ class MongoDBClient:
                     {'$project': {'content._id': 1, '_id': 0}}]
         results = []
         async for doc in self.sections.aggregate(pipeline):
+            if doc is None:
+                self.log(f'get_paragraph_ids {{{section_id}}} FAILED')
+                raise NoMatchError
             results.append(doc['content']['_id'])
         self.log(f'get_paragraph_ids for section {{{section_id}}}')
         return results
