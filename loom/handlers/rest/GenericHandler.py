@@ -1,10 +1,10 @@
-from loom.loggers import rest_connections
+from loom.loggers import rest_connections_log
 import loom.serialize as serialize
 
 import tornado.web
 
 class GenericHandler(tornado.web.RequestHandler):
-    logger = rest_connections
+    logger = rest_connections_log
 
     def set_default_headers(self):
         login_origin = self.settings['login_origin']

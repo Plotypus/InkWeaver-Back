@@ -1,4 +1,4 @@
-from loom.loggers import db_queries, LogLevel
+from loom.loggers import db_queries_log, LogLevel
 
 from bson.objectid import ObjectId
 from motor.core import AgnosticClient, AgnosticDatabase, AgnosticCollection
@@ -36,7 +36,7 @@ class ExtraUpdatesError(BadUpdateError):
 
 
 class MongoDBClient:
-    logger = db_queries
+    logger = db_queries_log
 
     def __init__(self, mongodb_client_class, db_name='inkweaver', db_host='localhost', db_port=27017, db_user=None,
                  db_pass=None):

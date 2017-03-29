@@ -2,6 +2,7 @@ from .AbstractDispatcher import AbstractDispatcher
 
 from loom.database.interfaces import AbstractDBInterface
 from loom.database.interfaces.errors import *
+from loom.loggers import interface_log
 from loom.messages.outgoing import *
 
 
@@ -42,6 +43,7 @@ def handle_interface_errors(func):
             async for message in func(dispatcher, uuid, message_id, *args, **kwargs):
                 yield message
         except InterfaceError as e:
+            interface_log.error(f'{e.query}: {e.message}')
             yield LoomErrorOutgoingMessage(uuid, message_id, action=func.__name__, reason=e.message)
     return wrapped
 
