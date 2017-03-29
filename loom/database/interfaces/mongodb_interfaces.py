@@ -227,18 +227,13 @@ class MongoDBInterface(AbstractDBInterface):
     ###########################################################################
 
     async def create_story(self, user_id, title, summary, wiki_id) -> ObjectId:
-        try:
-            user = await self.get_user_preferences(user_id)
-        except BadValueError:
-            # TODO: Or should this raise its own error with 'create_story' as the query
-            raise
+        user = await self.get_user_preferences(user_id)
         user_description = {
             'user_id':      user_id,
             'name':         user['name'],
             'access_level': 'owner',
         }
         section_id = await self.create_section(title)
-        # TODO: Come back to this.
         await self.add_paragraph(section_id, summary)
         inserted_id = await self.client.create_story(title, wiki_id, user_description, section_id)
         try:
@@ -310,7 +305,6 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='add_paragraph')
         if text is not None:
-            # TODO: Come back to this.
             links_created = await self.set_paragraph_text(section_id, text, paragraph_id)
         else:
             links_created = []
@@ -347,7 +341,6 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise BadValueError(query='get_story_hierarchy', value=story_id)
         section_id = story['section_id']
-        # TODO: Come back to this.
         return await self.get_section_hierarchy(section_id)
 
     async def get_section_hierarchy(self, section_id):
@@ -355,7 +348,6 @@ class MongoDBInterface(AbstractDBInterface):
             section = await self.client.get_section(section_id)
         except ClientError:
             raise BadValueError(query='get_section_hierarchy', value=section_id)
-        # TODO: Come back to this.
         hierarchy = {
             'title':      section['title'],
             'section_id': section_id,
@@ -402,7 +394,6 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='set_section_title')
 
     async def set_paragraph_text(self, section_id, text, paragraph_id):
-        # TODO: Come back to this
         text, links_created = await self._find_and_create_links_in_paragraph(section_id, paragraph_id, text)
         sentences_and_links, word_frequencies = await self.get_links_and_word_counts_from_paragraph(text)
         page_updates = {}
@@ -414,7 +405,10 @@ class MongoDBInterface(AbstractDBInterface):
                 context['paragraph_id'] = paragraph_id
                 context['text'] = sentence
                 # Update context in link.
-                await self.client.set_link_context(link_id, context)
+                try:
+                    await self.client.set_link_context(link_id, context)
+                except ClientError:
+                    raise FailedUpdateError(query='set_paragraph_text')
                 # Get page ID from link and add its context to `page_updates`.
                 page_id = link['page_id']
                 link_updates = page_updates.get(page_id)
@@ -426,25 +420,49 @@ class MongoDBInterface(AbstractDBInterface):
                 section_links.append(link_id)
         # Apply updates to references in pages.
         for page_id, updates in page_updates.items():
-            page = await self.client.get_page(page_id)
+            try:
+                page = await self.client.get_page(page_id)
+            except ClientError:
+                raise BadValueError(query='set_paragraph_text', value=page_id)
             references = page['references']
             for link_id, context in updates.items():
                 self._update_link_in_references_with_context(references, link_id, context)
-            await self.client.set_page_references(page_id, references)
+            try:
+                await self.client.set_page_references(page_id, references)
+            except ClientError:
+                raise FailedUpdateError(query='set_paragraph_text')
         # Update links for this paragraph for the section.
-        await self.client.set_links_in_section(section_id, section_links, paragraph_id)
-        await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
+        try:
+            await self.client.set_links_in_section(section_id, section_links, paragraph_id)
+        except ClientError:
+            raise FailedUpdateError(query='set_paragraph_text')
+        try:
+            await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
+        except ClientError:
+            raise FailedUpdateError(query='set_paragraph_text')
         # Get statistics for section and paragraph
-        section_stats = await self.client.get_section_statistics(section_id)
+        try:
+            section_stats = await self.client.get_section_statistics(section_id)
+        except ClientError:
+            raise FailedUpdateError(query='set_paragraph_text')
         section_wf = Counter(section_stats['word_frequency'])
-        paragraph_stats = await self.client.get_paragraph_statistics(section_id, paragraph_id)
+        try:
+            paragraph_stats = await self.client.get_paragraph_statistics(section_id, paragraph_id)
+        except ClientError:
+            raise FailedUpdateError(query='set_paragraph_text')
         paragraph_wf = Counter(paragraph_stats['word_frequency'])
         # Update statistics for section and paragraph
         section_wf.subtract(paragraph_wf)
         section_wf.update(word_frequencies)
-        await self.client.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
-        await self.client.set_paragraph_statistics(paragraph_id, word_frequencies, sum(word_frequencies.values()),
-                                                   section_id)
+        try:
+            await self.client.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
+        except ClientError:
+            raise FailedUpdateError(query='set_paragraph_text')
+        try:
+            await self.client.set_paragraph_statistics(paragraph_id, word_frequencies, sum(word_frequencies.values()),
+                                                       section_id)
+        except ClientError:
+            raise FailedUpdateError(query='set_paragraph_text')
         return links_created
 
     @staticmethod
@@ -456,7 +474,6 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def get_links_and_word_counts_from_paragraph(self, paragraph_text):
         # TODO: Support languages other than English.
-        # TODO: Come back to this.
         sentences = nltk.sent_tokenize(paragraph_text)
         word_counts = Counter()
         results = []
@@ -466,12 +483,18 @@ class MongoDBInterface(AbstractDBInterface):
             link_matches = re.findall(self.link_format_regex, sentence)
             for match in link_matches:
                 potential_id = decode_string_to_bson(match)
-                link = await self.get_link(potential_id)
-                if link is not None:
+                try:
+                    link = await self.get_link(potential_id)
+                except InterfaceError:
+                    # `potential_id` looked like a link, but it did not correspond to any legitimate link.
+                    continue
+                try:
                     alias = await self.client.get_alias(link['alias_id'])
-                    replacement = alias['name']
-                    links_replaced_sentence = links_replaced_sentence.replace(match, replacement)
-                    sentence_links.append(link)
+                except ClientError:
+                    raise BadValueError(query='get_links_and_word_counts_from_paragraph', value=potential_id)
+                replacement = alias['name']
+                links_replaced_sentence = links_replaced_sentence.replace(match, replacement)
+                sentence_links.append(link)
             # Mongo does not support '$' or '.' in key name, so we replace them with their unicode equivalents.
             words = [token.replace('.', '').replace('$', '').lower() for token in
                      nltk.word_tokenize(links_replaced_sentence) if token not in punctuation]
@@ -482,7 +505,6 @@ class MongoDBInterface(AbstractDBInterface):
         return results, word_counts
 
     async def _find_and_create_links_in_paragraph(self, section_id, paragraph_id, text):
-        # TODO: Come back to this.
         prev_end = 0
         links_created = []  # (link_id, page_id, name)
         # Buffer used for efficiently joining the string back together.
@@ -490,8 +512,8 @@ class MongoDBInterface(AbstractDBInterface):
         # Iterate through each encoded request and replace with a link_id.
         for match in CREATE_LINK_REGEX.finditer(text):
             start, end = match.span()
-            link_id, page_id, name = await self._create_link_and_replace_text(section_id, paragraph_id, text,
-                                                                              start, end)
+            link_id, page_id, name = await self._create_link_and_replace_text(section_id, paragraph_id, text, start,
+                                                                              end)
             links_created.append((link_id, page_id, name))
             # Strip out the space in the encoding.
             encoded_link_id = encode_bson_to_string(link_id).replace(' ', '')
@@ -504,7 +526,6 @@ class MongoDBInterface(AbstractDBInterface):
         return ''.join(buffer), links_created
 
     async def _create_link_and_replace_text(self, section_id, paragraph_id, text, start, end):
-        # TODO: Come back to this.
         # Get the match and split it into story_id, page_id, and name.
         tokens = text[start:end].split('|')[1:4]
         story_id, page_id, name = tuple(tokens)
@@ -532,7 +553,6 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise BadValueError(query='delete_story', value=story_id)
         section_id = story['section_id']
-        # TODO: Come back to this.
         await self.recur_delete_section_and_subsections(section_id)
         for user in story['users']:
             user_id = user['user_id']
@@ -546,7 +566,6 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='delete_story')
 
     async def delete_section(self, section_id):
-        # TODO: Come back to this.
         await self.recur_delete_section_and_subsections(section_id)
 
     async def recur_delete_section_and_subsections(self, section_id):
@@ -557,12 +576,10 @@ class MongoDBInterface(AbstractDBInterface):
         for subsection_id in chain(section['preceding_subsections'],
                                    section['inner_subsections'],
                                    section['succeeding_subsections']):
-            # TODO: Come back to this
             await self.recur_delete_section_and_subsections(subsection_id)
         for link_summary in section['links']:
             link_ids = link_summary['links']
             for link_id in link_ids:
-                # TODO: Come back to this.
                 await self.delete_link(link_id)
         try:
             await self.client.delete_section(section['_id'])
@@ -577,10 +594,8 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
         except ClientError:
-            # TODO: Come back to this.
-            raise BadValueError(query='delete_paragraph', value=...)
+            raise BadValueError(query='delete_paragraph', value=paragraph_id)
         for link_id in link_ids:
-            # TODO: Come back to this.
             await self.delete_link(link_id)
         try:
             await self.client.delete_paragraph(section_id, paragraph_id)
@@ -605,12 +620,8 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='delete_bookmark')
 
     async def move_subsection_as_preceding(self, section_id, to_parent_id, to_index):
-        try:
-            if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
-                raise BadValueError(query='move_subsection_as_preceding', value=to_parent_id)
-        except ClientError:
-            # TODO: Should this raise its own error or pass along the error from the call?
-            pass
+        if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
+            raise BadValueError(query='move_subsection_as_preceding', value=to_parent_id)
         try:
             await self.client.remove_section_from_parent(section_id)
         except ClientError:
@@ -621,12 +632,8 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='move_subsection_as_preceding')
 
     async def move_subsection_as_inner(self, section_id, to_parent_id, to_index):
-        try:
-            if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
-                raise BadValueError(query='move_subsection_as_inner', value=to_parent_id)
-        except ClientError:
-            # TODO: Should this raise its own error or pass along the error from the call?
-            pass
+        if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
+            raise BadValueError(query='move_subsection_as_inner', value=to_parent_id)
         try:
             await self.client.remove_section_from_parent(section_id)
         except ClientError:
@@ -637,12 +644,8 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='move_subsection_as_inner')
 
     async def move_subsection_as_succeeding(self, section_id, to_parent_id, to_index):
-        try:
-            if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
-                raise BadValueError(query='move_subsection_as_succeeding', value=to_parent_id)
-        except ClientError:
-            # TODO: Should this raise its own error or pass along the error from the call?
-            pass
+        if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
+            raise BadValueError(query='move_subsection_as_succeeding', value=to_parent_id)
         try:
             await self.client.remove_section_from_parent(section_id)
         except ClientError:
@@ -673,11 +676,7 @@ class MongoDBInterface(AbstractDBInterface):
     ###########################################################################
 
     async def create_wiki(self, user_id, title, summary):
-        try:
-            user = await self.get_user_preferences(user_id)
-        except InterfaceError:
-            # TODO: Come back to this.
-            pass
+        user = await self.get_user_preferences(user_id)
         user_description = {
             'user_id':      user_id,
             'name':         user['name'],
@@ -697,7 +696,6 @@ class MongoDBInterface(AbstractDBInterface):
         return inserted_id
 
     async def create_page(self, title, in_parent_segment):
-        # TODO: Come back to this.
         # Create the page and include the `template_headings` from the parent
         parent_segment = await self.get_segment(in_parent_segment)
         template_headings = parent_segment['template_headings']
@@ -708,6 +706,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.append_page_to_parent_segment(page_id, in_parent_segment)
         except ClientError:
             await self.delete_page(page_id)
+            raise FailedUpdateError(query='create_page')
         else:
             return page_id
 
@@ -772,7 +771,6 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise BadValueError(query='get_wiki_alias_list', value=wiki_id)
         segment_id = wiki['segment_id']
-        # TODO: Come back to this.
         return await self._get_segment_alias_list(segment_id)
 
     async def _get_segment_alias_list(self, segment_id):
@@ -783,12 +781,10 @@ class MongoDBInterface(AbstractDBInterface):
         # Get all the alias information for the pages at the current level.
         segment_alias_list = []
         for page_id in segment['pages']:
-            # TODO: Come back to this.
             for alias_entry in await self._get_page_alias_list(page_id):
                 segment_alias_list.append(alias_entry)
         # Then add all child segments' page alias lists to the current list, keeping it flat.
         for segment_id in segment['segments']:
-            # TODO: Come back to this.
             for page_aliases in await self._get_segment_alias_list(segment_id):
                 segment_alias_list.append(page_aliases)
         return segment_alias_list
@@ -812,13 +808,8 @@ class MongoDBInterface(AbstractDBInterface):
         return alias_list
 
     async def get_wiki_hierarchy(self, wiki_id):
-        try:
-            wiki = await self.get_wiki(wiki_id)
-        except InterfaceError:
-            # TODO: Come back to this.
-            pass
+        wiki = await self.get_wiki(wiki_id)
         segment_id = wiki['segment_id']
-        # TODO: Come back to this.
         return await self.get_segment_hierarchy(segment_id)
 
     async def get_segment_hierarchy(self, segment_id):
@@ -836,12 +827,10 @@ class MongoDBInterface(AbstractDBInterface):
         pages = hierarchy['pages']
         # Iterate through the segments, popping out the `links` field and inserting them into the top-level `links`.
         for segment_id in segment['segments']:
-            # TODO: Come back to this.
             inner_segment = await self.get_segment_hierarchy(segment_id)
             segments.append(inner_segment)
         # Iterate through the pages, pulling the links from the aliases inside of each.
         for page_id in segment['pages']:
-            # TODO: Come back to this.
             page = await self._get_page_for_hierarchy(page_id)
             pages.append(page)
         return hierarchy
@@ -862,7 +851,6 @@ class MongoDBInterface(AbstractDBInterface):
             segment = await self.client.get_segment(segment_id)
         except ClientError:
             raise BadValueError(query='get_segment', value=segment_id)
-        # TODO: Come back to this.
         segment['segments'] = [await self.get_segment_summary(child_id) for child_id in segment['segments']]
         segment['pages'] = [await self.get_page_summary(page_id) for page_id in segment['pages']]
         return segment
@@ -944,7 +932,6 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_page_title(new_title, page_id)
         except ClientError:
             raise FailedUpdateError(query='set_page_title')
-        # TODO: Come back to this.
         await self.change_alias_name(alias_id, new_title)
 
     async def set_heading_title(self, old_title, new_title, page_id):
@@ -985,12 +972,13 @@ class MongoDBInterface(AbstractDBInterface):
             wiki_title = f"{title} Wiki"
             wiki_summary = f"A wiki for {title}."
             # Create the new wiki and set it for the story.
-            # TODO: Come back to this.
             new_wiki_id = await self.create_wiki(user_id, wiki_title, wiki_summary)
-            await self.client.set_story_wiki(story_id, new_wiki_id)
+            try:
+                await self.client.set_story_wiki(story_id, new_wiki_id)
+            except ClientError:
+                raise FailedUpdateError(query='delete_wiki')
         # Recursively delete all segments in the wiki.
         segment_id = wiki['segment_id']
-        # TODO: Come back to this.
         deleted_link_ids = await self.delete_segment(segment_id)
         # Delete the wiki proper.
         try:
@@ -1001,7 +989,6 @@ class MongoDBInterface(AbstractDBInterface):
             return deleted_link_ids
 
     async def delete_segment(self, segment_id):
-        # TODO: Come back to this.
         deleted_link_ids = await self.recur_delete_segment_and_subsegments(segment_id)
         return deleted_link_ids
 
@@ -1012,11 +999,9 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='recur_delete_segment_and_subsegments', value=segment_id)
         deleted_link_ids = []
         for subsegment_id in segment['segments']:
-            # TODO: Come back to this.
             segment_deleted_link_ids = await self.recur_delete_segment_and_subsegments(subsegment_id)
             deleted_link_ids.extend(segment_deleted_link_ids)
         for page_id in segment['pages']:
-            # TODO: Come back to this.
             page_deleted_link_ids = await self.delete_page(page_id)
             deleted_link_ids.extend(page_deleted_link_ids)
         try:
@@ -1039,7 +1024,6 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='delete_page', value=page_id)
         deleted_link_ids = []
         for alias_id in page['aliases'].values():
-            # TODO: Come back to this.
             page_deleted_link_ids = await self._delete_alias_no_replace(alias_id)
             deleted_link_ids.extend(page_deleted_link_ids)
         try:
@@ -1092,7 +1076,6 @@ class MongoDBInterface(AbstractDBInterface):
             return link
 
     async def delete_link(self, link_id):
-        # TODO: Come back to this
         link = await self.get_link(link_id)
         alias_id = link['alias_id']
         page_id = link['page_id']
@@ -1110,14 +1093,12 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='delete_link')
 
     async def comprehensive_remove_link(self, link_id: ObjectId, replacement_text: str):
-        # TODO: Come back to this.
         link = await self.get_link(link_id)
         context = link['context']
         try:
             text = await self.client.get_paragraph_text(context['section_id'], context['paragraph_id'])
         except ClientError:
-            # TODO: Come back to this.
-            raise BadValueError(query='comprehensive_remove_link', value=...)
+            raise BadValueError(query='comprehensive_remove_link', value=link_id)
         # Strip spaces to handle the front-end's poor life choices regarding link IDs.
         serialized_link = encode_bson_to_string(link_id).replace(' ', '')
         updated_text = text.replace(serialized_link, replacement_text)
@@ -1132,9 +1113,11 @@ class MongoDBInterface(AbstractDBInterface):
     ###########################################################################
 
     async def change_alias_name(self, alias_id: ObjectId, new_name: str):
-        # TODO: Come back to this.
         # Update name in alias.
-        alias = await self.client.get_alias(alias_id)
+        try:
+            alias = await self.client.get_alias(alias_id)
+        except ClientError:
+            raise BadValueError(query='change_alias_name', value=alias_id)
         page_id = alias['page_id']
         old_name = alias['name']
         try:
@@ -1150,7 +1133,6 @@ class MongoDBInterface(AbstractDBInterface):
             page = await self.client.get_page(page_id)
         except ClientError:
             raise BadValueError(query='change_alias_name', value=page_id)
-        # TODO: Come back to this.
         # Alias with page title renamed, need to recreate primary alias
         if not await self._page_title_is_alias(page):
             await self._create_alias(page_id, old_name)
@@ -1164,7 +1146,6 @@ class MongoDBInterface(AbstractDBInterface):
             return alias
 
     async def delete_alias(self, alias_id: ObjectId):
-        # TODO: Come back to this.
         alias = await self.get_alias(alias_id)
         deleted_link_ids = await self._delete_alias_no_replace(alias_id)
         alias_name = alias['name']
@@ -1173,14 +1154,12 @@ class MongoDBInterface(AbstractDBInterface):
             page = await self.client.get_page(page_id)
         except ClientError:
             raise BadValueError(query='delete_alias', value=page_id)
-        # TODO: Come back to this.
         # Alias with page title deleted, need to recreate primary alias
         if page is not None and not await self._page_title_is_alias(page):
             await self._create_alias(page_id, alias_name)
         return deleted_link_ids
 
     async def _delete_alias_no_replace(self, alias_id: ObjectId):
-        # TODO: Come back to this.
         alias = await self.get_alias(alias_id)
         alias_name = alias['name']
         for link_id in alias['links']:
@@ -1222,7 +1201,6 @@ class MongoDBInterface(AbstractDBInterface):
             story = await self.client.get_story(story_id)
         except ClientError:
             raise BadValueError(query='get_story_statistics', value=story_id)
-        # TODO: Come back to this.
         stats = await self._recur_get_section_statistics(story['section_id'])
         return stats
 
@@ -1235,7 +1213,6 @@ class MongoDBInterface(AbstractDBInterface):
         for subsection_id in chain(section['preceding_subsections'],
                                    section['inner_subsections'],
                                    section['succeeding_subsections']):
-            # TODO: Come back to this.
             subsection_stats = await self._recur_get_section_statistics(subsection_id)
             word_freqs.update(subsection_stats['word_frequency'])
             section['statistics']['word_frequency'] = word_freqs
@@ -1243,15 +1220,13 @@ class MongoDBInterface(AbstractDBInterface):
         return section['statistics']
 
     async def get_section_statistics(self, section_id):
-        # TODO: Come back to this.
         return await self._recur_get_section_statistics(section_id)
 
     async def get_paragraph_statistics(self, section_id, paragraph_id):
         try:
             stats = await self.client.get_paragraph_statistics(section_id, paragraph_id)
         except ClientError:
-            # TODO: Come back to this.
-            raise BadValueError(query='get_paragraph_statistics', value=...)
+            raise BadValueError(query='get_paragraph_statistics', value=paragraph_id)
         else:
             return stats
 
@@ -1261,7 +1236,6 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise BadValueError(query='get_page_frequencies_in_story', value=wiki_id)
         segment_id = wiki['segment_id']
-        # TODO: Come back to this.
         return await self._get_page_section_frequencies(story_id, segment_id)
 
     async def _get_page_section_frequencies(self, story_id, segment_id):
@@ -1281,7 +1255,6 @@ class MongoDBInterface(AbstractDBInterface):
                 frequencies[key] += 1
             pages.append({'page_id': page_id, 'section_frequencies': frequencies})
         for child_segment_id in segment['segments']:
-            # TODO: Come back to this.
             child_pages = await self._get_page_section_frequencies(story_id, child_segment_id)
             pages.extend(child_pages)
         return pages
