@@ -258,6 +258,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.insert_preceding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
         except ClientError:
             await self.delete_section(subsection_id)
+            raise FailedUpdateError(query='add_preceding_subsection')
         else:
             return subsection_id
 
@@ -267,6 +268,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.insert_inner_subsection(subsection_id, to_section_id=parent_id, at_index=index)
         except ClientError:
             await self.delete_section(subsection_id)
+            raise FailedUpdateError(query='add_inner_subsection')
         else:
             return subsection_id
 
@@ -276,6 +278,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.insert_succeeding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
         except ClientError:
             await self.delete_section(subsection_id)
+            raise FailedUpdateError(query='add_succeeding_subsection')
         else:
             return subsection_id
 
@@ -670,7 +673,11 @@ class MongoDBInterface(AbstractDBInterface):
     ###########################################################################
 
     async def create_wiki(self, user_id, title, summary):
-        user = await self.get_user_preferences(user_id)
+        try:
+            user = await self.get_user_preferences(user_id)
+        except InterfaceError:
+            # TODO: Come back to this.
+            pass
         user_description = {
             'user_id':      user_id,
             'name':         user['name'],
@@ -678,14 +685,19 @@ class MongoDBInterface(AbstractDBInterface):
         }
         segment_id = await self.create_segment(title)
         inserted_id = await self.client.create_wiki(title, user_description, summary, segment_id)
-        await self.client.add_wiki_to_user(user_id, inserted_id)
-        return inserted_id
+        try:
+            await self.client.add_wiki_to_user(user_id, inserted_id)
+        except ClientError:
+            raise FailedUpdateError(query='create_wiki')
+        else:
+            return inserted_id
 
     async def create_segment(self, title):
         inserted_id = await self.client.create_segment(title)
         return inserted_id
 
     async def create_page(self, title, in_parent_segment):
+        # TODO: Come back to this.
         # Create the page and include the `template_headings` from the parent
         parent_segment = await self.get_segment(in_parent_segment)
         template_headings = parent_segment['template_headings']
@@ -700,63 +712,98 @@ class MongoDBInterface(AbstractDBInterface):
             return page_id
 
     async def add_child_segment(self, title, parent_id):
-        parent_segment = await self.client.get_segment(parent_id)
+        try:
+            parent_segment = await self.client.get_segment(parent_id)
+        except ClientError:
+            raise BadValueError(query='add_child_segment', value='parent_id')
         template_headings = parent_segment['template_headings']
         child_segment_id = await self.client.create_segment(title, template_headings)
         try:
             await self.client.append_segment_to_parent_segment(child_segment_id, parent_id)
         except ClientError:
             await self.delete_segment(child_segment_id)
+            raise FailedUpdateError(query='add_child_segment')
         else:
             return child_segment_id
 
     async def add_template_heading(self, title, segment_id):
-        heading = await self.client.get_template_heading(title, segment_id)
-        # Template heading already exists within the segment
-        if heading is not None:
+        # Check to see if a template heading already exists with the same title.
+        try:
+            await self.client.get_template_heading(title, segment_id)
+        except ClientError:
+            # Template heading does not exist, which is the desired behavior, so we continue execution.
+            pass
+        else:
+            # Template heading already exists within the segment
             raise BadValueError(query='add_template_heading', value=title)
+        # Add the template heading to the segment.
         try:
             await self.client.append_template_heading_to_segment(title, segment_id)
         except ClientError:
             raise FailedUpdateError(query='add_template_heading')
 
     async def add_heading(self, title, page_id, index=None):
-        heading = await self.client.get_heading(title, page_id)
-        # Heading already exists within the page
-        if heading is not None:
+        # Check to see if a heading already exists with the same title.
+        try:
+            await self.client.get_heading(title, page_id)
+        except ClientError:
+            # Heading does not exist, which is the desired behavior, so we continue execution.
+            pass
+        else:
+            # Heading already exists within the page
             raise BadValueError(query='add_heading', value=title)
+        # Add the heading to the page.
         try:
             await self.client.insert_heading(title, page_id, index)
         except ClientError:
             raise FailedUpdateError(query='add_heading')
 
     async def get_wiki(self, wiki_id):
-        wiki = await self.client.get_wiki(wiki_id)
-        return wiki
+        try:
+            wiki = await self.client.get_wiki(wiki_id)
+        except ClientError:
+            raise BadValueError(query='get_wiki', value=wiki_id)
+        else:
+            return wiki
 
     async def get_wiki_alias_list(self, wiki_id):
-        wiki = await self.get_wiki(wiki_id)
+        try:
+            wiki = await self.get_wiki(wiki_id)
+        except ClientError:
+            raise BadValueError(query='get_wiki_alias_list', value=wiki_id)
         segment_id = wiki['segment_id']
+        # TODO: Come back to this.
         return await self._get_segment_alias_list(segment_id)
 
     async def _get_segment_alias_list(self, segment_id):
-        segment = await self.client.get_segment(segment_id)
+        try:
+            segment = await self.client.get_segment(segment_id)
+        except ClientError:
+            raise BadValueError(query='_get_segment_alias_lis', value=segment_id)
         # Get all the alias information for the pages at the current level.
         segment_alias_list = []
         for page_id in segment['pages']:
+            # TODO: Come back to this.
             for alias_entry in await self._get_page_alias_list(page_id):
                 segment_alias_list.append(alias_entry)
         # Then add all child segments' page alias lists to the current list, keeping it flat.
         for segment_id in segment['segments']:
+            # TODO: Come back to this.
             for page_aliases in await self._get_segment_alias_list(segment_id):
                 segment_alias_list.append(page_aliases)
         return segment_alias_list
 
     async def _get_page_alias_list(self, page_id):
-        page = await self.client.get_page(page_id)
+        try:
+            page = await self.client.get_page(page_id)
+        except ClientError:
+            raise BadValueError(query='_get_page_alias_list', value=page_id)
         alias_list = []
         for alias_name, alias_id in page['aliases'].items():
-            alias = await self.client.get_alias(alias_id)
+            try:
+                alias = await self.client.get_alias(alias_id)
+            except ClientError:
+                raise BadValueError(query='_get_page_alias_list', value=alias_id)
             alias_list.append({
                 'alias_name':   alias_name,
                 'page_id':      page_id,
@@ -765,12 +812,20 @@ class MongoDBInterface(AbstractDBInterface):
         return alias_list
 
     async def get_wiki_hierarchy(self, wiki_id):
-        wiki = await self.get_wiki(wiki_id)
+        try:
+            wiki = await self.get_wiki(wiki_id)
+        except InterfaceError:
+            # TODO: Come back to this.
+            pass
         segment_id = wiki['segment_id']
+        # TODO: Come back to this.
         return await self.get_segment_hierarchy(segment_id)
 
     async def get_segment_hierarchy(self, segment_id):
-        segment = await self.client.get_segment(segment_id)
+        try:
+            segment = await self.client.get_segment(segment_id)
+        except ClientError:
+            raise BadValueError(query='get_segment_hierarchy', value=segment_id)
         hierarchy = {
             'title':      segment['title'],
             'segment_id': segment_id,
@@ -781,52 +836,79 @@ class MongoDBInterface(AbstractDBInterface):
         pages = hierarchy['pages']
         # Iterate through the segments, popping out the `links` field and inserting them into the top-level `links`.
         for segment_id in segment['segments']:
+            # TODO: Come back to this.
             inner_segment = await self.get_segment_hierarchy(segment_id)
             segments.append(inner_segment)
         # Iterate through the pages, pulling the links from the aliases inside of each.
         for page_id in segment['pages']:
+            # TODO: Come back to this.
             page = await self._get_page_for_hierarchy(page_id)
             pages.append(page)
         return hierarchy
 
     async def _get_page_for_hierarchy(self, page_id):
-        page = await self.client.get_page(page_id)
-        return {
-            'title':   page['title'],
-            'page_id': page_id,
-        }
+        try:
+            page = await self.client.get_page(page_id)
+        except ClientError:
+            raise BadValueError(query='_get_page_for_hierarchy', value=page_id)
+        else:
+            return {
+                'title':   page['title'],
+                'page_id': page_id,
+            }
 
     async def get_segment(self, segment_id):
-        segment = await self.client.get_segment(segment_id)
+        try:
+            segment = await self.client.get_segment(segment_id)
+        except ClientError:
+            raise BadValueError(query='get_segment', value=segment_id)
+        # TODO: Come back to this.
         segment['segments'] = [await self.get_segment_summary(child_id) for child_id in segment['segments']]
         segment['pages'] = [await self.get_page_summary(page_id) for page_id in segment['pages']]
         return segment
 
     async def get_segment_summary(self, segment_id):
-        segment = await self.client.get_segment(segment_id)
-        return {
-            'segment_id': segment_id,
-            'title':      segment['title'],
-        }
+        try:
+            segment = await self.client.get_segment(segment_id)
+        except ClientError:
+            raise BadValueError(query='get_segment_summary', value=segment_id)
+        else:
+            return {
+                'segment_id': segment_id,
+                'title':      segment['title'],
+            }
 
     async def get_page(self, page_id):
-        page = await self.client.get_page(page_id)
+        try:
+            page = await self.client.get_page(page_id)
+        except ClientError:
+            raise BadValueError(query='get_page', value=page_id)
         for reference in page['references']:
             # Take the context from inside the reference and push it to the next level up.
             reference.update(reference.pop('context'))
         return page
 
     async def get_page_summary(self, page_id):
-        page = await self.client.get_page(page_id)
-        return {
-            'page_id':   page_id,
-            'title':     page['title'],
-        }
+        try:
+            page = await self.client.get_page(page_id)
+        except ClientError:
+            raise BadValueError(query='get_page_summary', value=page_id)
+        else:
+            return {
+                'page_id':   page_id,
+                'title':     page['title'],
+            }
 
     async def set_wiki_title(self, title, wiki_id):
-        wiki = await self.client.get_wiki(wiki_id)
+        try:
+            wiki = await self.client.get_wiki(wiki_id)
+        except ClientError:
+            raise BadValueError(query='set_wiki_title', value=wiki_id)
         try:
             await self.client.set_wiki_title(title, wiki_id)
+        except ClientError:
+            raise FailedUpdateError(query='set_wiki_title')
+        try:
             await self.client.set_segment_title(title, wiki['segment_id'])
         except ClientError:
             raise FailedUpdateError(query='set_wiki_title')
@@ -850,18 +932,30 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='set_template_heading_text')
 
     async def set_page_title(self, new_title, page_id):
-        page = await self.client.get_page(page_id)
+        try:
+            page = await self.client.get_page(page_id)
+        except ClientError:
+            raise BadValueError(query='set_page_title', value=page_id)
         old_title = page['title']
         alias_id = page['aliases'][old_title]
         # It's important that we change the page title before renaming the alias
         # Otherwise, we are going to keep creating new aliases
-        await self.client.set_page_title(new_title, page_id)
+        try:
+            await self.client.set_page_title(new_title, page_id)
+        except ClientError:
+            raise FailedUpdateError(query='set_page_title')
+        # TODO: Come back to this.
         await self.change_alias_name(alias_id, new_title)
 
     async def set_heading_title(self, old_title, new_title, page_id):
-        heading = await self.client.get_heading(new_title, page_id)
-        # Heading already exists within the page
-        if heading is not None:
+        # Check to see if a heading already exists with the same title.
+        try:
+            await self.client.get_heading(new_title, page_id)
+        except ClientError:
+            # Heading does not exist, which is the desired behavior, so we continue execution.
+            pass
+        else:
+            # Heading already exists within the page
             raise BadValueError(query='set_heading_title', value=new_title)
         try:
             await self.client.set_heading_title(old_title, new_title, page_id)
@@ -876,39 +970,61 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def delete_wiki(self, user_id, wiki_id):
         # TODO: Is this the best way to handle this? Should all stories use one new wiki? Should this be an option?
-        wiki = await self.client.get_wiki(wiki_id)
+        try:
+            wiki = await self.client.get_wiki(wiki_id)
+        except ClientError:
+            raise BadValueError(query='delete_wiki', value=wiki_id)
         # Update each story using this wiki with a new wiki.
-        story_summaries = await self.client.get_summaries_of_stories_using_wiki(wiki_id)
+        try:
+            story_summaries = await self.client.get_summaries_of_stories_using_wiki(wiki_id)
+        except ClientError:
+            raise BadValueError(query='delete_wiki', value=wiki_id)
         for summary in story_summaries:
             story_id = summary['_id']
             title = summary['title']
             wiki_title = f"{title} Wiki"
             wiki_summary = f"A wiki for {title}."
             # Create the new wiki and set it for the story.
+            # TODO: Come back to this.
             new_wiki_id = await self.create_wiki(user_id, wiki_title, wiki_summary)
             await self.client.set_story_wiki(story_id, new_wiki_id)
         # Recursively delete all segments in the wiki.
         segment_id = wiki['segment_id']
+        # TODO: Come back to this.
         deleted_link_ids = await self.delete_segment(segment_id)
         # Delete the wiki proper.
-        await self.client.delete_wiki(wiki_id)
-        return deleted_link_ids
+        try:
+            await self.client.delete_wiki(wiki_id)
+        except ClientError:
+            raise FailedUpdateError(query='delete_wiki')
+        else:
+            return deleted_link_ids
 
     async def delete_segment(self, segment_id):
+        # TODO: Come back to this.
         deleted_link_ids = await self.recur_delete_segment_and_subsegments(segment_id)
         return deleted_link_ids
 
     async def recur_delete_segment_and_subsegments(self, segment_id):
-        segment = await self.client.get_segment(segment_id)
+        try:
+            segment = await self.client.get_segment(segment_id)
+        except ClientError:
+            raise BadValueError(query='recur_delete_segment_and_subsegments', value=segment_id)
         deleted_link_ids = []
         for subsegment_id in segment['segments']:
+            # TODO: Come back to this.
             segment_deleted_link_ids = await self.recur_delete_segment_and_subsegments(subsegment_id)
             deleted_link_ids.extend(segment_deleted_link_ids)
         for page_id in segment['pages']:
+            # TODO: Come back to this.
             page_deleted_link_ids = await self.delete_page(page_id)
             deleted_link_ids.extend(page_deleted_link_ids)
-        await self.client.delete_segment(segment_id)
-        return deleted_link_ids
+        try:
+            await self.client.delete_segment(segment_id)
+        except ClientError:
+            raise FailedUpdateError(query='recur_delete_segment_and_subsegments')
+        else:
+            return deleted_link_ids
 
     async def delete_template_heading(self, title, segment_id):
         try:
@@ -917,16 +1033,27 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='delete_template_heading', value=title)
 
     async def delete_page(self, page_id):
-        page = await self.client.get_page(page_id)
+        try:
+            page = await self.client.get_page(page_id)
+        except ClientError:
+            raise BadValueError(query='delete_page', value=page_id)
         deleted_link_ids = []
         for alias_id in page['aliases'].values():
+            # TODO: Come back to this.
             page_deleted_link_ids = await self._delete_alias_no_replace(alias_id)
             deleted_link_ids.extend(page_deleted_link_ids)
-        await self.client.delete_page(page_id)
-        return deleted_link_ids
+        try:
+            await self.client.delete_page(page_id)
+        except ClientError:
+            raise FailedUpdateError(query='delete_page')
+        else:
+            return deleted_link_ids
 
     async def delete_heading(self, heading_title: str, page_id: ObjectId):
-        await self.client.delete_heading(heading_title, page_id)
+        try:
+            await self.client.delete_heading(heading_title, page_id)
+        except ClientError:
+            raise FailedUpdateError(query='delete_heading')
 
     ###########################################################################
     #
@@ -937,35 +1064,64 @@ class MongoDBInterface(AbstractDBInterface):
     async def create_link(self, story_id: ObjectId, section_id: ObjectId, paragraph_id: ObjectId, name: str,
                           page_id: ObjectId):
         # Check if alias exists.
-        alias_id = await self.client.find_alias_in_page(page_id, name)
-        if alias_id is None:
+        try:
+            alias_id = await self.client.find_alias_in_page(page_id, name)
+        except ClientError:
             # Create a new alias and add it to the page.
             alias_id = await self._create_alias(page_id, name)
         # Now create a link with the alias.
         link_id = await self.client.create_link(alias_id, page_id, story_id, section_id, paragraph_id)
-        await self.client.insert_link_to_alias(link_id, alias_id)
-        # Insert the reference into the appropriate page.
-        await self.client.insert_reference_to_page(page_id, link_id, story_id, section_id, paragraph_id)
-        return link_id
+        try:
+            await self.client.insert_link_to_alias(link_id, alias_id)
+        except ClientError:
+            raise FailedUpdateError(query='create_link')
+        try:
+            # Insert the reference into the appropriate page.
+            await self.client.insert_reference_to_page(page_id, link_id, story_id, section_id, paragraph_id)
+        except ClientError:
+            raise FailedUpdateError(query='create_link')
+        else:
+            return link_id
 
     async def get_link(self, link_id):
-        return await self.client.get_link(link_id)
+        try:
+            link = await self.client.get_link(link_id)
+        except ClientError:
+            raise BadValueError(query='get_link', value=link_id)
+        else:
+            return link
 
     async def delete_link(self, link_id):
+        # TODO: Come back to this
         link = await self.get_link(link_id)
         alias_id = link['alias_id']
         page_id = link['page_id']
-        await self.client.remove_link_from_alias(link_id, alias_id)
-        await self.client.remove_reference_from_page(link_id, page_id)
-        await self.client.delete_link(link_id)
+        try:
+            await self.client.remove_link_from_alias(link_id, alias_id)
+        except ClientError:
+            raise FailedUpdateError(query='delete_link')
+        try:
+            await self.client.remove_reference_from_page(link_id, page_id)
+        except ClientError:
+            raise FailedUpdateError(query='delete_link')
+        try:
+            await self.client.delete_link(link_id)
+        except ClientError:
+            raise FailedUpdateError(query='delete_link')
 
     async def comprehensive_remove_link(self, link_id: ObjectId, replacement_text: str):
+        # TODO: Come back to this.
         link = await self.get_link(link_id)
         context = link['context']
-        text = await self.client.get_paragraph_text(context['section_id'], context['paragraph_id'])
+        try:
+            text = await self.client.get_paragraph_text(context['section_id'], context['paragraph_id'])
+        except ClientError:
+            # TODO: Come back to this.
+            raise BadValueError(query='comprehensive_remove_link', value=...)
         # Strip spaces to handle the front-end's poor life choices regarding link IDs.
         serialized_link = encode_bson_to_string(link_id).replace(' ', '')
         updated_text = text.replace(serialized_link, replacement_text)
+        # TOD: Come back to this.
         await self.set_paragraph_text(context['section_id'], updated_text, context['paragraph_id'])
         await self.delete_link(link_id)
 
@@ -976,46 +1132,79 @@ class MongoDBInterface(AbstractDBInterface):
     ###########################################################################
 
     async def change_alias_name(self, alias_id: ObjectId, new_name: str):
+        # TODO: Come back to this.
         # Update name in alias.
         alias = await self.client.get_alias(alias_id)
         page_id = alias['page_id']
         old_name = alias['name']
-        await self.client.set_alias_name(new_name, alias_id)
+        try:
+            await self.client.set_alias_name(new_name, alias_id)
+        except ClientError:
+            raise FailedUpdateError(query='change_alias_name')
         # Update `aliases` in the appropriate page.
-        await self.client.update_alias_name_in_page(page_id, old_name, new_name)
-        page = await self.client.get_page(page_id)
+        try:
+            await self.client.update_alias_name_in_page(page_id, old_name, new_name)
+        except ClientError:
+            raise FailedUpdateError(query='change_alias_name')
+        try:
+            page = await self.client.get_page(page_id)
+        except ClientError:
+            raise BadValueError(query='change_alias_name', value=page_id)
+        # TODO: Come back to this.
         # Alias with page title renamed, need to recreate primary alias
         if not await self._page_title_is_alias(page):
             await self._create_alias(page_id, old_name)
 
     async def get_alias(self, alias_id: ObjectId):
-        return await self.client.get_alias(alias_id)
+        try:
+            alias = await self.client.get_alias(alias_id)
+        except ClientError:
+            raise BadValueError(query='get_alias', value=alias_id)
+        else:
+            return alias
 
     async def delete_alias(self, alias_id: ObjectId):
+        # TODO: Come back to this.
         alias = await self.get_alias(alias_id)
         deleted_link_ids = await self._delete_alias_no_replace(alias_id)
         alias_name = alias['name']
         page_id = alias['page_id']
-        page = await self.client.get_page(page_id)
+        try:
+            page = await self.client.get_page(page_id)
+        except ClientError:
+            raise BadValueError(query='delete_alias', value=page_id)
+        # TODO: Come back to this.
         # Alias with page title deleted, need to recreate primary alias
         if page is not None and not await self._page_title_is_alias(page):
             await self._create_alias(page_id, alias_name)
         return deleted_link_ids
 
     async def _delete_alias_no_replace(self, alias_id: ObjectId):
+        # TODO: Come back to this.
         alias = await self.get_alias(alias_id)
         alias_name = alias['name']
         for link_id in alias['links']:
             await self.comprehensive_remove_link(link_id, alias_name)
         page_id = alias['page_id']
-        await self.client.remove_alias_from_page(alias_name, page_id)
-        await self.client.delete_alias(alias_id)
-        return alias['links']
+        try:
+            await self.client.remove_alias_from_page(alias_name, page_id)
+        except ClientError:
+            raise FailedUpdateError(query='_delete_alias_no_replace')
+        try:
+            await self.client.delete_alias(alias_id)
+        except ClientError:
+            raise FailedUpdateError(query='_delete_alias_no_replace')
+        else:
+            return alias['links']
 
     async def _create_alias(self, page_id: ObjectId, name: str):
         alias_id = await self.client.create_alias(name, page_id)
-        await self.client.insert_alias_to_page(page_id, name, alias_id)
-        return alias_id
+        try:
+            await self.client.insert_alias_to_page(page_id, name, alias_id)
+        except ClientError:
+            raise FailedUpdateError(query='_create_alias')
+        else:
+            return alias_id
 
     @staticmethod
     async def _page_title_is_alias(page):
@@ -1029,16 +1218,24 @@ class MongoDBInterface(AbstractDBInterface):
     ###########################################################################
 
     async def get_story_statistics(self, story_id):
-        story = await self.client.get_story(story_id)
+        try:
+            story = await self.client.get_story(story_id)
+        except ClientError:
+            raise BadValueError(query='get_story_statistics', value=story_id)
+        # TODO: Come back to this.
         stats = await self._recur_get_section_statistics(story['section_id'])
         return stats
 
     async def _recur_get_section_statistics(self, section_id):
-        section = await self.client.get_section(section_id)
+        try:
+            section = await self.client.get_section(section_id)
+        except ClientError:
+            raise BadValueError(query='_recur_get_section_statistics', value=section_id)
         word_freqs = Counter(section['statistics']['word_frequency'])
         for subsection_id in chain(section['preceding_subsections'],
                                    section['inner_subsections'],
                                    section['succeeding_subsections']):
+            # TODO: Come back to this.
             subsection_stats = await self._recur_get_section_statistics(subsection_id)
             word_freqs.update(subsection_stats['word_frequency'])
             section['statistics']['word_frequency'] = word_freqs
@@ -1046,27 +1243,45 @@ class MongoDBInterface(AbstractDBInterface):
         return section['statistics']
 
     async def get_section_statistics(self, section_id):
+        # TODO: Come back to this.
         return await self._recur_get_section_statistics(section_id)
 
     async def get_paragraph_statistics(self, section_id, paragraph_id):
-        return await self.client.get_paragraph_statistics(section_id, paragraph_id)
+        try:
+            stats = await self.client.get_paragraph_statistics(section_id, paragraph_id)
+        except ClientError:
+            # TODO: Come back to this.
+            raise BadValueError(query='get_paragraph_statistics', value=...)
+        else:
+            return stats
 
     async def get_page_frequencies_in_story(self, story_id, wiki_id):
-        wiki = await self.client.get_wiki(wiki_id)
+        try:
+            wiki = await self.client.get_wiki(wiki_id)
+        except ClientError:
+            raise BadValueError(query='get_page_frequencies_in_story', value=wiki_id)
         segment_id = wiki['segment_id']
+        # TODO: Come back to this.
         return await self._get_page_section_frequencies(story_id, segment_id)
 
     async def _get_page_section_frequencies(self, story_id, segment_id):
-        segment = await self.client.get_segment(segment_id)
+        try:
+            segment = await self.client.get_segment(segment_id)
+        except ClientError:
+            raise BadValueError(query='_get_page_section_frequencies', value=segment_id)
         pages = []
         for page_id in segment['pages']:
-            page = await self.get_page(page_id)
+            try:
+                page = await self.get_page(page_id)
+            except ClientError:
+                raise BadValueError(query='_get_page_section_frequencies', value=page_id)
             frequencies = defaultdict(int)
             for reference in filter(lambda ref: ref['story_id'] == story_id, page['references']):
                 key = encode_bson_to_string(reference['section_id'])
                 frequencies[key] += 1
             pages.append({'page_id': page_id, 'section_frequencies': frequencies})
         for child_segment_id in segment['segments']:
+            # TODO: Come back to this.
             child_pages = await self._get_page_section_frequencies(story_id, child_segment_id)
             pages.extend(child_pages)
         return pages
