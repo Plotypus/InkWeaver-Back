@@ -50,7 +50,6 @@ class GenericHandler(tornado.websocket.WebSocketHandler):
         self.write_log('received: {}'.format(message))
 
     def write_message(self, message, binary=False):
-        self.write_log(f'sent response to client: {message}')
         super().write_message(message, binary)
 
     def on_close(self):
