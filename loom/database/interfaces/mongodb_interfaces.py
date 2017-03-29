@@ -1025,6 +1025,9 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='delete_heading')
 
+    async def move_page(self, page_id, to_segment_id, to_index):
+        pass
+
     ###########################################################################
     #
     # Link Methods
