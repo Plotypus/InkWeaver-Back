@@ -604,7 +604,6 @@ class MongoDBInterface(AbstractDBInterface):
     async def move_subsection_as_preceding(self, section_id, to_parent_id, to_index):
         try:
             if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
-                # TODO: Should these just be ValueErrors?
                 raise BadValueError(query='move_subsection_as_preceding', value=to_parent_id)
         except ClientError:
             # TODO: Should this raise its own error or pass along the error from the call?
@@ -621,7 +620,6 @@ class MongoDBInterface(AbstractDBInterface):
     async def move_subsection_as_inner(self, section_id, to_parent_id, to_index):
         try:
             if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
-                # TODO: Should these just be ValueErrors?
                 raise BadValueError(query='move_subsection_as_inner', value=to_parent_id)
         except ClientError:
             # TODO: Should this raise its own error or pass along the error from the call?
@@ -638,7 +636,6 @@ class MongoDBInterface(AbstractDBInterface):
     async def move_subsection_as_succeeding(self, section_id, to_parent_id, to_index):
         try:
             if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
-                # TODO: Should these just be ValueErrors?
                 raise BadValueError(query='move_subsection_as_succeeding', value=to_parent_id)
         except ClientError:
             # TODO: Should this raise its own error or pass along the error from the call?
