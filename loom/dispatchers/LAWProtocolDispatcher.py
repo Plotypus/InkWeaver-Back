@@ -37,13 +37,11 @@ class LAWNotLoggedInError(LAWError):
 
 
 def handle_interface_errors(func):
-    async def wrapped(**kwargs):
+    async def wrapped(dispatcher, uuid, message_id, *args, **kwargs):
         try:
-            async for message in func(**kwargs):
+            async for message in func(dispatcher, uuid, message_id, *args, **kwargs):
                 yield message
         except InterfaceError as e:
-            uuid = kwargs['uuid']
-            message_id = kwargs['message_id']
             yield LoomErrorOutgoingMessage(uuid, message_id, action=func.__name__, reason=e.message)
     return wrapped
 
