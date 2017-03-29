@@ -36,10 +36,11 @@ class LAWNotLoggedInError(LAWError):
     pass
 
 
-async def handle_interface_errors(func):
-    def wrapped(**kwargs):
+def handle_interface_errors(func):
+    async def wrapped(**kwargs):
         try:
-            yield from func(**kwargs)
+            async for message in func(**kwargs):
+                yield message
         except InterfaceError as e:
             uuid = kwargs['uuid']
             message_id = kwargs['message_id']
