@@ -62,20 +62,6 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         response.update(fields)
         return response
 
-    async def dispatch(self, message: IncomingMessage, uuid: UUID, message_id=None):
-        # Dispatch the IncomingMessage.
-        try:
-            return await message.dispatch()
-        except LAWError as e:
-            return self.format_failure_json(uuid, message_id, str(e))
-        except Exception as e:
-            # TODO: Replace this with a generic message for production.
-            # General exceptions store messages as the first argument in their `.args` property.
-            message = type(e).__name__
-            if e.args:
-                message += ": {}".format(e.args[0])
-            return self.format_failure_json(uuid, message_id, message)
-
     ###########################################################################
     #
     # User Methods
