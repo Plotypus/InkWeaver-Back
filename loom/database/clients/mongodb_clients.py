@@ -1088,6 +1088,14 @@ class MongoDBClient:
         self.log(f'delete_template_heading {{{template_heading_title}}} in segment {{{segment_id}}}')
 
     async def delete_page(self, page_id: ObjectId):
+        await self.remove_page_from_parent(page_id)
+        delete_result: DeleteResult = await self.pages.delete_one(
+            filter={'_id': page_id}
+        )
+        self.assert_delete_one_successful(delete_result)
+        self.log(f'delete_page {{{page_id}}}')
+
+    async def remove_page_from_parent(self, page_id: ObjectId):
         parent_update_result: UpdateResult = await self.segments.update_many(
             filter={},
             update={
@@ -1097,11 +1105,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_was_successful(parent_update_result)
-        delete_result: DeleteResult = await self.pages.delete_one(
-            filter={'_id': page_id}
-        )
-        self.assert_delete_one_successful(delete_result)
-        self.log(f'delete_page {{{page_id}}}')
+        self.log(f'remove_page_from_parent {{{page_id}}}')
 
     async def delete_heading(self, heading_title, page_id):
         update_result: UpdateResult = await self.pages.update_one(
