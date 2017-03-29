@@ -405,9 +405,9 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def edit_page(self, uuid, message_id, page_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
-            await self.db_interface.set_page_title(title, page_id)
+            alias_id = await self.db_interface.set_page_title(title, page_id)
             yield EditPageOutgoingMessage(uuid, message_id, page_id=page_id, update=update)
-            # TODO: Also yield an AliasNameChanged message.
+            yield ChangeAliasNameOutgoingMessage(uuid, message_id, alias_id=alias_id, new_name=title)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
