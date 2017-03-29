@@ -202,5 +202,5 @@ class MovePageOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, page_id: ObjectId, to_parent_id: ObjectId, to_index: int):
         super().__init__(uuid, message_id, 'page_moved')
         self.page_id = page_id
-        self.to_segment_id = to_parent_id
+        self.to_parent_id = to_parent_id
         self.to_index = to_index
