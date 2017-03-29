@@ -42,6 +42,7 @@ def make_logger(name, filename=None, null_logger=False,
     return logger
 
 
-rest_connections = make_logger('rest_connections')
-ws_connections = make_logger('ws_connections')
-db_queries = make_logger('db_queries')
+rest_connections_log = make_logger('rest_connections')
+ws_connections_log = make_logger('ws_connections')
+db_queries_log = make_logger('db_queries')
+interface_log = make_logger('interface')
