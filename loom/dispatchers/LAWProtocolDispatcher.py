@@ -505,6 +505,10 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         await self.db_interface.delete_heading(heading_title, page_id)
         yield DeleteHeadingOutgoingMessage(uuid, message_id, page_id=page_id, heading_title=heading_title)
 
+    @handle_interface_errors
+    async def move_page(self, uuid, message_id, page_id, to_segment_id, to_index):
+        pass
+
     ###########################################################################
     #
     # Link Methods
