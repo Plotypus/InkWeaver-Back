@@ -687,7 +687,7 @@ class MongoDBInterface(AbstractDBInterface):
         # Create an alias for the page with the title as the alias name
         await self._create_alias(page_id, title)
         try:
-            await self.client.append_page_to_parent_segment(page_id, in_parent_segment)
+            await self.client.insert_page_to_parent_segment(page_id, in_parent_segment, at_index=None)
         except ClientError:
             await self.delete_page(page_id)
             raise FailedUpdateError(query='create_page')
@@ -1026,7 +1026,14 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='delete_heading')
 
     async def move_page(self, page_id, to_segment_id, to_index):
-        pass
+        try:
+            await self.client.remove_page_from_parent(page_id)
+        except ClientError:
+            raise FailedUpdateError(query='move_page')
+        try:
+            await self.client.insert_page_to_parent_segment(page_id, to_segment_id, to_index)
+        except ClientError:
+            raise FailedUpdateError(query='move_page')
 
     ###########################################################################
     #
