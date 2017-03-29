@@ -103,6 +103,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         await self.db_interface.set_story_position_context(user_id, story_id, position_context)
         # Async equivalent to `return None`
         return
+        # noinspection PyUnreachableCode
         yield
 
     ###########################################################################
