@@ -242,10 +242,6 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_heading(self, heading_id):
-        pass
-
-    @abstractmethod
     async def set_wiki_title(self, title, wiki_id):
         pass
 

@@ -1,7 +1,8 @@
 from .AbstractDispatcher import AbstractDispatcher
 
 from loom.database.interfaces import AbstractDBInterface
-from loom.messages import IncomingMessage
+from loom.database.interfaces.errors import *
+from loom.loggers import interface_log
 from loom.messages.outgoing import *
 
 
@@ -36,6 +37,17 @@ class LAWNotLoggedInError(LAWError):
     pass
 
 
+def handle_interface_errors(func):
+    async def wrapped(dispatcher, uuid, message_id, *args, **kwargs):
+        try:
+            async for message in func(dispatcher, uuid, message_id, *args, **kwargs):
+                yield message
+        except InterfaceError as e:
+            interface_log.error(f'{e.query}: {e.message}')
+            yield LoomErrorOutgoingMessage(uuid, message_id, action=func.__name__, reason=e.message)
+    return wrapped
+
+
 ############################################################
 #
 # LAWProtocolDispatcher Decorators
@@ -62,26 +74,13 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         response.update(fields)
         return response
 
-    async def dispatch(self, message: IncomingMessage, uuid: UUID, message_id=None):
-        # Dispatch the IncomingMessage.
-        try:
-            return await message.dispatch()
-        except LAWError as e:
-            return self.format_failure_json(uuid, message_id, str(e))
-        except Exception as e:
-            # TODO: Replace this with a generic message for production.
-            # General exceptions store messages as the first argument in their `.args` property.
-            message = type(e).__name__
-            if e.args:
-                message += ": {}".format(e.args[0])
-            return self.format_failure_json(uuid, message_id, message)
-
     ###########################################################################
     #
     # User Methods
     #
     ###########################################################################
 
+    @handle_interface_errors
     async def get_user_preferences(self, uuid, message_id, user_id):
         preferences = await self.db_interface.get_user_preferences(user_id)
         yield GetUserPreferencesOutgoingMessage(uuid, message_id,
@@ -91,20 +90,24 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                 bio=preferences['bio'],
                                                 avatar=preferences['avatar'])
 
+    @handle_interface_errors
     async def get_user_stories_and_wikis(self, uuid, message_id, user_id):
         response = await self.db_interface.get_user_stories_and_wikis(user_id)
         yield GetUserStoriesAndWikisOutgoingMessage(uuid, message_id,
                                                     stories=response['stories'],
                                                     wikis=response['wikis'])
 
+    @handle_interface_errors
     async def set_user_name(self, uuid, message_id, user_id, name):
         await self.db_interface.set_user_name(user_id, name)
         yield SetUserNameOutgoingMessage(uuid, message_id)
 
+    @handle_interface_errors
     async def set_user_email(self, uuid, message_id, user_id, email):
         await self.db_interface.set_user_email(user_id, email)
         yield SetUserEmailOutgoingMessage(uuid, message_id)
 
+    @handle_interface_errors
     async def set_user_bio(self, uuid, message_id, user_id, bio):
         await self.db_interface.set_user_bio(user_id, bio)
         yield SetUserBioOutgoingMessage(uuid, message_id)
@@ -113,10 +116,12 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     # async def set_user_avatar(self, uuid, message_id, avatar):
     #     await self.db_interface.set_user_avatar(self.user_id, avatar)
 
+    @handle_interface_errors
     async def set_user_story_position_context(self, uuid, message_id, user_id, story_id, position_context):
         await self.db_interface.set_story_position_context(user_id, story_id, position_context)
         # Async equivalent to `return None`
         return
+        # noinspection PyUnreachableCode
         yield
 
     ###########################################################################
@@ -125,6 +130,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     #
     ###########################################################################
 
+    @handle_interface_errors
     async def create_story(self, uuid, message_id, user_id, title, wiki_id, summary):
         story_id = await self.db_interface.create_story(user_id, title, summary, wiki_id)
         story = await self.db_interface.get_story(story_id)
@@ -135,6 +141,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                          wiki_id=story['wiki_id'],
                                          users=story['users'])
 
+    @handle_interface_errors
     async def add_preceding_subsection(self, uuid, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_preceding_subsection(title, parent_id, index)
         yield AddPrecedingSubsectionOutgoingMessage(uuid, message_id,
@@ -143,6 +150,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                     parent_id=parent_id,
                                                     index=index)
 
+    @handle_interface_errors
     async def add_inner_subsection(self, uuid, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_inner_subsection(title, parent_id, index)
         yield AddInnerSubsectionOutgoingMessage(uuid, message_id,
@@ -151,6 +159,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                 parent_id=parent_id,
                                                 index=index)
 
+    @handle_interface_errors
     async def add_succeeding_subsection(self, uuid, message_id, title, parent_id, index=None):
         subsection_id = await self.db_interface.add_succeeding_subsection(title, parent_id, index)
         yield AddSucceedingSubsectionOutgoingMessage(uuid, message_id,
@@ -159,6 +168,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                      parent_id=parent_id,
                                                      index=index)
 
+    @handle_interface_errors
     async def add_paragraph(self, uuid, message_id, section_id, text, succeeding_paragraph_id=None):
         paragraph_id, links_created = await self.db_interface.add_paragraph(section_id, text, succeeding_paragraph_id)
         for link_id, page_id, name in links_created:
@@ -174,6 +184,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                           text=text,
                                           succeeding_paragraph_id=succeeding_paragraph_id)
 
+    @handle_interface_errors
     async def add_bookmark(self, uuid, message_id, name, story_id, section_id, paragraph_id, index=None):
         bookmark_id = await self.db_interface.add_bookmark(name, story_id, section_id, paragraph_id, index)
         yield AddBookmarkOutgoingMessage(uuid, message_id,
@@ -184,6 +195,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                          name=name,
                                          index=index)
 
+    @handle_interface_errors
     async def edit_story(self, uuid, message_id, story_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
@@ -194,6 +206,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
+    @handle_interface_errors
     async def edit_paragraph(self, uuid, message_id, section_id, update, paragraph_id):
         if update['update_type'] == 'set_text':
             text = update['text']
@@ -212,12 +225,14 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
+    @handle_interface_errors
     async def edit_section_title(self, uuid, message_id, section_id, new_title):
         await self.db_interface.set_section_title(section_id, new_title)
         yield EditSectionTitleOutgoingMessage(uuid, message_id,
                                               section_id=section_id,
                                               new_title=new_title)
 
+    @handle_interface_errors
     async def edit_bookmark(self, uuid, message_id, story_id, bookmark_id, update):
         if update['update_type'] == 'set_name':
             name = update['name']
@@ -229,6 +244,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
+    @handle_interface_errors
     async def set_note(self, uuid, message_id, section_id, paragraph_id, note):
         await self.db_interface.set_note(section_id, paragraph_id, note)
         yield SetNoteOutgoingMessage(uuid, message_id,
@@ -236,6 +252,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                      paragraph_id=paragraph_id,
                                      note=note)
 
+    @handle_interface_errors
     async def get_story_information(self, uuid, message_id, story_id):
         story = await self.db_interface.get_story(story_id)
         yield GetStoryInformationOutgoingMessage(uuid, message_id,
@@ -244,76 +261,70 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                  wiki_id=story['wiki_id'],
                                                  users=story['users'])
 
+    @handle_interface_errors
     async def get_story_bookmarks(self, uuid, message_id, story_id):
         bookmarks = await self.db_interface.get_story_bookmarks(story_id)
         yield GetStoryBookmarksOutgoingMessage(uuid, message_id, bookmarks=bookmarks)
 
+    @handle_interface_errors
     async def get_story_hierarchy(self, uuid, message_id, story_id):
         hierarchy = await self.db_interface.get_story_hierarchy(story_id)
         yield GetStoryHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy)
 
+    @handle_interface_errors
     async def get_section_hierarchy(self, uuid, message_id, section_id):
         hierarchy = await self.db_interface.get_section_hierarchy(section_id)
         yield GetSectionHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy)
 
+    @handle_interface_errors
     async def get_section_content(self, uuid, message_id, section_id):
         paragraphs = await self.db_interface.get_section_content(section_id)
         content = [{'text': paragraph['text'], 'paragraph_id': paragraph['_id'], 'note': paragraph['note']}
                    for paragraph in paragraphs]
         yield GetSectionContentOutgoingMessage(uuid, message_id, content=content)
 
+    @handle_interface_errors
     async def delete_story(self, uuid, message_id, story_id):
         await self.db_interface.delete_story(story_id)
         yield DeleteStoryOutgoingMessage(uuid, message_id, story_id=story_id)
 
+    @handle_interface_errors
     async def delete_section(self, uuid, message_id, section_id):
         await self.db_interface.delete_section(section_id)
         yield DeleteSectionOutgoingMessage(uuid, message_id, section_id=section_id)
 
+    @handle_interface_errors
     async def delete_paragraph(self, uuid, message_id, section_id, paragraph_id):
         await self.db_interface.delete_paragraph(section_id, paragraph_id)
         yield DeleteParagraphOutgoingMessage(uuid, message_id, section_id=section_id, paragraph_id=paragraph_id)
 
+    @handle_interface_errors
     async def delete_note(self, uuid, message_id, section_id, paragraph_id):
         await self.db_interface.delete_note(section_id, paragraph_id)
         yield DeleteNoteOutgoingMessage(uuid, message_id, section_id=section_id, paragraph_id=paragraph_id)
 
+    @handle_interface_errors
     async def delete_bookmark(self, uuid, message_id, bookmark_id):
         await self.db_interface.delete_bookmark(bookmark_id)
         yield DeleteBookmarkOutgoingMessage(uuid, message_id, bookmark_id=bookmark_id)
 
+    @handle_interface_errors
     async def move_subsection_as_preceding(self, uuid, message_id, section_id, to_parent_id, to_index):
-        try:
-            await self.db_interface.move_subsection_as_preceding(section_id, to_parent_id, to_index)
-        except ValueError:
-            # Raised when trying to move section into a descendant.
-            # TODO: Handle this scenario
-            pass
-        else:
-            yield MoveSubsectionAsPrecedingOutgoingMessage(uuid, message_id, section_id=section_id,
-                                                           to_parent_id=to_parent_id, to_index=to_index)
-
-    async def move_subsection_as_inner(self, uuid, message_id, section_id, to_parent_id, to_index):
-        try:
-            await self.db_interface.move_subsection_as_inner(section_id, to_parent_id, to_index)
-        except ValueError:
-            # Raised when trying to move section into a descendant.
-            # TODO: Handle this scenario
-            pass
-        else:
-            yield MoveSubsectionAsInnerOutgoingMessage(uuid, message_id, section_id=section_id,
+        await self.db_interface.move_subsection_as_preceding(section_id, to_parent_id, to_index)
+        yield MoveSubsectionAsPrecedingOutgoingMessage(uuid, message_id, section_id=section_id,
                                                        to_parent_id=to_parent_id, to_index=to_index)
 
+    @handle_interface_errors
+    async def move_subsection_as_inner(self, uuid, message_id, section_id, to_parent_id, to_index):
+        await self.db_interface.move_subsection_as_inner(section_id, to_parent_id, to_index)
+        yield MoveSubsectionAsInnerOutgoingMessage(uuid, message_id, section_id=section_id,
+                                                   to_parent_id=to_parent_id, to_index=to_index)
+
+    @handle_interface_errors
     async def move_subsection_as_succeeding(self, uuid, message_id, section_id, to_parent_id, to_index):
-        try:
-            await self.db_interface.move_subsection_as_succeeding(section_id, to_parent_id, to_index)
-        except ValueError:
-            # Raised when trying to move section into a descendant.
-            # TODO: Handle this scenario
-            pass
-        else:
-            yield MoveSubsectionAsSucceedingOutgoingMessage(uuid, message_id, section_id=section_id,
-                                                            to_parent_id=to_parent_id, to_index=to_index)
+        await self.db_interface.move_subsection_as_succeeding(section_id, to_parent_id, to_index)
+        yield MoveSubsectionAsSucceedingOutgoingMessage(uuid, message_id, section_id=section_id,
+                                                        to_parent_id=to_parent_id, to_index=to_index)
 
     ###########################################################################
     #
@@ -321,6 +332,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     #
     ###########################################################################
 
+    @handle_interface_errors
     async def create_wiki(self, uuid, message_id, user_id, title, summary):
         wiki_id = await self.db_interface.create_wiki(user_id, title, summary)
         wiki = await self.db_interface.get_wiki(wiki_id)
@@ -331,22 +343,27 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                         users=wiki['users'],
                                         summary=wiki['summary'])
 
+    @handle_interface_errors
     async def add_segment(self, uuid, message_id, title, parent_id):
         segment_id = await self.db_interface.add_child_segment(title, parent_id)
         yield AddSegmentOutgoingMessage(uuid, message_id, segment_id=segment_id, title=title, parent_id=parent_id)
 
+    @handle_interface_errors
     async def add_template_heading(self, uuid, message_id, title, segment_id):
         await self.db_interface.add_template_heading(title, segment_id)
         yield AddTemplateHeadingOutgoingMessage(uuid, message_id, title=title, segment_id=segment_id)
 
+    @handle_interface_errors
     async def add_page(self, uuid, message_id, title, parent_id):
         page_id = await self.db_interface.create_page(title, parent_id)
         yield AddPageOutgoingMessage(uuid, message_id, page_id=page_id, title=title, parent_id=parent_id)
 
+    @handle_interface_errors
     async def add_heading(self, uuid, message_id, title, page_id, index=None):
         await self.db_interface.add_heading(title, page_id, index)
         yield AddHeadingOutgoingMessage(uuid, message_id, title=title, page_id=page_id, index=index)
 
+    @handle_interface_errors
     async def edit_wiki(self, uuid, message_id, wiki_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
@@ -355,6 +372,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
+    @handle_interface_errors
     async def edit_segment(self, uuid, message_id, segment_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
@@ -363,6 +381,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         else:
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
+    @handle_interface_errors
     async def edit_template_heading(self, uuid, message_id, segment_id, template_heading_title, update):
         if update['update_type'] == 'set_title':
             title = update['title']
@@ -382,14 +401,17 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
+    @handle_interface_errors
     async def edit_page(self, uuid, message_id, page_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
-            await self.db_interface.set_page_title(title, page_id)
+            alias_id = await self.db_interface.set_page_title(title, page_id)
             yield EditPageOutgoingMessage(uuid, message_id, page_id=page_id, update=update)
+            yield ChangeAliasNameOutgoingMessage(uuid, message_id, alias_id=alias_id, new_name=title)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
+    @handle_interface_errors
     async def edit_heading(self, uuid, message_id, page_id, heading_title, update):
         if update['update_type'] == 'set_title':
             title = update['title']
@@ -408,6 +430,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
+    @handle_interface_errors
     async def get_wiki_information(self, uuid, message_id, wiki_id):
         wiki = await self.db_interface.get_wiki(wiki_id)
         yield GetWikiInformationOutgoingMessage(uuid, message_id,
@@ -416,18 +439,22 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                 users=wiki['users'],
                                                 summary=wiki['summary'])
 
+    @handle_interface_errors
     async def get_wiki_alias_list(self, uuid, message_id, wiki_id):
         alias_list = await self.db_interface.get_wiki_alias_list(wiki_id)
         yield GetWikiAliasListOutgoingMessage(uuid, message_id, alias_list=alias_list)
 
+    @handle_interface_errors
     async def get_wiki_hierarchy(self, uuid, message_id, wiki_id):
         hierarchy = await self.db_interface.get_wiki_hierarchy(wiki_id)
         yield GetWikiHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy)
 
+    @handle_interface_errors
     async def get_wiki_segment_hierarchy(self, uuid, message_id, segment_id):
         hierarchy = await self.db_interface.get_segment_hierarchy(segment_id)
         yield GetWikiSegmentHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy)
 
+    @handle_interface_errors
     async def get_wiki_segment(self, uuid, message_id, segment_id):
         segment = await self.db_interface.get_segment(segment_id)
         yield GetWikiSegmentOutgoingMessage(uuid, message_id,
@@ -436,6 +463,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                             pages=segment['pages'],
                                             template_headings=segment['template_headings'])
 
+    @handle_interface_errors
     async def get_wiki_page(self, uuid, message_id, page_id):
         page = await self.db_interface.get_page(page_id)
         yield GetWikiPageOutgoingMessage(uuid, message_id,
@@ -444,30 +472,35 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                          references=page['references'],
                                          headings=page['headings'])
 
+    @handle_interface_errors
     async def delete_wiki(self, uuid, message_id, user_id, wiki_id):
         deleted_link_ids = await self.db_interface.delete_wiki(user_id, wiki_id)
         for link_id in deleted_link_ids:
             yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
         yield DeleteWikiOutgoingMessage(uuid, message_id, wiki_id=wiki_id)
 
+    @handle_interface_errors
     async def delete_segment(self, uuid, message_id, segment_id):
         deleted_link_ids = await self.db_interface.delete_segment(segment_id)
         for link_id in deleted_link_ids:
             yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
         yield DeleteSegmentOutgoingMessage(uuid, message_id, segment_id=segment_id)
 
+    @handle_interface_errors
     async def delete_template_heading(self, uuid, message_id, segment_id, template_heading_title):
         await self.db_interface.delete_template_heading(template_heading_title, segment_id)
         yield DeleteTemplateHeadingOutgoingMessage(uuid, message_id,
                                                    segment_id=segment_id,
                                                    template_heading_title=template_heading_title)
 
+    @handle_interface_errors
     async def delete_page(self, uuid, message_id, page_id):
         deleted_link_ids = await self.db_interface.delete_page(page_id)
         for link_id in deleted_link_ids:
             yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
         yield DeletePageOutgoingMessage(uuid, message_id, page_id=page_id)
 
+    @handle_interface_errors
     async def delete_heading(self, uuid, message_id, heading_title, page_id):
         await self.db_interface.delete_heading(heading_title, page_id)
         yield DeleteHeadingOutgoingMessage(uuid, message_id, page_id=page_id, heading_title=heading_title)
@@ -478,6 +511,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     #
     ###########################################################################
 
+    @handle_interface_errors
     async def delete_link(self, uuid, message_id, link_id):
         await self.db_interface.delete_link(link_id)
         yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
@@ -488,10 +522,13 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     #
     ###########################################################################
 
+    @handle_interface_errors
     async def change_alias_name(self, uuid, message_id, alias_id, new_name):
         await self.db_interface.change_alias_name(alias_id, new_name)
         yield ChangeAliasNameOutgoingMessage(uuid, message_id, alias_id=alias_id, new_name=new_name)
+        # TODO: Also yield message for recreated original alias name
 
+    @handle_interface_errors
     async def delete_alias(self, uuid, message_id, alias_id):
         deleted_link_ids = await self.db_interface.delete_alias(alias_id)
         for link_id in deleted_link_ids:
@@ -504,18 +541,22 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     #
     ###########################################################################
 
+    @handle_interface_errors
     async def get_story_statistics(self, uuid, message_id, story_id):
         stats = await self.db_interface.get_story_statistics(story_id)
         yield GetStoryStatisticsOutgoingMessage(uuid, message_id, statistics=stats)
 
+    @handle_interface_errors
     async def get_section_statistics(self, uuid, message_id, section_id):
         stats = await self.db_interface.get_section_statistics(section_id)
         yield GetSectionStatisticsOutgoingMessage(uuid, message_id, statistics=stats)
 
+    @handle_interface_errors
     async def get_paragraph_statistics(self, uuid, message_id, section_id, paragraph_id):
         stats = await self.db_interface.get_paragraph_statistics(section_id, paragraph_id)
         yield GetParagraphStatisticsOutgoingMessage(uuid, message_id, statistics=stats)
 
+    @handle_interface_errors
     async def get_page_frequencies(self, uuid, message_id, story_id, wiki_id):
         pages = await self.db_interface.get_page_frequencies_in_story(story_id, wiki_id)
         yield GetPageFrequenciesOutgoingMessage(uuid, message_id, pages=pages)
