@@ -208,6 +208,10 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
+    async def move_page(self, uuid, message_id, page_id, to_parent_id, to_index):
+        pass
+
+    @abstractmethod
     async def delete_link(self, uuid, message_id, link_id):
         pass
 

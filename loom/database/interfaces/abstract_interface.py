@@ -289,6 +289,10 @@ class AbstractDBInterface(ABC):
     async def delete_heading(self, heading_title, page_id):
         pass
 
+    @abstractmethod
+    async def move_page(self, page_id, to_parent_id, to_index):
+        pass
+
     ###########################################################################
     #
     # Link Methods
