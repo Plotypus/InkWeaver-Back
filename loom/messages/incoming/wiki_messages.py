@@ -253,8 +253,8 @@ class MovePageIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
         self.page_id = RequiredField()
-        self.to_segment_id = RequiredField()
+        self.to_parent_id = RequiredField()
         self.to_index = RequiredField()
 
     def dispatch(self):
-        return self.dispatcher.move_page(self.uuid, self.message_id, self.page_id, self.to_segment_id, self.to_index)
+        return self.dispatcher.move_page(self.uuid, self.message_id, self.page_id, self.to_parent_id, self.to_index)

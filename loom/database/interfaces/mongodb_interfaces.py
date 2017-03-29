@@ -1025,13 +1025,13 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='delete_heading')
 
-    async def move_page(self, page_id, to_segment_id, to_index):
+    async def move_page(self, page_id, to_parent_id, to_index):
         try:
             await self.client.remove_page_from_parent(page_id)
         except ClientError:
             raise FailedUpdateError(query='move_page')
         try:
-            await self.client.insert_page_to_parent_segment(page_id, to_segment_id, to_index)
+            await self.client.insert_page_to_parent_segment(page_id, to_parent_id, to_index)
         except ClientError:
             raise FailedUpdateError(query='move_page')
 

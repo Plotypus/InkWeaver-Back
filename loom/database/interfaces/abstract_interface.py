@@ -290,7 +290,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def move_page(self, page_id, to_segment_id, to_index):
+    async def move_page(self, page_id, to_parent_id, to_index):
         pass
 
     ###########################################################################
