@@ -1028,6 +1028,18 @@ class MongoDBInterface(AbstractDBInterface):
     async def move_segment(self, segment_id, to_parent_id, to_index):
         pass
 
+    async def _segment_is_ancestor_of_candidate(self, segment_id, candidate_segment_id):
+        if segment_id == candidate_segment_id:
+            return True
+        try:
+            segment = await self.client.get_segment(segment_id)
+        except ClientError:
+            raise BadValueError(query='_segment_is_ancestor_of_candidate', value=segment_id)
+        for subsegment_id in segment['segments']:
+            if await self._segment_is_ancestor_of_candidate(subsegment_id, candidate_segment_id):
+                return True
+        return False
+
     async def move_page(self, page_id, to_parent_id, to_index):
         try:
             await self.client.remove_page_from_parent(page_id)
