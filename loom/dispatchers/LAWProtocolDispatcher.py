@@ -507,7 +507,9 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def move_segment(self, uuid, message_id, segment_id, to_parent_id, to_index):
-        pass
+        await self.db_interface.move_segment(segment_id, to_parent_id, to_index)
+        yield MoveSegmentOutGoingMessage(uuid, message_id, segment_id=segment_id, to_parent_id=to_parent_id,
+                                         to_index=to_index)
 
     @handle_interface_errors
     async def move_page(self, uuid, message_id, page_id, to_parent_id, to_index):
