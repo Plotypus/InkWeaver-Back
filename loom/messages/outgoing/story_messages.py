@@ -1,4 +1,4 @@
-from .outgoing_message import UnicastMessage, StoryBroadcastMessage
+from .outgoing_message import UnicastMessage, MulticastMessage, StoryBroadcastMessage
 
 from bson import ObjectId
 from uuid import UUID
@@ -9,7 +9,7 @@ from uuid import UUID
 # Create Messages
 #
 ###########################################################################
-class CreateStoryOutgoingMessage(UnicastMessage):
+class CreateStoryOutgoingMessage(MulticastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, story_title: str, story_id: ObjectId, section_id: ObjectId,
                  wiki_id: ObjectId, users: list):
         super().__init__(uuid, message_id, 'created_story')

@@ -1,4 +1,4 @@
-from .outgoing_message import UnicastMessage
+from .outgoing_message import UnicastMessage, MulticastMessage
 
 from uuid import UUID
 
@@ -30,17 +30,17 @@ class GetUserStoriesAndWikisOutgoingMessage(UnicastMessage):
 # Set Messages
 #
 ###########################################################################
-class SetUserNameOutgoingMessage(UnicastMessage):
+class SetUserNameOutgoingMessage(MulticastMessage):
     def __init__(self, uuid: UUID, message_id: int):
         super().__init__(uuid, message_id, 'user_name_updated')
 
 
-class SetUserEmailOutgoingMessage(UnicastMessage):
+class SetUserEmailOutgoingMessage(MulticastMessage):
     def __init__(self, uuid: UUID, message_id: int):
         super().__init__(uuid, message_id, 'user_email_updated')
 
 
-class SetUserBioOutgoingMessage(UnicastMessage):
+class SetUserBioOutgoingMessage(MulticastMessage):
     def __init__(self, uuid: UUID, message_id: int):
         super().__init__(uuid, message_id, 'user_bio_updated')
 
