@@ -199,7 +199,11 @@ class DeleteAliasOutgoingMessage(WikiBroadcastMessage):
 #
 ###########################################################################
 class MoveSegmentOutGoingMessage(WikiBroadcastMessage):
-    pass
+    def __init__(self, uuid: UUID, message_id: int, *, segment_id: ObjectId, to_parent_id: ObjectId, to_index: int):
+        super().__init__(uuid, message_id, 'segment_moved')
+        self.segment_id = segment_id
+        self.to_parent_id = to_parent_id
+        self.to_index = to_index
 
 
 class MovePageOutgoingMessage(WikiBroadcastMessage):
