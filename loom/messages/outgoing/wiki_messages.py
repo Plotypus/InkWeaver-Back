@@ -198,6 +198,10 @@ class DeleteAliasOutgoingMessage(WikiBroadcastMessage):
 # Move Messages
 #
 ###########################################################################
+class MoveSegmentOutGoingMessage(WikiBroadcastMessage):
+    pass
+
+
 class MovePageOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, page_id: ObjectId, to_parent_id: ObjectId, to_index: int):
         super().__init__(uuid, message_id, 'page_moved')

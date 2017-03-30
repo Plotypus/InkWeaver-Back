@@ -249,6 +249,18 @@ class DeleteAliasIncomingMessage(IncomingMessage):
 # Move Messages
 #
 ###########################################################################
+class MoveSegmentIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.segment_id = RequiredField()
+        self.to_parent_id = RequiredField()
+        self.to_index = RequiredField()
+
+    def dispatch(self):
+        return self.dispatcher.move_segment(self.uuid, self.message_id, self.segment_id, self.to_parent_id,
+                                            self.to_index)
+
+
 class MovePageIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
