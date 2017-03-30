@@ -815,12 +815,13 @@ class MongoDBClient:
         self.log(f'create_page {{{title}}}; inserted ID {{{result.inserted_id}}}')
         return result.inserted_id
 
-    async def append_segment_to_parent_segment(self, child_segment: ObjectId, parent_segment: ObjectId):
+    async def insert_segment_to_parent_segment(self, child_segment: ObjectId, parent_segment: ObjectId, at_index=None):
+        inner_parameters = self._insertion_parameters(child_segment, at_index)
         update_result: UpdateResult = await self.segments.update_one(
             filter={'_id': parent_segment},
             update={
                 '$push': {
-                    'segments': child_segment
+                    'segments': inner_parameters
                 }
             }
         )

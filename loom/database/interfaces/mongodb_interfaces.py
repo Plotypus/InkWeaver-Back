@@ -702,7 +702,7 @@ class MongoDBInterface(AbstractDBInterface):
         template_headings = parent_segment['template_headings']
         child_segment_id = await self.client.create_segment(title, template_headings)
         try:
-            await self.client.append_segment_to_parent_segment(child_segment_id, parent_id)
+            await self.client.insert_segment_to_parent_segment(child_segment_id, parent_id, at_index=None)
         except ClientError:
             await self.delete_segment(child_segment_id)
             raise FailedUpdateError(query='add_child_segment')
