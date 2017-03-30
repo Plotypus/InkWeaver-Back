@@ -1,4 +1,4 @@
-from .outgoing_message import UnicastMessage, WikiBroadcastMessage
+from .outgoing_message import UnicastMessage, MulticastMessage, WikiBroadcastMessage
 
 from bson import ObjectId
 from uuid import UUID
@@ -9,7 +9,7 @@ from uuid import UUID
 # Create Messages
 #
 ###########################################################################
-class CreateWikiOutgoingMessage(UnicastMessage):
+class CreateWikiOutgoingMessage(MulticastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, wiki_title: str, wiki_id: ObjectId, segment_id: ObjectId,
                  users: list, summary: str):
         super().__init__(uuid, message_id, 'wiki_created')

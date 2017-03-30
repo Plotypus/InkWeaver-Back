@@ -6,7 +6,7 @@ from loom.messages.incoming import (
     UnsubscribeFromStoryIncomingMessage, UnsubscribeFromWikiIncomingMessage, UserSignOutIncomingMessage
 )
 from loom.messages.outgoing import (
-    UnicastMessage, StoryBroadcastMessage, WikiBroadcastMessage, OutgoingErrorMessage,
+    UnicastMessage, MulticastMessage, StoryBroadcastMessage, WikiBroadcastMessage, OutgoingErrorMessage,
     SubscribeToStoryOutgoingMessage, SubscribeToWikiOutgoingMessage,
     UnsubscribeFromStoryOutgoingMessage, UnsubscribeFromWikiOutgoingMessage
 )
@@ -36,6 +36,7 @@ class Router:
         self.message_factory = IncomingMessageFactory()
         self.message_tuples = Queue()
         # Various dictionaries for keeping track of user information.
+        self.user_to_uuids: Dict[UUID, Set[LoomHandler]] = defaultdict(set)
         self.story_to_uuids: Dict[ObjectId, Set[UUID]] = defaultdict(set)
         self.wiki_to_uuids: Dict[ObjectId, Set[UUID]] = defaultdict(set)
         self.uuid_to_user: Dict[UUID, ObjectId] = dict()
@@ -106,6 +107,8 @@ class Router:
             async for response in message_object.dispatch():
                 if isinstance(response, UnicastMessage):
                     self.unicast(response)
+                elif isinstance(response, MulticastMessage):
+                    self.multicast(response)
                 elif isinstance(response, StoryBroadcastMessage):
                     self.broadcast_to_story(story_id, response)
                 elif isinstance(response, WikiBroadcastMessage):
@@ -117,9 +120,12 @@ class Router:
         uuid = handler.uuid
         self.uuid_to_handler[uuid] = handler
         self.uuid_to_user[uuid] = user_id
+        self.user_to_uuids[user_id].add(uuid)
 
     def disconnect(self, handler: LoomHandler):
         uuid = handler.uuid
+        user_id = self.uuid_to_user[uuid]
+        self.user_to_uuids[user_id].remove(uuid)
         try:
             self._unsubscribe_from_story(uuid)
         except KeyError:
@@ -190,6 +196,13 @@ class Router:
         uuid = message.identifier.uuid
         handler = self.uuid_to_handler[uuid]
         handler.write_json(message)
+
+    def multicast(self, message: MulticastMessage):
+        uuid = message.identifier.uuid
+        user_id = self.uuid_to_user[uuid]
+        for handler_uuid in self.user_to_uuids[user_id]:
+            handler = self.uuid_to_handler[handler_uuid]
+            handler.write_json(message)
 
     def broadcast_to_story(self, story_id: ObjectId, message: StoryBroadcastMessage):
         for uuid in self.story_to_uuids[story_id]:
