@@ -1025,6 +1025,9 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='delete_heading')
 
+    async def move_segment(self, segment_id, to_parent_id, to_index):
+        pass
+
     async def move_page(self, page_id, to_parent_id, to_index):
         try:
             await self.client.remove_page_from_parent(page_id)
