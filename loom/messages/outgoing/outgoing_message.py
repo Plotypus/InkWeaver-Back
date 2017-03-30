@@ -16,6 +16,10 @@ class UnicastMessage(OutgoingMessage):
     pass
 
 
+class MulticastMessage(OutgoingMessage):
+    pass
+
+
 class BroadcastMessage(OutgoingMessage):
     pass
 
