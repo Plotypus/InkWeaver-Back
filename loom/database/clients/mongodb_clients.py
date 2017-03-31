@@ -841,16 +841,17 @@ class MongoDBClient:
         self.assert_update_was_successful(update_result)
         self.log(f'append_page_to_parent_segment {{{page_id}}} to parent {{{segment_id}}}')
 
-    async def append_template_heading_to_segment(self, title: str, segment_id: ObjectId):
+    async def insert_template_heading_to_segment(self, title: str, segment_id: ObjectId, at_index=None):
+        template_heading = {
+            'title': title,
+            'text':  '',
+        }
+        inner_parameters = self._insertion_parameters(template_heading, at_index)
         update_result: UpdateResult = await self.segments.update_one(
             filter={'_id': segment_id},
             update={
                 '$push': {
-                    # For now, this is the format of a `template_heading`
-                    'template_headings': {
-                        'title': title,
-                        'text':  '',
-                    }
+                    'template_headings': inner_parameters
                 }
             }
         )
