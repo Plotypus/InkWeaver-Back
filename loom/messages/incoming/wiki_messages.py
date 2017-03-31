@@ -282,3 +282,14 @@ class MovePageIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self.dispatcher.move_page(self.uuid, self.message_id, self.page_id, self.to_parent_id, self.to_index)
+
+
+class MoveHeadingIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.page_id = RequiredField()
+        self.heading_title = RequiredField()
+        self.to_index = RequiredField()
+
+    def dispatch(self):
+        return self.dispatcher.move_heading(self.uuid, self.message_id, self.page_id, self.heading_title, self.to_index)

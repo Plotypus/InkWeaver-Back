@@ -221,3 +221,11 @@ class MovePageOutgoingMessage(WikiBroadcastMessage):
         self.page_id = page_id
         self.to_parent_id = to_parent_id
         self.to_index = to_index
+
+
+class MoveHeadingOutgoingMessage(WikiBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, page_id: ObjectId, heading_title: str, to_index: int):
+        super().__init__(uuid, message_id, 'heading_moved')
+        self.page_id = page_id
+        self.heading_title = heading_title
+        self.to_index = to_index

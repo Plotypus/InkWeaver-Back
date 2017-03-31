@@ -70,6 +70,7 @@ APPROVED_MESSAGES = {
     'move_segment':                    MoveSegmentIncomingMessage,
     'move_template_heading':           MoveTemplateHeadingIncomingMessage,
     'move_page':                       MovePageIncomingMessage,
+    'move_heading':                    MoveHeadingIncomingMessage,
 
     # Links
     'delete_link':                     DeleteLinkIncomingMessage,
