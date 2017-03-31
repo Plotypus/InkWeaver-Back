@@ -737,7 +737,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='add_heading', value=title)
         # Add the heading to the page.
         try:
-            await self.client.insert_heading(title, page_id, index)
+            await self.client.insert_heading(title, page_id, text='', at_index=index)
         except ClientError:
             raise FailedUpdateError(query='add_heading')
 

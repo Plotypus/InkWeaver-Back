@@ -858,10 +858,10 @@ class MongoDBClient:
         self.assert_update_was_successful(update_result)
         self.log(f'append_template_heading_to_segment {{{title}}} to segment {{{segment_id}}}')
 
-    async def insert_heading(self, title: str, page_id: ObjectId, at_index=None):
+    async def insert_heading(self, title: str, page_id: ObjectId, text='', at_index=None):
         heading = {
             'title': title,
-            'text':  '',
+            'text':  text,
         }
         inner_parameters = self._insertion_parameters(heading, at_index)
         update_result: UpdateResult = await self.pages.update_one(
