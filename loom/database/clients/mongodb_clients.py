@@ -1016,7 +1016,13 @@ class MongoDBClient:
             self.log(f'get_template_heading {{{title}}} in segment {{{segment_id}}} FAILED')
             raise NoMatchError
         self.log(f'get_template_heading {{{title}}} in segment {{{segment_id}}}')
-        return result
+        # The result we get back is for the segment, not the template heading.
+        # So, we should iterate through to find it.
+        for template_heading in result['template_headings']:
+            if template_heading['title'] == title:
+                return template_heading
+        # This error is unreachable, because we already know the template heading exists.
+        raise NoMatchError
 
     async def get_heading(self, title: str, page_id: ObjectId):
         result = await self.pages.find_one({
@@ -1027,7 +1033,13 @@ class MongoDBClient:
             self.log(f'get_heading {{{title}}} in page {{{page_id}}}')
             raise NoMatchError
         self.log(f'get_heading {{{title}}} in page {{{page_id}}}')
-        return result
+        # The result we get back is for the page, not the heading.
+        # So, we should iterate through to find it.
+        for heading in result['headings']:
+            if heading['title'] == title:
+                return heading
+        # This error is unreachable, because we already know the heading exists.
+        raise NoMatchError
 
     async def get_summaries_of_stories_using_wiki(self, wiki_id: ObjectId):
         result_cursor = self.stories.find(
