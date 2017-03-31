@@ -721,7 +721,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='add_template_heading', value=title)
         # Add the template heading to the segment.
         try:
-            await self.client.insert_template_heading_to_segment(title, segment_id, at_index=None)
+            await self.client.insert_template_heading_to_segment(title, segment_id, text='', at_index=None)
         except ClientError:
             raise FailedUpdateError(query='add_template_heading')
 
