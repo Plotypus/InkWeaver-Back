@@ -1049,6 +1049,9 @@ class MongoDBInterface(AbstractDBInterface):
                 return True
         return False
 
+    async def move_template_heading(self, segment_id, template_heading_title, to_index):
+        pass
+
     async def move_page(self, page_id, to_parent_id, to_index):
         try:
             await self.client.remove_page_from_parent(page_id)
