@@ -1050,7 +1050,16 @@ class MongoDBInterface(AbstractDBInterface):
         return False
 
     async def move_template_heading(self, segment_id, template_heading_title, to_index):
-        pass
+        try:
+            template_heading = await self.client.get_template_heading(template_heading_title, segment_id)
+        except ClientError:
+            raise BadValueError(query='move_template_heading', value=template_heading_title)
+        await self.delete_template_heading(template_heading_title, segment_id)
+        try:
+            await self.client.insert_template_heading_to_segment(template_heading_title, segment_id,
+                                                                 text=template_heading['text'], at_index=to_index)
+        except ClientError:
+            raise FailedUpdateError(query='move_template_heading', value=segment_id)
 
     async def move_page(self, page_id, to_parent_id, to_index):
         try:

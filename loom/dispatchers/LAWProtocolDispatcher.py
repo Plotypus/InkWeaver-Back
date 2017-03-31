@@ -513,7 +513,9 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def move_template_heading(self, uuid, message_id, segment_id, template_heading_title, to_index):
-        pass
+        await self.db_interface.move_template_heading(segment_id, template_heading_title, to_index)
+        yield MoveTemplateHeadingOutgoingMessage(uuid, message_id, segment_id=segment_id,
+                                                 template_heading_title=template_heading_title, to_index=to_index)
 
     @handle_interface_errors
     async def move_page(self, uuid, message_id, page_id, to_parent_id, to_index):
