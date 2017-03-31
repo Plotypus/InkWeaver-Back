@@ -815,12 +815,13 @@ class MongoDBClient:
         self.log(f'create_page {{{title}}}; inserted ID {{{result.inserted_id}}}')
         return result.inserted_id
 
-    async def append_segment_to_parent_segment(self, child_segment: ObjectId, parent_segment: ObjectId):
+    async def insert_segment_to_parent_segment(self, child_segment: ObjectId, parent_segment: ObjectId, at_index=None):
+        inner_parameters = self._insertion_parameters(child_segment, at_index)
         update_result: UpdateResult = await self.segments.update_one(
             filter={'_id': parent_segment},
             update={
                 '$push': {
-                    'segments': child_segment
+                    'segments': inner_parameters
                 }
             }
         )
@@ -1058,6 +1059,14 @@ class MongoDBClient:
         self.log(f'delete_wiki {{{wiki_id}}}')
 
     async def delete_segment(self, segment_id: ObjectId):
+        await self.remove_segment_from_parent(segment_id)
+        delete_result: DeleteResult = await self.segments.delete_one(
+            filter={'_id': segment_id}
+        )
+        self.assert_delete_one_successful(delete_result)
+        self.log(f'delete_segment {{{segment_id}}}')
+
+    async def remove_segment_from_parent(self, segment_id: ObjectId):
         parent_update_result: UpdateResult = await self.segments.update_many(
             filter={},
             update={
@@ -1067,11 +1076,7 @@ class MongoDBClient:
             }
         )
         self.assert_update_was_successful(parent_update_result)
-        delete_result: DeleteResult = await self.segments.delete_one(
-            filter={'_id': segment_id}
-        )
-        self.assert_delete_one_successful(delete_result)
-        self.log(f'delete_segment {{{segment_id}}}')
+        self.log(f'remove_segment_from_parent {{{segment_id}}}')
 
     async def delete_template_heading(self, template_heading_title: str, segment_id: ObjectId):
         update_result: UpdateResult = await self.segments.update_one(

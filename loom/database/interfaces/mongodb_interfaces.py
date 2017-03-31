@@ -702,7 +702,7 @@ class MongoDBInterface(AbstractDBInterface):
         template_headings = parent_segment['template_headings']
         child_segment_id = await self.client.create_segment(title, template_headings)
         try:
-            await self.client.append_segment_to_parent_segment(child_segment_id, parent_id)
+            await self.client.insert_segment_to_parent_segment(child_segment_id, parent_id, at_index=None)
         except ClientError:
             await self.delete_segment(child_segment_id)
             raise FailedUpdateError(query='add_child_segment')
@@ -1024,6 +1024,30 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.delete_heading(heading_title, page_id)
         except ClientError:
             raise FailedUpdateError(query='delete_heading')
+
+    async def move_segment(self, segment_id, to_parent_id, to_index):
+        if await self._segment_is_ancestor_of_candidate(segment_id, to_parent_id):
+            raise BadValueError(query='move_segment', value=to_parent_id)
+        try:
+            await self.client.remove_segment_from_parent(segment_id)
+        except ClientError:
+            raise FailedUpdateError(query='move_segment')
+        try:
+            await self.client.insert_segment_to_parent_segment(segment_id, to_parent_id, to_index)
+        except ClientError:
+            raise FailedUpdateError(query='move_segment')
+
+    async def _segment_is_ancestor_of_candidate(self, segment_id, candidate_segment_id):
+        if segment_id == candidate_segment_id:
+            return True
+        try:
+            segment = await self.client.get_segment(segment_id)
+        except ClientError:
+            raise BadValueError(query='_segment_is_ancestor_of_candidate', value=segment_id)
+        for subsegment_id in segment['segments']:
+            if await self._segment_is_ancestor_of_candidate(subsegment_id, candidate_segment_id):
+                return True
+        return False
 
     async def move_page(self, page_id, to_parent_id, to_index):
         try:

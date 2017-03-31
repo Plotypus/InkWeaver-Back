@@ -506,6 +506,12 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         yield DeleteHeadingOutgoingMessage(uuid, message_id, page_id=page_id, heading_title=heading_title)
 
     @handle_interface_errors
+    async def move_segment(self, uuid, message_id, segment_id, to_parent_id, to_index):
+        await self.db_interface.move_segment(segment_id, to_parent_id, to_index)
+        yield MoveSegmentOutGoingMessage(uuid, message_id, segment_id=segment_id, to_parent_id=to_parent_id,
+                                         to_index=to_index)
+
+    @handle_interface_errors
     async def move_page(self, uuid, message_id, page_id, to_parent_id, to_index):
         await self.db_interface.move_page(page_id, to_parent_id, to_index)
         yield MovePageOutgoingMessage(uuid, message_id, page_id=page_id, to_parent_id=to_parent_id, to_index=to_index)
