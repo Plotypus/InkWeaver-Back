@@ -524,7 +524,9 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def move_heading(self, uuid, message_id, page_id, heading_title, to_index):
-        pass
+        await self.db_interface.move_heading(page_id, heading_title, to_index)
+        yield MoveHeadingOutgoingMessage(uuid, message_id, page_id=page_id, heading_title=heading_title,
+                                         to_index=to_index)
 
     ###########################################################################
     #

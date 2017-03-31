@@ -1072,7 +1072,15 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='move_page')
 
     async def move_heading(self, page_id, heading_title, to_index):
-        pass
+        try:
+            heading = await self.client.get_heading(heading_title, page_id)
+        except ClientError:
+            raise BadValueError(query='move_heading', value=heading_title)
+        await self.delete_heading(heading_title, page_id)
+        try:
+            await self.client.insert_heading(heading_title, page_id, text=heading['text'], at_index=to_index)
+        except ClientError:
+            raise FailedUpdateError(query='move_heading', value=page_id)
 
     ###########################################################################
     #
