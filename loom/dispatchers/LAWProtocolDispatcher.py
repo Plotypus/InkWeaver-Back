@@ -522,6 +522,10 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         await self.db_interface.move_page(page_id, to_parent_id, to_index)
         yield MovePageOutgoingMessage(uuid, message_id, page_id=page_id, to_parent_id=to_parent_id, to_index=to_index)
 
+    @handle_interface_errors
+    async def move_heading(self, uuid, message_id, page_id, heading_title, to_index):
+        pass
+
     ###########################################################################
     #
     # Link Methods
