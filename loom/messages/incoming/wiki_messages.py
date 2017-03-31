@@ -261,6 +261,18 @@ class MoveSegmentIncomingMessage(IncomingMessage):
                                             self.to_index)
 
 
+class MoveTemplateHeadingIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.segment_id = RequiredField()
+        self.template_heading_title = RequiredField()
+        self.to_index = RequiredField()
+
+    def dispatch(self):
+        return self.dispatcher.move_template_heading(self.uuid, self.message_id, self.segment_id,
+                                                     self.template_heading_title, self.to_index)
+
+
 class MovePageIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()

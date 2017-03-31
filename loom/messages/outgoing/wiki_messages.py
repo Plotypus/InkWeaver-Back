@@ -206,6 +206,15 @@ class MoveSegmentOutGoingMessage(WikiBroadcastMessage):
         self.to_index = to_index
 
 
+class MoveTemplateHeadingOutgoingMessage(WikiBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, segment_id: ObjectId, template_heading_title: str,
+                 to_index: int):
+        super().__init__(uuid, message_id, 'template_heading_moved')
+        self.segment_id = segment_id
+        self.template_heading_title = template_heading_title
+        self.to_index = to_index
+
+
 class MovePageOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, page_id: ObjectId, to_parent_id: ObjectId, to_index: int):
         super().__init__(uuid, message_id, 'page_moved')
