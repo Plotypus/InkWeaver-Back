@@ -267,7 +267,7 @@ class MoveSubsectionAsPrecedingIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.move_subsection_as_preceding(self.uuid, self.message_id, self.section_id,
-                                                          self.to_parent_id, self.to_index)
+                                                             self.to_parent_id, self.to_index)
 
 
 class MoveSubsectionAsInnerIncomingMessage(IncomingMessage):
@@ -279,7 +279,7 @@ class MoveSubsectionAsInnerIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.move_subsection_as_inner(self.uuid, self.message_id, self.section_id, self.to_parent_id,
-                                                      self.to_index)
+                                                         self.to_index)
 
 
 class MoveSubsectionAsSucceedingIncomingMessage(IncomingMessage):
@@ -291,4 +291,4 @@ class MoveSubsectionAsSucceedingIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.move_subsection_as_succeeding(self.uuid, self.message_id, self.section_id,
-                                                           self.to_parent_id, self.to_index)
+                                                              self.to_parent_id, self.to_index)
