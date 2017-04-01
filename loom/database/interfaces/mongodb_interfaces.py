@@ -1208,6 +1208,8 @@ class MongoDBInterface(AbstractDBInterface):
         alias_name = alias['name']
         for link_id in alias['links']:
             await self.comprehensive_remove_link(link_id, alias_name)
+        for passive_link_id in alias['passive_links']:
+            await self.comprehensive_remove_passive_link(passive_link_id, alias_name)
         page_id = alias['page_id']
         try:
             await self.client.remove_alias_from_page(alias_name, page_id)
