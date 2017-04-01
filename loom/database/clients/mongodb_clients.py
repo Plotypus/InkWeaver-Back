@@ -92,6 +92,7 @@ class MongoDBClient:
             self.segments,
             self.pages,
             self.links,
+            self.passive_links,
             self.aliases,
         ]
 
@@ -394,6 +395,7 @@ class MongoDBClient:
             'succeeding_subsections': list(),
             'statistics':             {'word_frequency': {}, 'word_count': 0},
             'links':                  list(),  # links is a list of lists of links (runs parallel to paragraphs)
+            'passive_links':          list(),
             'notes':                  list(),
         }
         if _id is not None:
@@ -716,6 +718,9 @@ class MongoDBClient:
                         '_id': paragraph_id,
                     },
                     'links': {
+                        'paragraph_id': paragraph_id,
+                    },
+                    'passive_links': {
                         'paragraph_id': paragraph_id,
                     },
                     'notes': {
