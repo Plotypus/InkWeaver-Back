@@ -786,9 +786,10 @@ class MongoDBInterface(AbstractDBInterface):
             except ClientError:
                 raise BadValueError(query='_get_page_alias_list', value=alias_id)
             alias_list.append({
-                'alias_name':   alias_name,
-                'page_id':      page_id,
-                'link_ids':     alias['links'],
+                'alias_name':       alias_name,
+                'page_id':          page_id,
+                'link_ids':         alias['links'],
+                'passive_link_ids': alias['passive_link_ids'],
             })
         return alias_list
 
