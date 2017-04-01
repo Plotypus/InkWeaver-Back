@@ -1157,13 +1157,17 @@ class MongoDBInterface(AbstractDBInterface):
     ###########################################################################
 
     async def change_alias_name(self, alias_id: ObjectId, new_name: str):
-        # Update name in alias.
+        # Retrieve alias.
         try:
             alias = await self.client.get_alias(alias_id)
         except ClientError:
             raise BadValueError(query='change_alias_name', value=alias_id)
-        page_id = alias['page_id']
+        # Delete existing passive links to this alias.
         old_name = alias['name']
+        for passive_link_id in alias['passive_links']:
+            await self.comprehensive_remove_passive_link(passive_link_id, old_name)
+        # Update name in alias.
+        page_id = alias['page_id']
         try:
             await self.client.set_alias_name(new_name, alias_id)
         except ClientError:
