@@ -386,6 +386,7 @@ class MongoDBInterface(AbstractDBInterface):
             for link in links:
                 link_id = link['_id']
                 context = link['context']
+                context['section_id'] = section_id
                 context['paragraph_id'] = paragraph_id
                 context['text'] = sentence
                 # Update context in link.
