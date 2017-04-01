@@ -566,6 +566,10 @@ class MongoDBInterface(AbstractDBInterface):
             link_ids = link_summary['links']
             for link_id in link_ids:
                 await self.delete_link(link_id)
+        for passive_link_summary in section['passive_links']:
+            passive_link_ids = passive_link_summary['passive_links']
+            for passive_link_id in passive_link_ids:
+                await self.delete_passive_link(passive_link_id)
         try:
             await self.client.delete_section(section['_id'])
         except ClientError:
