@@ -1295,9 +1295,10 @@ class MongoDBClient:
 
     async def create_alias(self, name: str, page_id: ObjectId, _id=None) -> ObjectId:
         alias = {
-            'name':    name,
-            'page_id': page_id,
-            'links':   list(),
+            'name':          name,
+            'page_id':       page_id,
+            'links':         list(),
+            'passive_links': list(),
         }
         if _id is not None:
             alias['_id'] = _id
@@ -1328,6 +1329,18 @@ class MongoDBClient:
         )
         self.assert_update_was_successful(update_result)
         self.log(f'insert_link_to_alias {{{link_id}}} to alias {{{alias_id}}}')
+
+    async def insert_passive_link_to_alias(self, passive_link_id: ObjectId, alias_id: ObjectId):
+        update_result: UpdateResult = await self.aliases.update_one(
+            filter={'_id': alias_id},
+            update={
+                '$push': {
+                    'passive_links': passive_link_id,
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'insert_passive_link_to_alias {{{passive_link_id}}} to alias {{{alias_id}}}')
 
     async def get_alias(self, alias_id: ObjectId):
         result = await self.aliases.find_one({'_id': alias_id})
@@ -1412,6 +1425,18 @@ class MongoDBClient:
         )
         self.assert_update_was_successful(update_result)
         self.log(f'remove_link_from_alias {{{link_id}}} from alias {{{alias_id}}}')
+
+    async def remove_passive_link_from_alias(self, passive_link_id: ObjectId, alias_id: ObjectId):
+        update_result: UpdateResult = await self.aliases.update_one(
+            filter={'_id': alias_id},
+            update={
+                '$pull': {
+                    'passive_links': passive_link_id,
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'remove_link_from_alias {{{passive_link_id}}} from alias {{{alias_id}}}')
 
     async def delete_alias(self, alias_id: ObjectId):
         delete_result: DeleteResult = await self.aliases.delete_one(
