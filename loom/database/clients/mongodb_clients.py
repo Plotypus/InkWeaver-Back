@@ -841,26 +841,27 @@ class MongoDBClient:
         self.assert_update_was_successful(update_result)
         self.log(f'append_page_to_parent_segment {{{page_id}}} to parent {{{segment_id}}}')
 
-    async def append_template_heading_to_segment(self, title: str, segment_id: ObjectId):
+    async def insert_template_heading_to_segment(self, title: str, segment_id: ObjectId, text='', at_index=None):
+        template_heading = {
+            'title': title,
+            'text':  text,
+        }
+        inner_parameters = self._insertion_parameters(template_heading, at_index)
         update_result: UpdateResult = await self.segments.update_one(
             filter={'_id': segment_id},
             update={
                 '$push': {
-                    # For now, this is the format of a `template_heading`
-                    'template_headings': {
-                        'title': title,
-                        'text':  '',
-                    }
+                    'template_headings': inner_parameters
                 }
             }
         )
         self.assert_update_was_successful(update_result)
         self.log(f'append_template_heading_to_segment {{{title}}} to segment {{{segment_id}}}')
 
-    async def insert_heading(self, title: str, page_id: ObjectId, at_index=None):
+    async def insert_heading(self, title: str, page_id: ObjectId, text='', at_index=None):
         heading = {
             'title': title,
-            'text':  '',
+            'text':  text,
         }
         inner_parameters = self._insertion_parameters(heading, at_index)
         update_result: UpdateResult = await self.pages.update_one(
@@ -1015,7 +1016,13 @@ class MongoDBClient:
             self.log(f'get_template_heading {{{title}}} in segment {{{segment_id}}} FAILED')
             raise NoMatchError
         self.log(f'get_template_heading {{{title}}} in segment {{{segment_id}}}')
-        return result
+        # The result we get back is for the segment, not the template heading.
+        # So, we should iterate through to find it.
+        for template_heading in result['template_headings']:
+            if template_heading['title'] == title:
+                return template_heading
+        # This error is unreachable, because we already know the template heading exists.
+        raise NoMatchError
 
     async def get_heading(self, title: str, page_id: ObjectId):
         result = await self.pages.find_one({
@@ -1026,7 +1033,13 @@ class MongoDBClient:
             self.log(f'get_heading {{{title}}} in page {{{page_id}}}')
             raise NoMatchError
         self.log(f'get_heading {{{title}}} in page {{{page_id}}}')
-        return result
+        # The result we get back is for the page, not the heading.
+        # So, we should iterate through to find it.
+        for heading in result['headings']:
+            if heading['title'] == title:
+                return heading
+        # This error is unreachable, because we already know the heading exists.
+        raise NoMatchError
 
     async def get_summaries_of_stories_using_wiki(self, wiki_id: ObjectId):
         result_cursor = self.stories.find(

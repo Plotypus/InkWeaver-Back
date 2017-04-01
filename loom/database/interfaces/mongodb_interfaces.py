@@ -721,7 +721,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='add_template_heading', value=title)
         # Add the template heading to the segment.
         try:
-            await self.client.append_template_heading_to_segment(title, segment_id)
+            await self.client.insert_template_heading_to_segment(title, segment_id, text='', at_index=None)
         except ClientError:
             raise FailedUpdateError(query='add_template_heading')
 
@@ -737,7 +737,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='add_heading', value=title)
         # Add the heading to the page.
         try:
-            await self.client.insert_heading(title, page_id, index)
+            await self.client.insert_heading(title, page_id, text='', at_index=index)
         except ClientError:
             raise FailedUpdateError(query='add_heading')
 
@@ -1049,6 +1049,18 @@ class MongoDBInterface(AbstractDBInterface):
                 return True
         return False
 
+    async def move_template_heading(self, segment_id, template_heading_title, to_index):
+        try:
+            template_heading = await self.client.get_template_heading(template_heading_title, segment_id)
+        except ClientError:
+            raise BadValueError(query='move_template_heading', value=template_heading_title)
+        await self.delete_template_heading(template_heading_title, segment_id)
+        try:
+            await self.client.insert_template_heading_to_segment(template_heading_title, segment_id,
+                                                                 text=template_heading['text'], at_index=to_index)
+        except ClientError:
+            raise FailedUpdateError(query='move_template_heading')
+
     async def move_page(self, page_id, to_parent_id, to_index):
         try:
             await self.client.remove_page_from_parent(page_id)
@@ -1058,6 +1070,17 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.insert_page_to_parent_segment(page_id, to_parent_id, to_index)
         except ClientError:
             raise FailedUpdateError(query='move_page')
+
+    async def move_heading(self, page_id, heading_title, to_index):
+        try:
+            heading = await self.client.get_heading(heading_title, page_id)
+        except ClientError:
+            raise BadValueError(query='move_heading', value=heading_title)
+        await self.delete_heading(heading_title, page_id)
+        try:
+            await self.client.insert_heading(heading_title, page_id, text=heading['text'], at_index=to_index)
+        except ClientError:
+            raise FailedUpdateError(query='move_heading')
 
     ###########################################################################
     #

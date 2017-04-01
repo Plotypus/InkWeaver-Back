@@ -266,8 +266,8 @@ class MoveSubsectionAsPrecedingIncomingMessage(IncomingMessage):
         self.to_index = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.move_section_as_preceding(self.uuid, self.message_id, self.section_id,
-                                                          self.to_parent_id, self.to_index)
+        return self._dispatcher.move_subsection_as_preceding(self.uuid, self.message_id, self.section_id,
+                                                             self.to_parent_id, self.to_index)
 
 
 class MoveSubsectionAsInnerIncomingMessage(IncomingMessage):
@@ -278,8 +278,8 @@ class MoveSubsectionAsInnerIncomingMessage(IncomingMessage):
         self.to_index = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.move_section_as_inner(self.uuid, self.message_id, self.section_id, self.to_parent_id,
-                                                      self.to_index)
+        return self._dispatcher.move_subsection_as_inner(self.uuid, self.message_id, self.section_id, self.to_parent_id,
+                                                         self.to_index)
 
 
 class MoveSubsectionAsSucceedingIncomingMessage(IncomingMessage):
@@ -290,5 +290,5 @@ class MoveSubsectionAsSucceedingIncomingMessage(IncomingMessage):
         self.to_index = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.move_section_as_succeeding(self.uuid, self.message_id, self.section_id,
-                                                           self.to_parent_id, self.to_index)
+        return self._dispatcher.move_subsection_as_succeeding(self.uuid, self.message_id, self.section_id,
+                                                              self.to_parent_id, self.to_index)

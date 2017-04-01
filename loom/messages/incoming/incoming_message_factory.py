@@ -68,7 +68,9 @@ APPROVED_MESSAGES = {
     'delete_page':                     DeletePageIncomingMessage,
     'delete_heading':                  DeleteHeadingIncomingMessage,
     'move_segment':                    MoveSegmentIncomingMessage,
+    'move_template_heading':           MoveTemplateHeadingIncomingMessage,
     'move_page':                       MovePageIncomingMessage,
+    'move_heading':                    MoveHeadingIncomingMessage,
 
     # Links
     'delete_link':                     DeleteLinkIncomingMessage,

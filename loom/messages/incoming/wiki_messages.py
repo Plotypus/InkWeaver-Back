@@ -257,8 +257,20 @@ class MoveSegmentIncomingMessage(IncomingMessage):
         self.to_index = RequiredField()
 
     def dispatch(self):
-        return self.dispatcher.move_segment(self.uuid, self.message_id, self.segment_id, self.to_parent_id,
+        return self._dispatcher.move_segment(self.uuid, self.message_id, self.segment_id, self.to_parent_id,
                                             self.to_index)
+
+
+class MoveTemplateHeadingIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.segment_id = RequiredField()
+        self.template_heading_title = RequiredField()
+        self.to_index = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.move_template_heading(self.uuid, self.message_id, self.segment_id,
+                                                     self.template_heading_title, self.to_index)
 
 
 class MovePageIncomingMessage(IncomingMessage):
@@ -269,4 +281,15 @@ class MovePageIncomingMessage(IncomingMessage):
         self.to_index = RequiredField()
 
     def dispatch(self):
-        return self.dispatcher.move_page(self.uuid, self.message_id, self.page_id, self.to_parent_id, self.to_index)
+        return self._dispatcher.move_page(self.uuid, self.message_id, self.page_id, self.to_parent_id, self.to_index)
+
+
+class MoveHeadingIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.page_id = RequiredField()
+        self.heading_title = RequiredField()
+        self.to_index = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.move_heading(self.uuid, self.message_id, self.page_id, self.heading_title, self.to_index)

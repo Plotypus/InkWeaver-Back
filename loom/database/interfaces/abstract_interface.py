@@ -294,7 +294,15 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def move_template_heading(self, segment_id, template_heading_title, to_index):
+        pass
+
+    @abstractmethod
     async def move_page(self, page_id, to_parent_id, to_index):
+        pass
+
+    @abstractmethod
+    async def move_heading(self, page_id, heading_title, to_index):
         pass
 
     ###########################################################################
