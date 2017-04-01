@@ -1059,7 +1059,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.insert_template_heading_to_segment(template_heading_title, segment_id,
                                                                  text=template_heading['text'], at_index=to_index)
         except ClientError:
-            raise FailedUpdateError(query='move_template_heading', value=segment_id)
+            raise FailedUpdateError(query='move_template_heading')
 
     async def move_page(self, page_id, to_parent_id, to_index):
         try:
@@ -1080,7 +1080,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.insert_heading(heading_title, page_id, text=heading['text'], at_index=to_index)
         except ClientError:
-            raise FailedUpdateError(query='move_heading', value=page_id)
+            raise FailedUpdateError(query='move_heading')
 
     ###########################################################################
     #
