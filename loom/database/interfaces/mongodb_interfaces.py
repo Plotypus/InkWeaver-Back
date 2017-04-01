@@ -580,8 +580,14 @@ class MongoDBInterface(AbstractDBInterface):
             link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
         except ClientError:
             raise BadValueError(query='delete_paragraph', value=paragraph_id)
+        try:
+            passive_link_ids = await self.client.get_passive_links_in_paragraph(paragraph_id, section_id)
+        except ClientError:
+            raise BadValueError(query='delete_paragraph', value=paragraph_id)
         for link_id in link_ids:
             await self.delete_link(link_id)
+        for passive_link_id in passive_link_ids:
+            await self.delete_passive_link(passive_link_id)
         try:
             await self.client.delete_paragraph(section_id, paragraph_id)
         except ClientError:
