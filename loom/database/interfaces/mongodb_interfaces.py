@@ -1157,9 +1157,48 @@ class MongoDBInterface(AbstractDBInterface):
         # Strip spaces to handle the front-end's poor life choices regarding link IDs.
         serialized_link = encode_bson_to_string(link_id).replace(' ', '')
         updated_text = text.replace(serialized_link, replacement_text)
-        # TOD: Come back to this.
         await self.set_paragraph_text(context['section_id'], updated_text, context['paragraph_id'])
         await self.delete_link(link_id)
+
+    ###########################################################################
+    #
+    # Passive Link Methods
+    #
+    ###########################################################################
+
+    async def get_passive_link(self, passive_link_id):
+        try:
+            passive_link = await self.client.get_passive_link(passive_link_id)
+        except ClientError:
+            raise BadValueError(query='get_passive_link', value=passive_link_id)
+        else:
+            return passive_link
+
+    async def delete_passive_link(self, passive_link_id):
+        passive_link = await self.get_passive_link(passive_link_id)
+        alias_id = passive_link['alias_id']
+        try:
+            await self.client.remove_passive_link_from_alias(passive_link_id, alias_id)
+        except ClientError:
+            raise FailedUpdateError(query='delete_passive_link')
+        try:
+            await self.client.delete_passive_link(passive_link_id)
+        except ClientError:
+            raise FailedUpdateError(query='delete_passive_link')
+
+    async def comprehensive_remove_passive_link(self, passive_link_id: ObjectId, replacement_text: str):
+        # TODO: handle different encoding?
+        passive_link = await self.get_passive_link(passive_link_id)
+        context = passive_link['context']
+        try:
+            text = await self.client.get_paragraph_text(context['section_id'], context['paragraph_id'])
+        except ClientError:
+            raise BadValueError(query='comprehensive_remove_passive_link', value=passive_link_id)
+        # Strip spaces to handle the front-end's poor life choices regarding passive_link IDs.
+        serialized_passive_link = encode_bson_to_string(passive_link_id).replace(' ', '')
+        updated_text = text.replace(serialized_passive_link, replacement_text)
+        await self.set_paragraph_text(context['section_id'], updated_text, context['paragraph_id'])
+        await self.delete_passive_link(passive_link_id)
 
     ###########################################################################
     #
