@@ -110,7 +110,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     @handle_interface_errors
     async def set_user_bio(self, uuid, message_id, user_id, bio):
         await self.db_interface.set_user_bio(user_id, bio)
-        yield SetUserBioOutgoingMessage(uuid, message_id)
+        yield SetUserBioOutgoingMessage(uuid, message_id, bio=bio)
 
     # TODO: Implement this.
     # async def set_user_avatar(self, uuid, message_id, avatar):

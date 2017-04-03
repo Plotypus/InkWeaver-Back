@@ -43,8 +43,9 @@ class SetUserEmailOutgoingMessage(MulticastMessage):
 
 
 class SetUserBioOutgoingMessage(MulticastMessage):
-    def __init__(self, uuid: UUID, message_id: int):
+    def __init__(self, uuid: UUID, message_id: int, *, bio: str):
         super().__init__(uuid, message_id, 'user_bio_updated')
+        self.bio = bio
 
 
 ###########################################################################
