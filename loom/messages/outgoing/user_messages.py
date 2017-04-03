@@ -37,8 +37,9 @@ class SetUserNameOutgoingMessage(MulticastMessage):
 
 
 class SetUserEmailOutgoingMessage(MulticastMessage):
-    def __init__(self, uuid: UUID, message_id: int):
+    def __init__(self, uuid: UUID, message_id: int, *, email: str):
         super().__init__(uuid, message_id, 'user_email_updated')
+        self.email = email
 
 
 class SetUserBioOutgoingMessage(MulticastMessage):

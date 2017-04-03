@@ -105,7 +105,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     @handle_interface_errors
     async def set_user_email(self, uuid, message_id, user_id, email):
         await self.db_interface.set_user_email(user_id, email)
-        yield SetUserEmailOutgoingMessage(uuid, message_id)
+        yield SetUserEmailOutgoingMessage(uuid, message_id, email=email)
 
     @handle_interface_errors
     async def set_user_bio(self, uuid, message_id, user_id, bio):
