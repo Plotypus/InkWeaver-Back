@@ -31,18 +31,21 @@ class GetUserStoriesAndWikisOutgoingMessage(UnicastMessage):
 #
 ###########################################################################
 class SetUserNameOutgoingMessage(MulticastMessage):
-    def __init__(self, uuid: UUID, message_id: int):
+    def __init__(self, uuid: UUID, message_id: int, *, name: str):
         super().__init__(uuid, message_id, 'user_name_updated')
+        self.name = name
 
 
 class SetUserEmailOutgoingMessage(MulticastMessage):
-    def __init__(self, uuid: UUID, message_id: int):
+    def __init__(self, uuid: UUID, message_id: int, *, email: str):
         super().__init__(uuid, message_id, 'user_email_updated')
+        self.email = email
 
 
 class SetUserBioOutgoingMessage(MulticastMessage):
-    def __init__(self, uuid: UUID, message_id: int):
+    def __init__(self, uuid: UUID, message_id: int, *, bio: str):
         super().__init__(uuid, message_id, 'user_bio_updated')
+        self.bio = bio
 
 
 ###########################################################################
