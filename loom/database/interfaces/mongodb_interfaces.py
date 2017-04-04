@@ -421,6 +421,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_links_in_section(section_id, section_links, paragraph_id)
         except ClientError:
             raise FailedUpdateError(query='set_paragraph_text')
+        # TODO: Set passive links in section
         try:
             await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
         except ClientError:
@@ -1255,6 +1256,7 @@ class MongoDBInterface(AbstractDBInterface):
         # Alias with page title deleted, need to recreate primary alias
         if page is not None and not await self._page_title_is_alias(page):
             await self._create_alias(page_id, alias_name)
+        # TODO: Also return list of deleted passive link IDs.
         return deleted_link_ids
 
     async def _delete_alias_no_replace(self, alias_id: ObjectId):
@@ -1274,6 +1276,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='_delete_alias_no_replace')
         else:
+            # TODO: Return list of passive links also.
             return alias['links']
 
     async def _create_alias(self, page_id: ObjectId, name: str):
