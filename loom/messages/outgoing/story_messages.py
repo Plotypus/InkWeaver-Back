@@ -12,7 +12,7 @@ from uuid import UUID
 class CreateStoryOutgoingMessage(MulticastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, story_title: str, story_id: ObjectId, section_id: ObjectId,
                  wiki_id: ObjectId, users: list):
-        super().__init__(uuid, message_id, 'created_story')
+        super().__init__(uuid, message_id, 'story_created')
         self.story_title = story_title
         self.story_id = story_id
         self.section_id = section_id
