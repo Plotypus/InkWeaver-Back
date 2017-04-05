@@ -379,7 +379,7 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def set_paragraph_text(self, section_id, text, paragraph_id):
         text, links_created = await self._find_and_create_links_in_paragraph(section_id, paragraph_id, text)
-        sentences_and_links, word_frequencies = await self.get_links_and_word_counts_from_paragraph(text)
+        sentences_and_links, word_frequencies = await self._get_links_and_word_counts_from_paragraph(text)
         page_updates = {}
         section_links = []
         for sentence, links in sentences_and_links:
@@ -458,7 +458,7 @@ class MongoDBInterface(AbstractDBInterface):
                 reference['context'] = context
                 break
 
-    async def get_links_and_word_counts_from_paragraph(self, paragraph_text):
+    async def _get_links_and_word_counts_from_paragraph(self, paragraph_text):
         # TODO: Support languages other than English.
         sentences = nltk.sent_tokenize(paragraph_text)
         word_counts = Counter()
