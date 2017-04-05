@@ -988,17 +988,17 @@ class MongoDBInterface(AbstractDBInterface):
             return deleted_link_ids
 
     async def delete_segment(self, segment_id):
-        deleted_link_ids = await self.recur_delete_segment_and_subsegments(segment_id)
+        deleted_link_ids = await self._recur_delete_segment_and_subsegments(segment_id)
         return deleted_link_ids
 
-    async def recur_delete_segment_and_subsegments(self, segment_id):
+    async def _recur_delete_segment_and_subsegments(self, segment_id):
         try:
             segment = await self.client.get_segment(segment_id)
         except ClientError:
             raise BadValueError(query='recur_delete_segment_and_subsegments', value=segment_id)
         deleted_link_ids = []
         for subsegment_id in segment['segments']:
-            segment_deleted_link_ids = await self.recur_delete_segment_and_subsegments(subsegment_id)
+            segment_deleted_link_ids = await self._recur_delete_segment_and_subsegments(subsegment_id)
             deleted_link_ids.extend(segment_deleted_link_ids)
         for page_id in segment['pages']:
             page_deleted_link_ids = await self.delete_page(page_id)
@@ -1148,7 +1148,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='delete_link')
 
-    async def comprehensive_remove_link(self, link_id: ObjectId, replacement_text: str):
+    async def _comprehensive_remove_link(self, link_id: ObjectId, replacement_text: str):
         link = await self.get_link(link_id)
         context = link['context']
         try:
@@ -1187,7 +1187,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='delete_passive_link')
 
-    async def comprehensive_remove_passive_link(self, passive_link_id: ObjectId, replacement_text: str):
+    async def _comprehensive_remove_passive_link(self, passive_link_id: ObjectId, replacement_text: str):
         # TODO: handle different encoding?
         passive_link = await self.get_passive_link(passive_link_id)
         context = passive_link['context']
@@ -1216,7 +1216,7 @@ class MongoDBInterface(AbstractDBInterface):
         # Delete existing passive links to this alias.
         old_name = alias['name']
         for passive_link_id in alias['passive_links']:
-            await self.comprehensive_remove_passive_link(passive_link_id, old_name)
+            await self._comprehensive_remove_passive_link(passive_link_id, old_name)
         # Update name in alias.
         page_id = alias['page_id']
         try:
@@ -1263,9 +1263,9 @@ class MongoDBInterface(AbstractDBInterface):
         alias = await self.get_alias(alias_id)
         alias_name = alias['name']
         for link_id in alias['links']:
-            await self.comprehensive_remove_link(link_id, alias_name)
+            await self._comprehensive_remove_link(link_id, alias_name)
         for passive_link_id in alias['passive_links']:
-            await self.comprehensive_remove_passive_link(passive_link_id, alias_name)
+            await self._comprehensive_remove_passive_link(passive_link_id, alias_name)
         page_id = alias['page_id']
         try:
             await self.client.remove_alias_from_page(alias_name, page_id)
