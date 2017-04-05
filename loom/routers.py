@@ -124,8 +124,10 @@ class Router:
 
     def disconnect(self, handler: LoomHandler):
         uuid = handler.uuid
-        user_id = self.uuid_to_user[uuid]
-        self.user_to_uuids[user_id].remove(uuid)
+        try:
+            self._remove_uuid(uuid)
+        except KeyError:
+            pass
         try:
             self._unsubscribe_from_story(uuid)
         except KeyError:
@@ -134,7 +136,15 @@ class Router:
             self._unsubscribe_from_wiki(uuid)
         except KeyError:
             pass
-        del(self.uuid_to_handler[uuid])
+        try:
+            del(self.uuid_to_handler[uuid])
+        except KeyError:
+            pass
+
+    def _remove_uuid(self, uuid: UUID):
+        user_id = self.uuid_to_user[uuid]
+        del(self.uuid_to_user[uuid])
+        self.user_to_uuids[user_id].remove(uuid)
 
     def subscribe_to_story(self, story_id: ObjectId, uuid: UUID, message_id: int):
         if uuid in self.uuid_to_story:
