@@ -46,11 +46,12 @@ class AddTemplateHeadingIncomingMessage(IncomingMessage):
 class AddPageIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.wiki_id = RequiredField()
         self.title = RequiredField()
         self.parent_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.add_page(self.uuid, self.message_id, self.title, self.parent_id)
+        return self._dispatcher.add_page(self.uuid, self.message_id, self.wiki_id, self.title, self.parent_id)
 
 
 class AddHeadingIncomingMessage(IncomingMessage):
@@ -104,11 +105,12 @@ class EditTemplateHeadingIncomingMessage(IncomingMessage):
 class EditPageIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.wiki_id = RequiredField()
         self.page_id = RequiredField()
         self.update = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.edit_page(self.uuid, self.message_id, self.page_id, self.update)
+        return self._dispatcher.edit_page(self.uuid, self.message_id, self.wiki_id, self.page_id, self.update)
 
 
 class EditHeadingIncomingMessage(IncomingMessage):
@@ -199,10 +201,11 @@ class DeleteWikiIncomingMessage(IncomingMessage):
 class DeleteSegmentIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.wiki_id = RequiredField()
         self.segment_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_segment(self.uuid, self.message_id, self.segment_id)
+        return self._dispatcher.delete_segment(self.uuid, self.message_id, self.wiki_id, self.segment_id)
 
 
 class DeleteTemplateHeadingIncomingMessage(IncomingMessage):
@@ -219,10 +222,11 @@ class DeleteTemplateHeadingIncomingMessage(IncomingMessage):
 class DeletePageIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.wiki_id = RequiredField()
         self.page_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_page(self.uuid, self.message_id, self.page_id)
+        return self._dispatcher.delete_page(self.uuid, self.message_id, self.wiki_id, self.page_id)
 
 
 class DeleteHeadingIncomingMessage(IncomingMessage):
@@ -238,10 +242,11 @@ class DeleteHeadingIncomingMessage(IncomingMessage):
 class DeleteAliasIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.wiki_id = RequiredField()
         self.alias_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_alias(self.uuid, self.message_id, self.alias_id)
+        return self._dispatcher.delete_alias(self.uuid, self.message_id, self.wiki_id, self.alias_id)
 
 
 ###########################################################################
@@ -258,7 +263,7 @@ class MoveSegmentIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.move_segment(self.uuid, self.message_id, self.segment_id, self.to_parent_id,
-                                            self.to_index)
+                                             self.to_index)
 
 
 class MoveTemplateHeadingIncomingMessage(IncomingMessage):
@@ -270,7 +275,7 @@ class MoveTemplateHeadingIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.move_template_heading(self.uuid, self.message_id, self.segment_id,
-                                                     self.template_heading_title, self.to_index)
+                                                      self.template_heading_title, self.to_index)
 
 
 class MovePageIncomingMessage(IncomingMessage):
@@ -292,4 +297,5 @@ class MoveHeadingIncomingMessage(IncomingMessage):
         self.to_index = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.move_heading(self.uuid, self.message_id, self.page_id, self.heading_title, self.to_index)
+        return self._dispatcher.move_heading(self.uuid, self.message_id, self.page_id, self.heading_title,
+                                             self.to_index)

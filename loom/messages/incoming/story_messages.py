@@ -63,12 +63,13 @@ class AddSucceedingSubsectionIncomingMessage(IncomingMessage):
 class AddParagraphIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.wiki_id = RequiredField()
         self.section_id = RequiredField()
         self.text = RequiredField()
         self.succeeding_paragraph_id = OptionalField()
 
     def dispatch(self):
-        return self._dispatcher.add_paragraph(self.uuid, self.message_id, self.section_id, self.text,
+        return self._dispatcher.add_paragraph(self.uuid, self.message_id, self.wiki_id, self.section_id, self.text,
                                               self.succeeding_paragraph_id)
 
 
@@ -104,12 +105,13 @@ class EditStoryIncomingMessage(IncomingMessage):
 class EditParagraphIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.wiki_id = RequiredField()
         self.section_id = RequiredField()
         self.update = RequiredField()
         self.paragraph_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.edit_paragraph(self.uuid, self.message_id, self.section_id, self.update,
+        return self._dispatcher.edit_paragraph(self.uuid, self.message_id, self.wiki_id, self.section_id, self.update,
                                                self.paragraph_id)
 
 
