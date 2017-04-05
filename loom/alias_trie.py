@@ -2,6 +2,13 @@ from bson.objectid import ObjectId
 from typing import List, Union
 
 
+class AliasTrieMatch:
+    def __init__(self, length, page_id, alias_id):
+        self.length = length
+        self.page_id = page_id
+        self.alias_id = alias_id
+
+
 class AliasTrie:
     def __init__(self):
         self.root = AliasTrieNode(None, is_terminal=True, page_id=None, alias_id=None, depth=0)
@@ -21,9 +28,12 @@ class AliasTrie:
         node.page_id = page_id
         node.alias_id = alias_id
 
-    def find_longest_match_in_tokens(self, tokens, *, from_index):
+    def find_longest_match_in_tokens(self, tokens, *, from_index) -> Union[AliasTrieMatch, None]:
         node = self.root.find_next_terminal(tokens, from_index, None)
-        return from_index + node.depth, node.page_id
+        if node.depth > 0:
+            return AliasTrieMatch(from_index + node.depth, node.page_id, node.alias_id)
+        else:
+            return None
 
 
 class AliasTrieNode:
