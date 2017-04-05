@@ -4,9 +4,9 @@ from typing import List, Union
 
 class AliasTrie:
     def __init__(self):
-        self.root = AliasTrieNode(None, is_terminal=True, page_id=None, depth=0)
+        self.root = AliasTrieNode(None, is_terminal=True, page_id=None, alias_id=None, depth=0)
 
-    def add_path(self, path: List[str], page_id: ObjectId):
+    def add_path(self, path: List[str], page_id: ObjectId, alias_id: ObjectId):
         if not path:
             return
         node = self.root
@@ -14,11 +14,12 @@ class AliasTrie:
             token = path[i]
             next_node = node.get_child(token)
             if next_node is None:
-                next_node = AliasTrieNode(token, is_terminal=False, page_id=None, depth=i+1)
+                next_node = AliasTrieNode(token, is_terminal=False, page_id=None, alias_id=None, depth=i+1)
                 node.add_child(next_node)
             node = next_node
         node.is_terminal = True
         node.page_id = page_id
+        node.alias_id = alias_id
 
     def find_longest_match_in_tokens(self, tokens, *, from_index):
         node = self.root.find_next_terminal(tokens, from_index, None)
@@ -26,10 +27,12 @@ class AliasTrie:
 
 
 class AliasTrieNode:
-    def __init__(self, value: Union[str, None], *, is_terminal: bool, page_id: Union[ObjectId, None], depth: int):
+    def __init__(self, value: Union[str, None], *, is_terminal: bool, page_id: Union[ObjectId, None],
+                 alias_id: Union[ObjectId, None], depth: int):
         self.is_terminal = is_terminal
         self.children = {}
         self.page_id = page_id
+        self.alias_id = alias_id
         self.depth = depth
         self.value = value
 
