@@ -1,6 +1,7 @@
 from .abstract_interface import AbstractDBInterface
 from .errors import *
 
+from loom.alias_trie import AliasTrie
 from loom.database.clients import *
 from loom.serialize import decode_string_to_bson, encode_bson_to_string
 
@@ -10,6 +11,7 @@ import re
 from bson.objectid import ObjectId
 from collections import Counter, defaultdict
 from itertools import chain
+from nltk.tokenize.moses import MosesDetokenizer
 from os.path import dirname, join as pathjoin
 from string import punctuation
 from typing import ClassVar
@@ -52,6 +54,24 @@ class MongoDBInterface(AbstractDBInterface):
     @property
     def link_format_regex(self):
         return self._link_format_regex
+
+    @staticmethod
+    def tokenize_paragraph(paragraph):
+        return nltk.sent_tokenize(paragraph)
+
+    @staticmethod
+    def tokenize_sentence(sentence):
+        return nltk.word_tokenize(sentence)
+
+    @staticmethod
+    def detokenize_sentence(sentence_tokens):
+        detokenizer = MosesDetokenizer()
+        return detokenizer.detokenize(sentence_tokens, return_str=True)
+
+    @staticmethod
+    def encode_object_id(object_id: ObjectId) -> str:
+        # Strip spaces to handle the front-end's poor life choices regarding link IDs.
+        return encode_bson_to_string(object_id).replace(' ', '')
 
     ###########################################################################
     #
@@ -379,6 +399,8 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def set_paragraph_text(self, wiki_id, section_id, text, paragraph_id):
         text, links_created = await self._find_and_create_links_in_paragraph(section_id, paragraph_id, text)
+        text, passive_links_created = await self._find_and_create_passive_links_in_paragraph(section_id, paragraph_id,
+                                                                                             wiki_id, text)
         sentences_and_links, word_frequencies = await self._get_links_and_word_counts_from_paragraph(text)
         page_updates = {}
         section_links = []
@@ -460,7 +482,7 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def _get_links_and_word_counts_from_paragraph(self, paragraph_text):
         # TODO: Support languages other than English.
-        sentences = nltk.sent_tokenize(paragraph_text)
+        sentences = self.tokenize_paragraph(paragraph_text)
         word_counts = Counter()
         results = []
         for sentence in sentences:
@@ -483,7 +505,7 @@ class MongoDBInterface(AbstractDBInterface):
                 sentence_links.append(link)
             # Mongo does not support '$' or '.' in key name, so we replace them with their unicode equivalents.
             words = [token.replace('.', '').replace('$', '').lower() for token in
-                     nltk.word_tokenize(links_replaced_sentence) if token not in punctuation]
+                     self.tokenize_sentence(links_replaced_sentence) if token not in punctuation]
             word_counts.update(words)
             if sentence_links:
                 sentence_tuple = (sentence, sentence_links)
@@ -501,8 +523,7 @@ class MongoDBInterface(AbstractDBInterface):
             link_id, page_id, name = await self._create_link_and_replace_text(section_id, paragraph_id, text, start,
                                                                               end)
             links_created.append((link_id, page_id, name))
-            # Strip out the space in the encoding.
-            encoded_link_id = encode_bson_to_string(link_id).replace(' ', '')
+            encoded_link_id = self.encode_object_id(link_id)
             # Add the previous text and link_id to the buffer.
             buffer.append(text[prev_end:start])
             buffer.append(encoded_link_id)
@@ -510,6 +531,33 @@ class MongoDBInterface(AbstractDBInterface):
         # Don't forget to add the rest of the string.
         buffer.append(text[prev_end:])
         return ''.join(buffer), links_created
+
+    async def _find_and_create_passive_links_in_paragraph(self, section_id, paragraph_id, wiki_id, text):
+        # Build a trie of the alias names to parse paragraph text.
+        trie = AliasTrie()
+        aliases = await self.get_wiki_alias_list(wiki_id)
+        for alias in aliases:
+            path = alias['alias_name'].split()
+            trie.add_path(path, alias['page_id'], alias['alias_id'])
+        # Parse the text.
+        sentences_buffer = []
+        sentences = self.tokenize_paragraph(text)
+        for tokens in (self.tokenize_sentence(sentence) for sentence in sentences):
+            buffer = []
+            index = 0
+            while index < len(tokens):
+                match = trie.find_longest_match_in_tokens(tokens, from_index=index)
+                if match is not None:
+                    passive_link_id = await self.client.create_passive_link(match.alias_id, match.page_id, section_id,
+                                                                            paragraph_id)
+                    encoded_link_id = self.encode_object_id(passive_link_id)
+                    buffer.append(encoded_link_id)
+                    index += match.length
+                else:
+                    buffer.append(tokens[index])
+                    index += 1
+            sentences_buffer.append(buffer)
+        return ' '.join((self.detokenize_sentence(sentence_buffer) for sentence_buffer in sentences_buffer))
 
     async def _create_link_and_replace_text(self, section_id, paragraph_id, text, start, end):
         # Get the match and split it into story_id, page_id, and name.
@@ -1156,9 +1204,8 @@ class MongoDBInterface(AbstractDBInterface):
             text = await self.client.get_paragraph_text(context['section_id'], context['paragraph_id'])
         except ClientError:
             raise BadValueError(query='comprehensive_remove_link', value=link_id)
-        # Strip spaces to handle the front-end's poor life choices regarding link IDs.
-        serialized_link = encode_bson_to_string(link_id).replace(' ', '')
-        updated_text = text.replace(serialized_link, replacement_text)
+        encoded_link_id = self.encode_object_id(link_id)
+        updated_text = text.replace(encoded_link_id, replacement_text)
         await self.set_paragraph_text(wiki_id, context['section_id'], updated_text, context['paragraph_id'])
         await self.delete_link(link_id)
 
@@ -1197,9 +1244,8 @@ class MongoDBInterface(AbstractDBInterface):
             text = await self.client.get_paragraph_text(context['section_id'], context['paragraph_id'])
         except ClientError:
             raise BadValueError(query='comprehensive_remove_passive_link', value=passive_link_id)
-        # Strip spaces to handle the front-end's poor life choices regarding passive_link IDs.
-        serialized_passive_link = encode_bson_to_string(passive_link_id).replace(' ', '')
-        updated_text = text.replace(serialized_passive_link, replacement_text)
+        encoded_passive_link_id = self.encode_object_id(passive_link_id)
+        updated_text = text.replace(encoded_passive_link_id, replacement_text)
         await self.set_paragraph_text(wiki_id, context['section_id'], updated_text, context['paragraph_id'])
         await self.delete_passive_link(passive_link_id)
 
