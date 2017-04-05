@@ -48,7 +48,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def add_paragraph(self, uuid, message_id, section_id, text, succeeding_paragraph_id=None):
+    async def add_paragraph(self, uuid, message_id, wiki_id, section_id, text, succeeding_paragraph_id=None):
         pass
 
     @abstractmethod
@@ -60,7 +60,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def edit_paragraph(self, uuid, message_id, section_id, update, paragraph_id):
+    async def edit_paragraph(self, uuid, message_id, wiki_id, section_id, update, paragraph_id):
         pass
 
     @abstractmethod
@@ -140,7 +140,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def add_page(self, uuid, message_id, title, parent_id):
+    async def add_page(self, uuid, message_id, wiki_id, title, parent_id):
         pass
 
     @abstractmethod
@@ -160,7 +160,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def edit_page(self, uuid, message_id, page_id, update):
+    async def edit_page(self, uuid, message_id, wiki_id, page_id, update):
         pass
 
     @abstractmethod
@@ -192,7 +192,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def delete_segment(self, uuid, message_id, segment_id):
+    async def delete_segment(self, uuid, message_id, wiki_id, segment_id):
         pass
 
     @abstractmethod
@@ -200,7 +200,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def delete_page(self, uuid, message_id, page_id):
+    async def delete_page(self, uuid, message_id, wiki_id, page_id):
         pass
 
     @abstractmethod
@@ -228,11 +228,11 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def change_alias_name(self, uuid, message_id, alias_id, new_name):
+    async def change_alias_name(self, uuid, message_id, wiki_id, alias_id, new_name):
         pass
 
     @abstractmethod
-    async def delete_alias(self, uuid, message_id, alias_id):
+    async def delete_alias(self, uuid, message_id, wiki_id, alias_id):
         pass
 
     @abstractmethod
