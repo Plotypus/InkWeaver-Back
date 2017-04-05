@@ -798,6 +798,7 @@ class MongoDBInterface(AbstractDBInterface):
                 raise BadValueError(query='_get_page_alias_list', value=alias_id)
             alias_list.append({
                 'alias_name':       alias_name,
+                'alias_id':         alias_id,
                 'page_id':          page_id,
                 'link_ids':         alias['links'],
                 'passive_link_ids': alias['passive_link_ids'],
