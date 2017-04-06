@@ -1374,7 +1374,8 @@ class MongoDBClient:
         self.log(f'insert_passive_links_for_paragraph {{{paragraph_id}}} in section {{{in_section_id}}} at index '
                  f'{{{at_index}}}')
 
-    async def set_passive_links_in_section(self, section_id: ObjectId, passive_links: List[ObjectId], paragraph_id: ObjectId):
+    async def set_passive_links_in_section(self, section_id: ObjectId, passive_links: List[ObjectId],
+                                           paragraph_id: ObjectId):
         update_result: UpdateResult = await self.sections.update_one(
             filter={'_id': section_id, 'passive_links.paragraph_id': paragraph_id},
             update={
