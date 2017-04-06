@@ -1069,18 +1069,19 @@ class MongoDBInterface(AbstractDBInterface):
                 raise FailedUpdateError(query='delete_wiki')
         # Recursively delete all segments in the wiki.
         segment_id = wiki['segment_id']
-        deleted_link_ids = await self.delete_segment(wiki_id, segment_id)
+        deleted_link_ids, deleted_passive_link_ids = await self.delete_segment(wiki_id, segment_id)
         # Delete the wiki proper.
         try:
             await self.client.delete_wiki(wiki_id)
         except ClientError:
             raise FailedUpdateError(query='delete_wiki')
         else:
-            return deleted_link_ids
+            return deleted_link_ids, deleted_passive_link_ids
 
     async def delete_segment(self, wiki_id, segment_id):
-        deleted_link_ids = await self._recur_delete_segment_and_subsegments(wiki_id, segment_id)
-        return deleted_link_ids
+        deleted_link_ids, deleted_passive_link_ids = await self._recur_delete_segment_and_subsegments(wiki_id,
+                                                                                                      segment_id)
+        return deleted_link_ids, deleted_passive_link_ids
 
     async def _recur_delete_segment_and_subsegments(self, wiki_id, segment_id):
         try:
@@ -1088,18 +1089,24 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise BadValueError(query='recur_delete_segment_and_subsegments', value=segment_id)
         deleted_link_ids = []
+        deleted_passive_link_ids = []
         for subsegment_id in segment['segments']:
-            segment_deleted_link_ids = await self._recur_delete_segment_and_subsegments(wiki_id, subsegment_id)
+            (
+                segment_deleted_link_ids,
+                segment_deleted_passive_link_ids
+            ) = await self._recur_delete_segment_and_subsegments(wiki_id, subsegment_id)
             deleted_link_ids.extend(segment_deleted_link_ids)
+            deleted_passive_link_ids.extend(segment_deleted_passive_link_ids)
         for page_id in segment['pages']:
-            page_deleted_link_ids = await self.delete_page(wiki_id, page_id)
+            page_deleted_link_ids, page_deleted_passive_link_ids = await self.delete_page(wiki_id, page_id)
             deleted_link_ids.extend(page_deleted_link_ids)
+            deleted_passive_link_ids.extend(page_deleted_passive_link_ids)
         try:
             await self.client.delete_segment(segment_id)
         except ClientError:
             raise FailedUpdateError(query='recur_delete_segment_and_subsegments')
         else:
-            return deleted_link_ids
+            return deleted_link_ids, deleted_passive_link_ids
 
     async def delete_template_heading(self, title, segment_id):
         try:
@@ -1113,15 +1120,18 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise BadValueError(query='delete_page', value=page_id)
         deleted_link_ids = []
+        deleted_passive_link_ids = []
         for alias_id in page['aliases'].values():
-            page_deleted_link_ids = await self._delete_alias_no_replace(wiki_id, alias_id)
+            page_deleted_link_ids, page_deleted_passive_link_ids = await self._delete_alias_no_replace(wiki_id,
+                                                                                                       alias_id)
             deleted_link_ids.extend(page_deleted_link_ids)
+            deleted_passive_link_ids.extend(page_deleted_passive_link_ids)
         try:
             await self.client.delete_page(page_id)
         except ClientError:
             raise FailedUpdateError(query='delete_page')
         else:
-            return deleted_link_ids
+            return deleted_link_ids, deleted_passive_link_ids
 
     async def delete_heading(self, heading_title: str, page_id: ObjectId):
         try:
@@ -1325,6 +1335,7 @@ class MongoDBInterface(AbstractDBInterface):
         # Alias with page title renamed, need to recreate primary alias
         if not await self._page_title_is_alias(page):
             await self._create_alias(page_id, old_name)
+        # TODO: Return deleted passive link ids
 
     async def get_alias(self, alias_id: ObjectId):
         try:
@@ -1336,7 +1347,7 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def delete_alias(self, wiki_id: ObjectId, alias_id: ObjectId):
         alias = await self.get_alias(alias_id)
-        deleted_link_ids = await self._delete_alias_no_replace(wiki_id, alias_id)
+        deleted_link_ids, deleted_passive_link_ids = await self._delete_alias_no_replace(wiki_id, alias_id)
         alias_name = alias['name']
         page_id = alias['page_id']
         try:
@@ -1346,8 +1357,7 @@ class MongoDBInterface(AbstractDBInterface):
         # Alias with page title deleted, need to recreate primary alias
         if page is not None and not await self._page_title_is_alias(page):
             await self._create_alias(page_id, alias_name)
-        # TODO: Also return list of deleted passive link IDs.
-        return deleted_link_ids
+        return deleted_link_ids, deleted_passive_link_ids
 
     async def _delete_alias_no_replace(self, wiki_id: ObjectId, alias_id: ObjectId):
         alias = await self.get_alias(alias_id)
@@ -1366,8 +1376,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='_delete_alias_no_replace')
         else:
-            # TODO: Return list of passive links also.
-            return alias['links']
+            return alias['links'], alias['passive_links']
 
     async def _create_alias(self, page_id: ObjectId, name: str):
         alias_id = await self.client.create_alias(name, page_id)
