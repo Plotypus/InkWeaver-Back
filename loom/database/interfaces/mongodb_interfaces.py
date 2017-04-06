@@ -522,28 +522,24 @@ class MongoDBInterface(AbstractDBInterface):
                 potential_id = decode_string_to_bson(match)
                 try:
                     link = await self.get_link(potential_id)
+                    alias_id = link['alias_id']
+                    sentence_links.append(link)
                 except InterfaceError:
                     # `potential_id` looked like a link, but it did not correspond to any legitimate link.
                     # Now we check if it's a passive link.
                     try:
-                        passive_link = await self.get_link(potential_id)
+                        passive_link = await self.get_passive_link(potential_id)
+                        alias_id = passive_link['alias_id']
                     except InterfaceError:
                         # `potential_id` looked like a link, but it did not correspond to any legitimate link.
                         continue
-                    try:
-                        alias = await self.client.get_alias(passive_link['alias_id'])
-                    except ClientError:
-                        raise BadValueError(query='get_links_and_word_counts_from_paragraph', value=potential_id)
-                    replacement = alias['name']
-                    sentence_with_links_replaced = sentence_with_links_replaced.replace(match, replacement)
-                    sentence_passive_links.append(link)
+                    sentence_passive_links.append(passive_link)
                 try:
-                    alias = await self.client.get_alias(link['alias_id'])
+                    alias = await self.client.get_alias(alias_id)
                 except ClientError:
                     raise BadValueError(query='get_links_and_word_counts_from_paragraph', value=potential_id)
                 replacement = alias['name']
                 sentence_with_links_replaced = sentence_with_links_replaced.replace(match, replacement)
-                sentence_links.append(link)
             # Mongo does not support '$' or '.' in key name, so we replace them with their unicode equivalents.
             words = [token.replace('.', '').replace('$', '').lower() for token in
                      self.tokenize_sentence(sentence_with_links_replaced) if token not in punctuation]
