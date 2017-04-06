@@ -132,7 +132,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def add_segment(self, uuid, message_id, title, parent_id):
+    async def add_segment(self, uuid, message_id, wiki_id, title, parent_id):
         pass
 
     @abstractmethod

@@ -26,11 +26,12 @@ class CreateWikiIncomingMessage(IncomingMessage):
 class AddSegmentIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.wiki_id = RequiredField()
         self.title = RequiredField()
         self.parent_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.add_segment(self.uuid, self.message_id, self.title, self.parent_id)
+        return self._dispatcher.add_segment(self.uuid, self.message_id, self.wiki_id, self.title, self.parent_id)
 
 
 class AddTemplateHeadingIncomingMessage(IncomingMessage):

@@ -346,8 +346,8 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                         summary=wiki['summary'])
 
     @handle_interface_errors
-    async def add_segment(self, uuid, message_id, title, parent_id):
-        segment_id = await self.db_interface.add_child_segment(title, parent_id)
+    async def add_segment(self, uuid, message_id, wiki_id, title, parent_id):
+        segment_id = await self.db_interface.add_child_segment(wiki_id, title, parent_id)
         yield AddSegmentOutgoingMessage(uuid, message_id, segment_id=segment_id, title=title, parent_id=parent_id)
 
     @handle_interface_errors
