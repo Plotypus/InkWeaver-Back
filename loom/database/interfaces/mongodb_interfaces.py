@@ -404,7 +404,8 @@ class MongoDBInterface(AbstractDBInterface):
         sentences_and_links, word_frequencies = await self._get_links_and_word_counts_from_paragraph(text)
         page_updates = {}
         section_links = []
-        for sentence, links in sentences_and_links:
+        section_passive_links = []
+        for sentence, links, passive_links in sentences_and_links:
             for link in links:
                 link_id = link['_id']
                 context = link['context']
@@ -425,6 +426,25 @@ class MongoDBInterface(AbstractDBInterface):
                 link_updates[link_id] = context
                 # Add link to `section_links` to update the links for the paragraph.
                 section_links.append(link_id)
+            for passive_link in passive_links:
+                passive_link_id = passive_link['_id']
+                context = passive_link['context']
+                context['section_id'] = section_id
+                context['paragraph_id'] = paragraph_id
+                # Update context in passive_link.
+                try:
+                    await self.client.set_passive_link_context(passive_link_id, context)
+                except ClientError:
+                    raise FailedUpdateError(query='set_paragraph_text')
+                # Get page ID from passive_link and add its context to `page_updates`.
+                page_id = passive_link['page_id']
+                passive_link_updates = page_updates.get(page_id)
+                if passive_link_updates is None:
+                    passive_link_updates = {}
+                    page_updates[page_id] = passive_link_updates
+                passive_link_updates[passive_link_id] = context
+                # Add passive_link to `section_passive_links` to update the passive_links for the paragraph.
+                section_passive_links.append(passive_link_id)
         # Apply updates to references in pages.
         for page_id, updates in page_updates.items():
             try:
@@ -443,7 +463,10 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_links_in_section(section_id, section_links, paragraph_id)
         except ClientError:
             raise FailedUpdateError(query='set_paragraph_text')
-        # TODO: Set passive links in section
+        try:
+            await self.client.set_passive_links_in_section(section_id, section_passive_links, paragraph_id)
+        except ClientError:
+            raise FailedUpdateError(query='set_paragraph_text')
         try:
             await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
         except ClientError:
@@ -487,6 +510,7 @@ class MongoDBInterface(AbstractDBInterface):
         results = []
         for sentence in sentences:
             sentence_links = []
+            sentence_passive_links = []
             sentence_with_links_replaced = sentence
             link_matches = re.findall(self.link_format_regex, sentence)
             for match in link_matches:
@@ -495,7 +519,19 @@ class MongoDBInterface(AbstractDBInterface):
                     link = await self.get_link(potential_id)
                 except InterfaceError:
                     # `potential_id` looked like a link, but it did not correspond to any legitimate link.
-                    continue
+                    # Now we check if it's a passive link.
+                    try:
+                        passive_link = await self.get_link(potential_id)
+                    except InterfaceError:
+                        # `potential_id` looked like a link, but it did not correspond to any legitimate link.
+                        continue
+                    try:
+                        alias = await self.client.get_alias(passive_link['alias_id'])
+                    except ClientError:
+                        raise BadValueError(query='get_links_and_word_counts_from_paragraph', value=potential_id)
+                    replacement = alias['name']
+                    sentence_with_links_replaced = sentence_with_links_replaced.replace(match, replacement)
+                    sentence_passive_links.append(link)
                 try:
                     alias = await self.client.get_alias(link['alias_id'])
                 except ClientError:
@@ -508,7 +544,7 @@ class MongoDBInterface(AbstractDBInterface):
                      self.tokenize_sentence(sentence_with_links_replaced) if token not in punctuation]
             word_counts.update(words)
             if sentence_links:
-                sentence_tuple = (sentence, sentence_links)
+                sentence_tuple = (sentence, sentence_links, sentence_passive_links)
                 results.append(sentence_tuple)
         return results, word_counts
 
