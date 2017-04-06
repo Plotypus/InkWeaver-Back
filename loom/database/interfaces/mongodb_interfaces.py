@@ -487,7 +487,7 @@ class MongoDBInterface(AbstractDBInterface):
         results = []
         for sentence in sentences:
             sentence_links = []
-            links_replaced_sentence = sentence
+            sentence_with_links_replaced = sentence
             link_matches = re.findall(self.link_format_regex, sentence)
             for match in link_matches:
                 potential_id = decode_string_to_bson(match)
@@ -501,11 +501,11 @@ class MongoDBInterface(AbstractDBInterface):
                 except ClientError:
                     raise BadValueError(query='get_links_and_word_counts_from_paragraph', value=potential_id)
                 replacement = alias['name']
-                links_replaced_sentence = links_replaced_sentence.replace(match, replacement)
+                sentence_with_links_replaced = sentence_with_links_replaced.replace(match, replacement)
                 sentence_links.append(link)
             # Mongo does not support '$' or '.' in key name, so we replace them with their unicode equivalents.
             words = [token.replace('.', '').replace('$', '').lower() for token in
-                     self.tokenize_sentence(links_replaced_sentence) if token not in punctuation]
+                     self.tokenize_sentence(sentence_with_links_replaced) if token not in punctuation]
             word_counts.update(words)
             if sentence_links:
                 sentence_tuple = (sentence, sentence_links)
