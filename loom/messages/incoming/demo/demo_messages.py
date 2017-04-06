@@ -15,8 +15,10 @@ class AddHeadingWithTextIncomingMessage(IncomingMessage):
 class AddTextToSectionIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.wiki_id = RequiredField()
         self.text = RequiredField()
         self.section_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.add_text_to_section(self.uuid, self.message_id, self.text, self.section_id)
+        return self._dispatcher.add_text_to_section(self.uuid, self.message_id, self.wiki_id, self.text,
+                                                    self.section_id)
