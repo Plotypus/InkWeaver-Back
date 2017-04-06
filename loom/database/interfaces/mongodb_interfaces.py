@@ -854,7 +854,7 @@ class MongoDBInterface(AbstractDBInterface):
                 'alias_id':         alias_id,
                 'page_id':          page_id,
                 'link_ids':         alias['links'],
-                'passive_link_ids': alias['passive_link_ids'],
+                'passive_link_ids': alias['passive_links'],
             })
         return alias_list
 
