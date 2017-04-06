@@ -540,6 +540,7 @@ class MongoDBInterface(AbstractDBInterface):
             path = alias['alias_name'].split()
             trie.add_path(path, alias['page_id'], alias['alias_id'])
         # Parse the text.
+        passive_links = []
         sentences_buffer = []
         sentences = self.tokenize_paragraph(text)
         for tokens in (self.tokenize_sentence(sentence) for sentence in sentences):
@@ -550,6 +551,7 @@ class MongoDBInterface(AbstractDBInterface):
                 if match is not None:
                     passive_link_id = await self.client.create_passive_link(match.alias_id, match.page_id, section_id,
                                                                             paragraph_id)
+                    passive_links.append(passive_link_id)
                     encoded_link_id = self.encode_object_id(passive_link_id)
                     buffer.append(encoded_link_id)
                     index += match.length
@@ -557,7 +559,10 @@ class MongoDBInterface(AbstractDBInterface):
                     buffer.append(tokens[index])
                     index += 1
             sentences_buffer.append(buffer)
-        return ' '.join((self.detokenize_sentence(sentence_buffer) for sentence_buffer in sentences_buffer))
+        return (
+            ' '.join((self.detokenize_sentence(sentence_buffer) for sentence_buffer in sentences_buffer)),
+            passive_links
+        )
 
     async def _create_link_and_replace_text(self, section_id, paragraph_id, text, start, end):
         # Get the match and split it into story_id, page_id, and name.
