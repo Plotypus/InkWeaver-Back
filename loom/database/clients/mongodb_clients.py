@@ -1385,7 +1385,7 @@ class MongoDBClient:
         if len(results) > 1:
             raise ExtraMatchesError
         if not results:
-            return None
+            raise NoMatchError
         else:
             return results[0]
 
