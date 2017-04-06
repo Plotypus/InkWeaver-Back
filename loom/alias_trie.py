@@ -31,7 +31,7 @@ class AliasTrie:
     def find_longest_match_in_tokens(self, tokens, *, from_index) -> Union[AliasTrieMatch, None]:
         node = self.root.find_next_terminal(tokens, from_index, None)
         if node.depth > 0:
-            return AliasTrieMatch(from_index + node.depth, node.page_id, node.alias_id)
+            return AliasTrieMatch(node.depth, node.page_id, node.alias_id)
         else:
             return None
 
