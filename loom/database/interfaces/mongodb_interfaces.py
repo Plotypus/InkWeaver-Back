@@ -302,6 +302,11 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.insert_links_for_paragraph(paragraph_id, list(), in_section_id=section_id, at_index=index)
         except ClientError:
             raise FailedUpdateError(query='add_paragraph')
+        try:
+            await self.client.insert_passive_links_for_paragraph(paragraph_id, list(), in_section_id=section_id,
+                                                                 at_index=index)
+        except ClientError:
+            raise FailedUpdateError(query='add_paragraph')
         # Default the note to None
         try:
             await self.client.insert_note_for_paragraph(paragraph_id, in_section_id=section_id, note=None,
