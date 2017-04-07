@@ -314,10 +314,12 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='add_paragraph')
         if text is not None:
-            links_created = await self.set_paragraph_text(wiki_id, section_id, text, paragraph_id)
+            links_created, passive_links_created = await self.set_paragraph_text(wiki_id, section_id, text,
+                                                                                 paragraph_id)
         else:
             links_created = []
-        return paragraph_id, links_created
+            passive_links_created = []
+        return paragraph_id, links_created, passive_links_created
 
     async def add_bookmark(self, name, story_id, section_id, paragraph_id, index=None):
         bookmark_id = ObjectId()
@@ -499,7 +501,7 @@ class MongoDBInterface(AbstractDBInterface):
                                                        section_id)
         except ClientError:
             raise FailedUpdateError(query='set_paragraph_text')
-        return links_created
+        return links_created, passive_links_created
 
     @staticmethod
     def _update_link_in_references_with_context(references, link_id, context):
