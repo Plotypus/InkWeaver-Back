@@ -52,3 +52,9 @@ class DeleteLinkOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, link_id: ObjectId):
         super().__init__(uuid, message_id, 'link_deleted')
         self.link_id = link_id
+
+
+class DeletePassiveLinkOutgoingMessage(StoryBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, passive_link_id: ObjectId):
+        super().__init__(uuid, message_id, 'passive_link_deleted')
+        self.passive_link_id = passive_link_id
