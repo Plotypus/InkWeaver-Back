@@ -582,6 +582,7 @@ class MongoDBInterface(AbstractDBInterface):
         passive_links = []
         sentences_buffer = []
         sentences = self.tokenize_paragraph(text)
+        # TODO: Fix nltk's behavior when tokenizing sentences with quotations.
         for tokens in (self.tokenize_sentence(sentence) for sentence in sentences):
             buffer = []
             index = 0
@@ -590,7 +591,8 @@ class MongoDBInterface(AbstractDBInterface):
                 if match is not None:
                     passive_link_id = await self.client.create_passive_link(match.alias_id, match.page_id, section_id,
                                                                             paragraph_id)
-                    passive_links.append(passive_link_id)
+                    match_name = tokens[index:match.length]
+                    passive_links.append((passive_link_id, match.page_id, match_name))
                     encoded_link_id = self.encode_object_id(passive_link_id)
                     buffer.append(encoded_link_id)
                     index += match.length
