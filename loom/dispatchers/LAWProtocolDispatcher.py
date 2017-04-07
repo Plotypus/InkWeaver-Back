@@ -170,8 +170,11 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def add_paragraph(self, uuid, message_id, wiki_id, section_id, text, succeeding_paragraph_id=None):
-        paragraph_id, links_created = await self.db_interface.add_paragraph(wiki_id, section_id, text,
-                                                                            succeeding_paragraph_id)
+        (
+            paragraph_id,
+            links_created,
+            passive_links_created
+        ) = await self.db_interface.add_paragraph(wiki_id, section_id, text, succeeding_paragraph_id)
         for link_id, page_id, name in links_created:
             yield CreateLinkOutgoingMessage(uuid, message_id,
                                             link_id=link_id,
@@ -179,6 +182,13 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                             paragraph_id=paragraph_id,
                                             name=name,
                                             page_id=page_id)
+        for passive_link_id, page_id, name in passive_links_created:
+            yield CreatePassiveLinkOutgoingMessage(uuid, message_id,
+                                                   passive_link_id=passive_link_id,
+                                                   section_id=section_id,
+                                                   paragraph_id=paragraph_id,
+                                                   name=name,
+                                                   page_id=page_id)
         yield AddParagraphOutgoingMessage(uuid, message_id,
                                           paragraph_id=paragraph_id,
                                           section_id=section_id,
@@ -211,8 +221,9 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def edit_paragraph(self, uuid, message_id, wiki_id, section_id, update, paragraph_id):
         if update['update_type'] == 'set_text':
             text = update['text']
-            links_created = await self.db_interface.set_paragraph_text(wiki_id, section_id, paragraph_id=paragraph_id,
-                                                                       text=text)
+            links_created, passive_links_created = await self.db_interface.set_paragraph_text(wiki_id, section_id,
+                                                                                              paragraph_id=paragraph_id,
+                                                                                              text=text)
             for link_id, page_id, name in links_created:
                 yield CreateLinkOutgoingMessage(uuid, message_id,
                                                 link_id=link_id,
@@ -220,6 +231,13 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                 paragraph_id=paragraph_id,
                                                 name=name,
                                                 page_id=page_id)
+            for passive_link_id, page_id, name in passive_links_created:
+                yield CreatePassiveLinkOutgoingMessage(uuid, message_id,
+                                                       passive_link_id=passive_link_id,
+                                                       section_id=section_id,
+                                                       paragraph_id=paragraph_id,
+                                                       name=name,
+                                                       page_id=page_id)
             yield EditParagraphOutgoingMessage(uuid, message_id,
                                                section_id=section_id,
                                                update=update,
