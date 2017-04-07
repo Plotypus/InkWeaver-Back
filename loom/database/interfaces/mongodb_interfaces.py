@@ -1340,6 +1340,7 @@ class MongoDBInterface(AbstractDBInterface):
         if not await self._page_title_is_alias(page):
             await self._create_alias(page_id, old_name)
         # TODO: Return deleted passive link ids
+        # TODO: Return new alias_id if one is created
 
     async def get_alias(self, alias_id: ObjectId):
         try:

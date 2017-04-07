@@ -494,18 +494,20 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def delete_wiki(self, uuid, message_id, user_id, wiki_id):
-        # TODO: Yield deleted passive links.
         deleted_link_ids, deleted_passive_link_ids = await self.db_interface.delete_wiki(user_id, wiki_id)
         for link_id in deleted_link_ids:
             yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
+        for passive_link_id in deleted_passive_link_ids:
+            yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
         yield DeleteWikiOutgoingMessage(uuid, message_id, wiki_id=wiki_id)
 
     @handle_interface_errors
     async def delete_segment(self, uuid, message_id, wiki_id, segment_id):
-        # TODO: Yield deleted passive links.
         deleted_link_ids, deleted_passive_link_ids = await self.db_interface.delete_segment(wiki_id, segment_id)
         for link_id in deleted_link_ids:
             yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
+        for passive_link_id in deleted_passive_link_ids:
+            yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
         yield DeleteSegmentOutgoingMessage(uuid, message_id, segment_id=segment_id)
 
     @handle_interface_errors
@@ -517,10 +519,11 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def delete_page(self, uuid, message_id, wiki_id, page_id):
-        # TODO: Yield deleted passive links.
         deleted_link_ids, deleted_passive_link_ids = await self.db_interface.delete_page(wiki_id, page_id)
         for link_id in deleted_link_ids:
             yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
+        for passive_link_id in deleted_passive_link_ids:
+            yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
         yield DeletePageOutgoingMessage(uuid, message_id, page_id=page_id)
 
     @handle_interface_errors
@@ -576,10 +579,11 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def delete_alias(self, uuid, message_id, wiki_id, alias_id):
-        # TODO: Yield deleted passive link outgoing messages
         deleted_link_ids, deleted_passive_link_ids = await self.db_interface.delete_alias(wiki_id, alias_id)
         for link_id in deleted_link_ids:
             yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
+        for passive_link_id in deleted_passive_link_ids:
+            yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
         yield DeleteAliasOutgoingMessage(uuid, message_id, alias_id=alias_id)
 
     ###########################################################################
