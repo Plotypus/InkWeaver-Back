@@ -1,10 +1,11 @@
+import nltk
 import re
 
 # This Tokenizer is heavily based on the NLTK Penn Treebank Tokenizer:
 #  https://github.com/nltk/nltk/blob/develop/nltk/tokenize/treebank.py
 
 
-class Tokenizer:
+class LoomTokenizer:
     """
     This tokenizer is designed to split words and punctuation, but it does not separate words into semantic units like
     the original Treebank tokenizer on which it is based.
@@ -36,14 +37,19 @@ class Tokenizer:
         (re.compile(r'--'), r' -- '),                                   # |Blah--blah| -> |Blah -- blah|
     ]
 
-    def tokenize(self, text):
-        for regexp, substitution in self.STARTING_QUOTES:
+    @staticmethod
+    def word_tokenize(text):
+        for regexp, substitution in LoomTokenizer.STARTING_QUOTES:
             text = regexp.sub(substitution, text)
-        for regexp, substitution in self.PUNCTUATION:
+        for regexp, substitution in LoomTokenizer.PUNCTUATION:
             text = regexp.sub(substitution, text)
-        for regexp, substitution in self.PARENS_BRACKETS:
+        for regexp, substitution in LoomTokenizer.PARENS_BRACKETS:
             text = regexp.sub(substitution, text)
         text = " " + text + " "
-        for regexp, substitution in self.ENDING_QUOTES:
+        for regexp, substitution in LoomTokenizer.ENDING_QUOTES:
             text = regexp.sub(substitution, text)
         return text.split()
+
+    @staticmethod
+    def sent_tokenize(text):
+        return nltk.sent_tokenize(text)
