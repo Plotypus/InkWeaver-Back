@@ -443,13 +443,6 @@ class MongoDBInterface(AbstractDBInterface):
                     await self.client.set_passive_link_context(passive_link_id, context)
                 except ClientError:
                     raise FailedUpdateError(query='set_paragraph_text')
-                # Get page ID from passive_link and add its context to `page_updates`.
-                page_id = passive_link['page_id']
-                passive_link_updates = page_updates.get(page_id)
-                if passive_link_updates is None:
-                    passive_link_updates = {}
-                    page_updates[page_id] = passive_link_updates
-                passive_link_updates[passive_link_id] = context
                 # Add passive_link to `section_passive_links` to update the passive_links for the paragraph.
                 section_passive_links.append(passive_link_id)
         # Apply updates to references in pages.
@@ -589,8 +582,8 @@ class MongoDBInterface(AbstractDBInterface):
             while index < len(tokens):
                 match = trie.find_longest_match_in_tokens(tokens, from_index=index)
                 if match is not None:
-                    passive_link_id = await self.client.create_passive_link(match.alias_id, match.page_id, section_id,
-                                                                            paragraph_id)
+                    passive_link_id = await self.create_passive_link(section_id, paragraph_id, match.alias_id,
+                                                                     match.page_id)
                     match_name = tokens[index:match.length]
                     passive_links.append((passive_link_id, match.page_id, match_name))
                     encoded_link_id = self.encode_object_id(passive_link_id)
@@ -1271,6 +1264,16 @@ class MongoDBInterface(AbstractDBInterface):
     #
     ###########################################################################
 
+    async def create_passive_link(self, section_id: ObjectId, paragraph_id: ObjectId, alias_id: ObjectId,
+                                  page_id: ObjectId):
+        passive_link_id = await self.client.create_passive_link(alias_id, page_id, section_id, paragraph_id)
+        try:
+            await self.client.insert_passive_link_to_alias(passive_link_id, alias_id)
+        except ClientError:
+            raise FailedUpdateError(query='create_passive_link')
+        else:
+            return passive_link_id
+
     async def get_passive_link(self, passive_link_id):
         try:
             passive_link = await self.client.get_passive_link(passive_link_id)
@@ -1317,12 +1320,9 @@ class MongoDBInterface(AbstractDBInterface):
             alias = await self.client.get_alias(alias_id)
         except ClientError:
             raise BadValueError(query='change_alias_name', value=alias_id)
-        # Delete existing passive links to this alias.
-        old_name = alias['name']
-        for passive_link_id in alias['passive_links']:
-            await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, old_name)
         # Update name in alias.
         page_id = alias['page_id']
+        old_name = alias['name']
         try:
             await self.client.set_alias_name(new_name, alias_id)
         except ClientError:
@@ -1332,6 +1332,10 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.update_alias_name_in_page(page_id, old_name, new_name)
         except ClientError:
             raise FailedUpdateError(query='change_alias_name')
+        # Delete existing passive links to this alias.
+        for passive_link_id in alias['passive_links']:
+            await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, old_name)
+        # Get page to do updates.
         try:
             page = await self.client.get_page(page_id)
         except ClientError:
