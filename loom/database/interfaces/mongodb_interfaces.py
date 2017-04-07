@@ -1324,6 +1324,13 @@ class MongoDBInterface(AbstractDBInterface):
         page_id = alias['page_id']
         old_name = alias['name']
         try:
+            page = await self.client.get_page(page_id)
+        except ClientError:
+            raise BadValueError(query='change_alias_name', value=page_id)
+        # Prevent users from renaming an alias into an existing one
+        if page['aliases'].get(new_name) is not None:
+            raise BadValueError(query='change_alias_name', value=new_name)
+        try:
             await self.client.set_alias_name(new_name, alias_id)
         except ClientError:
             raise FailedUpdateError(query='change_alias_name')
@@ -1335,11 +1342,6 @@ class MongoDBInterface(AbstractDBInterface):
         # Delete existing passive links to this alias.
         for passive_link_id in alias['passive_links']:
             await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, old_name)
-        # Get page to do updates.
-        try:
-            page = await self.client.get_page(page_id)
-        except ClientError:
-            raise BadValueError(query='change_alias_name', value=page_id)
         # Alias with page title renamed, need to recreate primary alias
         if not await self._page_title_is_alias(page):
             await self._create_alias(page_id, old_name)
