@@ -4,6 +4,7 @@ from .errors import *
 from loom.alias_trie import AliasTrie
 from loom.database.clients import *
 from loom.serialize import decode_string_to_bson, encode_bson_to_string
+from loom.tokenizer import LoomTokenizer
 
 import nltk
 import re
@@ -57,11 +58,11 @@ class MongoDBInterface(AbstractDBInterface):
 
     @staticmethod
     def tokenize_paragraph(paragraph):
-        return nltk.sent_tokenize(paragraph)
+        return LoomTokenizer.sent_tokenize(paragraph)
 
     @staticmethod
     def tokenize_sentence(sentence):
-        return nltk.word_tokenize(sentence)
+        return LoomTokenizer.word_tokenize(sentence)
 
     @staticmethod
     def detokenize_sentence(sentence_tokens):
