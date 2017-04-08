@@ -23,6 +23,12 @@ nltk.data.path.insert(0, pathjoin(dirname(dirname(dirname(__file__))), 'nltk_dat
 CREATE_LINK_REGEX = re.compile(r'{#\|(.*?)\|#}')
 
 
+def generate_create_link_encoding(story_id: ObjectId, page_id: ObjectId, text: str):
+    encoded_story_id = MongoDBInterface.encode_object_id(story_id)
+    encoded_page_id = MongoDBInterface.encode_object_id(page_id)
+    return '{#|' + encoded_story_id + '|' + encoded_page_id + '|' + text + '|#}'
+
+
 def generate_link_format_regex():
     o = ObjectId()
     inner_regex = r'[a-f\d]{24}'
