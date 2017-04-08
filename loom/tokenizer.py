@@ -26,30 +26,30 @@ class LoomTokenizer:
         (re.compile(r'([:,])([^\d])'), r' \1 \2'),                      # |Blah: blah.| -> |Blah : blah.|
         (re.compile(r'([:,])$'), r' \1 '),                              # |Blah:| -> |Blah : |
         (re.compile(r'\.\.\.'), r' ... '),                              # |Blah...blah.| -> |Blah ... blah.|
-        (re.compile(r'[;@#$%&]'), r' \g<0> '),                          #
-        (re.compile(r'([^.])(\.)([\])}>"\']*)\s*$'), r'\1 \2\3 '),    # |(Blah.)   | -> |(Blah .) |
-        (re.compile(r'[?!]'), r' \g<0> '),                              #
+        (re.compile(r'[;@#$%&]'), r' \g<0> '),
+        (re.compile(r'([^.])(\.)([\])}>"\']*)\s*$'), r'\1 \2\3 '),      # |(Blah.)   | -> |(Blah .) |
+        (re.compile(r'[?!]'), r' \g<0> '),
         (re.compile(r"([^'])' "), r"\1 ' "),                            # |'Blah blah' blah.| -> |'Blah blah ' blah.|
     ]
 
     PARENS_BRACKETS = [
-        (re.compile(r'[\]\[(){\}<>]'), r' \g<0> '),                #
+        (re.compile(r'[\]\[(){\}<>]'), r' \g<0> '),
         (re.compile(r'--'), r' -- '),                                   # |Blah--blah| -> |Blah -- blah|
     ]
 
-    @staticmethod
-    def word_tokenize(text):
-        for regexp, substitution in LoomTokenizer.STARTING_QUOTES:
+    @classmethod
+    def word_tokenize(cls, text):
+        for regexp, substitution in cls.STARTING_QUOTES:
             text = regexp.sub(substitution, text)
-        for regexp, substitution in LoomTokenizer.PUNCTUATION:
+        for regexp, substitution in cls.PUNCTUATION:
             text = regexp.sub(substitution, text)
-        for regexp, substitution in LoomTokenizer.PARENS_BRACKETS:
+        for regexp, substitution in cls.PARENS_BRACKETS:
             text = regexp.sub(substitution, text)
         text = " " + text + " "
-        for regexp, substitution in LoomTokenizer.ENDING_QUOTES:
+        for regexp, substitution in cls.ENDING_QUOTES:
             text = regexp.sub(substitution, text)
         return text.split()
 
-    @staticmethod
-    def sent_tokenize(text):
+    @classmethod
+    def sent_tokenize(cls, text):
         return nltk.sent_tokenize(text)
