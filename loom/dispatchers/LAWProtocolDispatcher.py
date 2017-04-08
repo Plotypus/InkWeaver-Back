@@ -611,3 +611,13 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def get_page_frequencies(self, uuid, message_id, story_id, wiki_id):
         pages = await self.db_interface.get_page_frequencies_in_story(story_id, wiki_id)
         yield GetPageFrequenciesOutgoingMessage(uuid, message_id, pages=pages)
+
+    ###########################################################################
+    #
+    # Passive Link Methods
+    #
+    ###########################################################################
+
+    @handle_interface_errors
+    async def approve_passive_link(self, uuid, message_id, passive_link_id):
+        pass

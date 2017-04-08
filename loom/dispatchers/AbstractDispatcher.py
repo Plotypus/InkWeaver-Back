@@ -247,3 +247,7 @@ class AbstractDispatcher(ABC):
     async def get_paragraph_statistics(self, uuid, message_id, section_id, paragraph_id):
         pass
 
+    @abstractmethod
+    async def approve_passive_link(self, uuid, message_id, passive_link_id):
+        pass
+
