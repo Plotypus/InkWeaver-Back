@@ -1320,8 +1320,10 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='comprehensive_remove_passive_link', value=passive_link_id)
         encoded_passive_link_id = self.encode_object_id(passive_link_id)
         updated_text = text.replace(encoded_passive_link_id, replacement_text)
-        await self.set_paragraph_text(wiki_id, context['section_id'], updated_text, context['paragraph_id'])
+        links_created, _ = await self.set_paragraph_text(wiki_id, context['section_id'], updated_text,
+                                                         context['paragraph_id'])
         await self.delete_passive_link(passive_link_id)
+        return links_created
 
     ###########################################################################
     #
