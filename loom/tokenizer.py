@@ -11,30 +11,31 @@ class LoomTokenizer:
     the original Treebank tokenizer on which it is based.
     """
     STARTING_QUOTES = [
-        (re.compile(r'^\"'), r'" '),                                    # |"Blah blah"| -> |" Blah blah"|
-        (re.compile(r'^\''), r"' "),                                    # |'Blah blah'| -> |' Blah blah'|
-        (re.compile(r'([ (\[{<])"'), r'\1 " '),                         # |Blah "blah" blah.| -> |Blah " blah" blah.|
-        (re.compile(r'([ (\[{<])\''), r"\1 ' "),                        # |Blah 'blah' blah.| -> |Blah ' blah' blah.|
+        (re.compile(r'^\"'), r'" '),                                    # |"Blah blah"|         -> |" Blah blah"|
+        (re.compile(r'^\''), r"' "),                                    # |'Blah blah'|         -> |' Blah blah'|
+        (re.compile(r'([ (\[{<])"'), r'\1 " '),                         # |Blah "blah" blah.|   -> |Blah " blah" blah.|
+        (re.compile(r'([ (\[{<])\''), r"\1 ' "),                        # |Blah 'blah' blah.|   -> |Blah ' blah' blah.|
     ]
 
     ENDING_QUOTES = [
-        (re.compile(r'"'), ' " '),                                      # |Blah " blah" blah.| -> |Blah " blah " blah.|
-        # (re.compile(r'\' '), ' \' '),                                   # |Blah ' blah'.| -> |Blah ' blah '.|
+        (re.compile(r'"'), ' " '),                                      # |Blah " blah" blah.|  -> |Blah " blah " blah.|
+        (re.compile(r"([^' ])('[sS]|') "), r"\1 \2 "),                  # |Blah's blah.|        -> |Blah 's blah.|
+        # (re.compile(r'\' '), ' \' '),                                   # |Blah ' blah'.|     -> |Blah ' blah '.|
     ]
 
     PUNCTUATION = [
-        (re.compile(r'([:,])([^\d])'), r' \1 \2'),                      # |Blah: blah.| -> |Blah : blah.|
-        (re.compile(r'([:,])$'), r' \1 '),                              # |Blah:| -> |Blah : |
-        (re.compile(r'\.\.\.'), r' ... '),                              # |Blah...blah.| -> |Blah ... blah.|
+        (re.compile(r'([:,])([^\d])'), r' \1 \2'),                      # |Blah: blah.|         -> |Blah : blah.|
+        (re.compile(r'([:,])$'), r' \1 '),                              # |Blah:|               -> |Blah : |
+        (re.compile(r'\.\.\.'), r' ... '),                              # |Blah...blah.|        -> |Blah ... blah.|
         (re.compile(r'[;@#$%&]'), r' \g<0> '),
-        (re.compile(r'([^.])(\.)([\])}>"\']*)\s*$'), r'\1 \2\3 '),      # |(Blah.)   | -> |(Blah .) |
+        (re.compile(r'([^.])(\.)([\])}>"\']*)\s*$'), r'\1 \2\3 '),      # |(Blah.)   |          -> |(Blah .) |
         (re.compile(r'[?!]'), r' \g<0> '),
-        (re.compile(r"([^'])' "), r"\1 ' "),                            # |'Blah blah' blah.| -> |'Blah blah ' blah.|
+        (re.compile(r"([^'])' "), r"\1 ' "),                            # |'Blah blah' blah.|   -> |'Blah blah ' blah.|
     ]
 
     PARENS_BRACKETS = [
         (re.compile(r'[\]\[(){\}<>]'), r' \g<0> '),
-        (re.compile(r'--'), r' -- '),                                   # |Blah--blah| -> |Blah -- blah|
+        (re.compile(r'--'), r' -- '),                                   # |Blah--blah|          -> |Blah -- blah|
     ]
 
     @classmethod
