@@ -619,5 +619,5 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     ###########################################################################
 
     @handle_interface_errors
-    async def approve_passive_link(self, uuid, message_id, passive_link_id):
+    async def approve_passive_link(self, uuid, message_id, passive_link_id, story_id, wiki_id):
         pass

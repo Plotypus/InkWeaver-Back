@@ -330,7 +330,7 @@ class AbstractDBInterface(ABC):
     ###########################################################################
 
     @abstractmethod
-    async def approve_passive_link(self, passive_link_id):
+    async def approve_passive_link(self, passive_link_id, story_id, wiki_id):
         pass
 
     ###########################################################################
