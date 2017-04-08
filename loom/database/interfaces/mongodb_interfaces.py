@@ -576,28 +576,36 @@ class MongoDBInterface(AbstractDBInterface):
         passive_links = []
         sentences_buffer = []
         sentences = self.tokenize_paragraph(text)
-        # TODO: Fix nltk's behavior when tokenizing sentences with quotations.
-        for tokens in (self.tokenize_sentence(sentence) for sentence in sentences):
+        for sentence in sentences:
+            tokens = self.tokenize_sentence(sentence)
             buffer = []
-            index = 0
-            while index < len(tokens):
-                match = trie.find_longest_match_in_tokens(tokens, from_index=index)
+            sent_index = 0
+            token_index = 0
+            while token_index < len(tokens):
+                while sentence[sent_index] == ' ':
+                    buffer.append(' ')
+                    sent_index += 1
+                match = trie.find_longest_match_in_tokens(tokens, from_index=token_index)
                 if match is not None:
                     passive_link_id = await self.create_passive_link(section_id, paragraph_id, match.alias_id,
                                                                      match.page_id)
-                    match_name = tokens[index:match.length]
+                    match_name = ' '.join(tokens[token_index:token_index+match.length])
                     passive_links.append((passive_link_id, match.page_id, match_name))
                     encoded_link_id = self.encode_object_id(passive_link_id)
+                    for j in range(match.length):
+                        sent_index += len(tokens[token_index])
+                        if j < match.length - 1:
+                            while sentence[sent_index] == ' ':
+                                sent_index += 1
+                        token_index += 1
                     buffer.append(encoded_link_id)
-                    index += match.length
                 else:
-                    buffer.append(tokens[index])
-                    index += 1
-            sentences_buffer.append(buffer)
-        return (
-            ' '.join((self.detokenize_sentence(sentence_buffer) for sentence_buffer in sentences_buffer)),
-            passive_links
-        )
+                    token = tokens[token_index]
+                    sent_index += len(token)
+                    buffer.append(token)
+                    token_index += 1
+            sentences_buffer.append(''.join(buffer))
+        return ' '.join(sentences_buffer), passive_links
 
     async def _create_link_and_replace_text(self, section_id, paragraph_id, text, start, end):
         # Get the match and split it into story_id, page_id, and name.
