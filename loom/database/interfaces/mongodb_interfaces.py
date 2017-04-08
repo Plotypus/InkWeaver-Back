@@ -1309,7 +1309,8 @@ class MongoDBInterface(AbstractDBInterface):
         links_created = await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, create_link_encoding)
         if len(links_created) != 1:
             raise FailedUpdateError(query='approve_passive_link')
-        return passive_link_id, section_id, paragraph_id, links_created[0]
+        paragraph_text = await self.client.get_paragraph_text(section_id, paragraph_id)
+        return passive_link_id, section_id, paragraph_id, links_created[0], paragraph_text
 
     async def delete_passive_link(self, passive_link_id):
         passive_link = await self.get_passive_link(passive_link_id)
