@@ -620,4 +620,21 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def approve_passive_link(self, uuid, message_id, passive_link_id, story_id, wiki_id):
-        pass
+        (
+            passive_link_id,
+            section_id,
+            paragraph_id,
+            created_link,
+            new_paragraph_text,
+        ) = await self.db_interface.approve_passive_link(passive_link_id, story_id, wiki_id)
+        yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
+        update = {
+            'update_type': 'set_text',
+            'text':        new_paragraph_text,
+        }
+        yield EditParagraphOutgoingMessage(uuid, message_id, section_id=section_id, update=update,
+                                           paragraph_id=paragraph_id)
+        link_id, page_id, name = created_link
+        yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, paragraph_id=paragraph_id, name=name,
+                                        page_id=page_id)
+
