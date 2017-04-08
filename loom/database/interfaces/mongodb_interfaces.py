@@ -1297,6 +1297,20 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return passive_link
 
+    async def approve_passive_link(self, passive_link_id, story_id, wiki_id):
+        passive_link = await self.get_passive_link(passive_link_id)
+        section_id = passive_link['context']['section_id']
+        paragraph_id = passive_link['context']['paragraph_id']
+        alias_id = passive_link['alias_id']
+        page_id = passive_link['page_id']
+        alias = await self.get_alias(alias_id)
+        alias_name = alias['name']
+        create_link_encoding = generate_create_link_encoding(story_id, page_id, alias_name)
+        links_created = await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, create_link_encoding)
+        if len(links_created) != 1:
+            raise FailedUpdateError(query='approve_passive_link')
+        return passive_link_id, section_id, paragraph_id, links_created[0]
+
     async def delete_passive_link(self, passive_link_id):
         passive_link = await self.get_passive_link(passive_link_id)
         alias_id = passive_link['alias_id']
