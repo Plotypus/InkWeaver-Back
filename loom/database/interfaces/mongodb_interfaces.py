@@ -903,9 +903,18 @@ class MongoDBInterface(AbstractDBInterface):
                 'alias_id':         alias_id,
                 'page_id':          page_id,
                 'link_ids':         alias['links'],
-                'passive_link_ids': alias['passive_links'],
+                'passive_links':    [await self._get_passive_link_for_alias_list(passive_link_id)
+                                     for passive_link_id in alias['passive_links']],
             })
         return alias_list
+
+    async def _get_passive_link_for_alias_list(self, passive_link_id):
+        passive_link = await self.get_passive_link(passive_link_id)
+        passive_link_object = {
+            'passive_link_id': passive_link['_id'],
+            'pending':         passive_link['pending'],
+        }
+        return passive_link_object
 
     async def get_wiki_hierarchy(self, wiki_id):
         wiki = await self.get_wiki(wiki_id)
