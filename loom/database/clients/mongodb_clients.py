@@ -1357,6 +1357,18 @@ class MongoDBClient:
         self.assert_update_was_successful(update_result)
         self.log(f'set_passive_link_context {{{passive_link_id}}}')
 
+    async def reject_passive_link(self, passive_link_id: ObjectId):
+        update_result: UpdateResult = await self.passive_links.update_one(
+            filter={'_id': passive_link_id},
+            update={
+                '$set': {
+                    'pending': False,
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'reject_passive_link {{{passive_link_id}}}')
+
     async def insert_passive_links_for_paragraph(self, paragraph_id: ObjectId, passive_links: List[ObjectId],
                                                  in_section_id: ObjectId, at_index=None):
         inner_parameters = self._insertion_parameters({
