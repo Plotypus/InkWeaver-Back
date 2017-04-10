@@ -591,6 +591,11 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, section_id=section_id,
                                         paragraph_id=paragraph_id, name=name, page_id=page_id)
 
+    @handle_interface_errors
+    async def reject_passive_link(self, uuid, message_id, passive_link_id):
+        await self.db_interface.reject_passive_link(passive_link_id)
+        yield RejectPassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
+
     ###########################################################################
     #
     # Alias Methods
