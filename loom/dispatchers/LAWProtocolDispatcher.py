@@ -431,6 +431,8 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                                                                                 page_id)
             yield EditPageOutgoingMessage(uuid, message_id, page_id=page_id, update=update)
             yield ChangeAliasNameOutgoingMessage(uuid, message_id, alias_id=alias_id, new_name=title)
+            for passive_link_id in deleted_passive_link_ids:
+                yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
             if replacement_alias_info is not None:
                 replacement_alias_id, prev_name = replacement_alias_info
                 yield CreateAliasOutgoingMessage(uuid, message_id, alias_id=replacement_alias_id, page_id=page_id,
