@@ -426,9 +426,15 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def edit_page(self, uuid, message_id, wiki_id, page_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
-            alias_id = await self.db_interface.set_page_title(wiki_id, title, page_id)
+            alias_id, deleted_passive_link_ids, replacement_alias_info = await self.db_interface.set_page_title(wiki_id,
+                                                                                                                title,
+                                                                                                                page_id)
             yield EditPageOutgoingMessage(uuid, message_id, page_id=page_id, update=update)
             yield ChangeAliasNameOutgoingMessage(uuid, message_id, alias_id=alias_id, new_name=title)
+            if replacement_alias_info is not None:
+                replacement_alias_id, prev_name = replacement_alias_info
+                yield CreateAliasOutgoingMessage(uuid, message_id, alias_id=replacement_alias_id, page_id=page_id,
+                                                 alias_name=prev_name)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
