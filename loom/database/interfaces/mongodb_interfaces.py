@@ -1394,8 +1394,9 @@ class MongoDBInterface(AbstractDBInterface):
         replacement_alias_id = None
         if not await self._page_title_is_alias(page):
             replacement_alias_id = await self._create_alias(page_id, old_name)
+        replacement_alias_info = None if replacement_alias_id is None else (replacement_alias_id, old_name)
         # Return the deleted passive link IDs and the new alias ID, if one was created.
-        return alias['passive_links'], replacement_alias_id
+        return alias['passive_links'], replacement_alias_info
 
     async def get_alias(self, alias_id: ObjectId):
         try:
