@@ -6,6 +6,19 @@ from uuid import UUID
 
 ###########################################################################
 #
+# Create Messages
+#
+###########################################################################
+class AliasCreatedOutgoingMessage(StoryBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, alias_id: ObjectId, page_id: ObjectId, alias_name: str):
+        super().__init__(uuid, message_id, 'alias_created')
+        self.alias_id = alias_id
+        self.page_id = page_id
+        self.alias_name = alias_name
+
+
+###########################################################################
+#
 # Edit Messages
 #
 ###########################################################################
