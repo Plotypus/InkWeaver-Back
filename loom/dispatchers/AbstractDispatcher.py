@@ -254,6 +254,20 @@ class AbstractDispatcher(ABC):
 
     ###########################################################################
     #
+    # Passive Link Methods
+    #
+    ###########################################################################
+
+    @abstractmethod
+    async def approve_passive_link(self, uuid, message_id, passive_link_id, story_id, wiki_id):
+        pass
+
+    @abstractmethod
+    async def reject_passive_link(self, uuid, message_id, passive_link_id):
+        pass
+
+    ###########################################################################
+    #
     # Alias Methods
     #
     ###########################################################################
