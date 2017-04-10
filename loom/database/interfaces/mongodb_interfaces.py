@@ -1041,10 +1041,9 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_page_title(new_title, page_id)
         except ClientError:
             raise FailedUpdateError(query='set_page_title')
-        # TODO: Fix this to account for returned values.
-        await self.change_alias_name(wiki_id, alias_id, new_title)
+        deleted_passive_link_ids, replacement_alias_info = await self.change_alias_name(wiki_id, alias_id, new_title)
         # Return the `alias_id` to facilitate error handling up above.
-        return alias_id
+        return alias_id, deleted_passive_link_ids, replacement_alias_info
 
     async def set_heading_title(self, old_title, new_title, page_id):
         # Check to see if a heading already exists with the same title.
