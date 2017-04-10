@@ -2,6 +2,13 @@ from abc import ABC, abstractmethod
 
 
 class AbstractDispatcher(ABC):
+
+    ###########################################################################
+    #
+    # User Methods
+    #
+    ###########################################################################
+
     @abstractmethod
     async def get_user_preferences(self, uuid, message_id, user_id):
         pass
@@ -30,6 +37,12 @@ class AbstractDispatcher(ABC):
     @abstractmethod
     async def set_user_story_position_context(self, uuid, message_id, user_id, story_id, position_context):
         pass
+
+    ###########################################################################
+    #
+    # Story Methods
+    #
+    ###########################################################################
 
     @abstractmethod
     async def create_story(self, uuid, message_id, user_id, title, wiki_id, summary):
@@ -127,6 +140,12 @@ class AbstractDispatcher(ABC):
     async def move_subsection_as_succeeding(self, uuid, message_id, section_id, to_parent_id, to_index):
         pass
 
+    ###########################################################################
+    #
+    # Wiki Methods
+    #
+    ###########################################################################
+
     @abstractmethod
     async def create_wiki(self, uuid, message_id, user_id, title, summary):
         pass
@@ -223,9 +242,21 @@ class AbstractDispatcher(ABC):
     async def move_heading(self, uuid, message_id, page_id, heading_title, to_index):
         pass
 
+    ###########################################################################
+    #
+    # Link Methods
+    #
+    ###########################################################################
+
     @abstractmethod
     async def delete_link(self, uuid, message_id, link_id):
         pass
+
+    ###########################################################################
+    #
+    # Alias Methods
+    #
+    ###########################################################################
 
     @abstractmethod
     async def change_alias_name(self, uuid, message_id, wiki_id, alias_id, new_name):
@@ -234,6 +265,12 @@ class AbstractDispatcher(ABC):
     @abstractmethod
     async def delete_alias(self, uuid, message_id, wiki_id, alias_id):
         pass
+
+    ###########################################################################
+    #
+    # Statistics Methods
+    #
+    ###########################################################################
 
     @abstractmethod
     async def get_story_statistics(self, uuid, message_id, story_id):
