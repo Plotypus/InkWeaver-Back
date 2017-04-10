@@ -1317,6 +1317,7 @@ class MongoDBClient:
             'context':  context,
             'alias_id': alias_id,
             'page_id':  page_id,
+            'pending':  True,
         }
         if _id is not None:
             passive_link['_id'] = _id
