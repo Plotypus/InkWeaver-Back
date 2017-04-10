@@ -1,6 +1,7 @@
 from .error_messages import *
 from .outgoing_message import *
 from .link_messages import *
+from .passive_link_messages import *
 from .subscription_messages import *
 from .statistics_messages import *
 from .story_messages import *
