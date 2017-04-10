@@ -620,6 +620,8 @@ class LAWProtocolDispatcher(AbstractDispatcher):
             yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
         if replacement_alias_info is not None:
             replacement_alias_id, old_alias_name = replacement_alias_info
+            alias = await self.db_interface.get_alias(alias_id)
+            page_id = alias['page_id']
             yield CreateAliasOutgoingMessage(uuid, message_id, alias_id=replacement_alias_id, page_id=page_id,
                                              alias_name=old_alias_name)
 
