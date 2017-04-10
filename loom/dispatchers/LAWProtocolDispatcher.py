@@ -567,6 +567,32 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     ###########################################################################
     #
+    # Passive Link Methods
+    #
+    ###########################################################################
+
+    @handle_interface_errors
+    async def approve_passive_link(self, uuid, message_id, passive_link_id, story_id, wiki_id):
+        (
+            passive_link_id,
+            section_id,
+            paragraph_id,
+            created_link,
+            new_paragraph_text,
+        ) = await self.db_interface.approve_passive_link(passive_link_id, story_id, wiki_id)
+        yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
+        update = {
+            'update_type': 'set_text',
+            'text':        new_paragraph_text,
+        }
+        yield EditParagraphOutgoingMessage(uuid, message_id, section_id=section_id, update=update,
+                                           paragraph_id=paragraph_id)
+        link_id, page_id, name = created_link
+        yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, section_id=section_id,
+                                        paragraph_id=paragraph_id, name=name, page_id=page_id)
+
+    ###########################################################################
+    #
     # Alias Methods
     #
     ###########################################################################
@@ -611,29 +637,3 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def get_page_frequencies(self, uuid, message_id, story_id, wiki_id):
         pages = await self.db_interface.get_page_frequencies_in_story(story_id, wiki_id)
         yield GetPageFrequenciesOutgoingMessage(uuid, message_id, pages=pages)
-
-    ###########################################################################
-    #
-    # Passive Link Methods
-    #
-    ###########################################################################
-
-    @handle_interface_errors
-    async def approve_passive_link(self, uuid, message_id, passive_link_id, story_id, wiki_id):
-        (
-            passive_link_id,
-            section_id,
-            paragraph_id,
-            created_link,
-            new_paragraph_text,
-        ) = await self.db_interface.approve_passive_link(passive_link_id, story_id, wiki_id)
-        yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
-        update = {
-            'update_type': 'set_text',
-            'text':        new_paragraph_text,
-        }
-        yield EditParagraphOutgoingMessage(uuid, message_id, section_id=section_id, update=update,
-                                           paragraph_id=paragraph_id)
-        link_id, page_id, name = created_link
-        yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, section_id=section_id,
-                                        paragraph_id=paragraph_id, name=name, page_id=page_id)
