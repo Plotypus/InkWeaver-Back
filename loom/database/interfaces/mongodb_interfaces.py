@@ -1289,7 +1289,7 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return passive_link_id
 
-    async def get_passive_link(self, passive_link_id):
+    async def get_passive_link(self, passive_link_id: ObjectId):
         try:
             passive_link = await self.client.get_passive_link(passive_link_id)
         except ClientError:
@@ -1297,7 +1297,7 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return passive_link
 
-    async def approve_passive_link(self, passive_link_id, story_id, wiki_id):
+    async def approve_passive_link(self, passive_link_id: ObjectId, story_id: ObjectId, wiki_id: ObjectId):
         passive_link = await self.get_passive_link(passive_link_id)
         section_id = passive_link['context']['section_id']
         paragraph_id = passive_link['context']['paragraph_id']
@@ -1312,13 +1312,13 @@ class MongoDBInterface(AbstractDBInterface):
         paragraph_text = await self.client.get_paragraph_text(section_id, paragraph_id)
         return passive_link_id, section_id, paragraph_id, links_created[0], paragraph_text
 
-    async def reject_passive_link(self, passive_link_id):
+    async def reject_passive_link(self, passive_link_id: ObjectId):
         try:
             await self.client.reject_passive_link(passive_link_id)
         except ClientError:
             raise FailedUpdateError(query='reject_passive_link')
 
-    async def delete_passive_link(self, passive_link_id):
+    async def delete_passive_link(self, passive_link_id: ObjectId):
         passive_link = await self.get_passive_link(passive_link_id)
         alias_id = passive_link['alias_id']
         try:
