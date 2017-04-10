@@ -1312,6 +1312,12 @@ class MongoDBInterface(AbstractDBInterface):
         paragraph_text = await self.client.get_paragraph_text(section_id, paragraph_id)
         return passive_link_id, section_id, paragraph_id, links_created[0], paragraph_text
 
+    async def reject_passive_link(self, passive_link_id):
+        try:
+            await self.client.reject_passive_link(passive_link_id)
+        except ClientError:
+            raise FailedUpdateError(query='reject_passive_link')
+
     async def delete_passive_link(self, passive_link_id):
         passive_link = await self.get_passive_link(passive_link_id)
         alias_id = passive_link['alias_id']
