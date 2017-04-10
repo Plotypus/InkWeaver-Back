@@ -635,6 +635,5 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         yield EditParagraphOutgoingMessage(uuid, message_id, section_id=section_id, update=update,
                                            paragraph_id=paragraph_id)
         link_id, page_id, name = created_link
-        yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, paragraph_id=paragraph_id, name=name,
-                                        page_id=page_id)
-
+        yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, section_id=section_id,
+                                        paragraph_id=paragraph_id, name=name, page_id=page_id)
