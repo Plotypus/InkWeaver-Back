@@ -799,14 +799,14 @@ class MongoDBInterface(AbstractDBInterface):
         template_headings = parent_segment['template_headings']
         page_id = await self.client.create_page(title, template_headings)
         # Create an alias for the page with the title as the alias name
-        await self._create_alias(page_id, title)
+        alias_id = await self._create_alias(page_id, title)
         try:
             await self.client.insert_page_to_parent_segment(page_id, in_parent_segment, at_index=None)
         except ClientError:
             await self.delete_page(wiki_id, page_id)
             raise FailedUpdateError(query='create_page')
         else:
-            return page_id
+            return page_id, alias_id
 
     async def add_child_segment(self, wiki_id, title, parent_id):
         try:
@@ -1041,6 +1041,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_page_title(new_title, page_id)
         except ClientError:
             raise FailedUpdateError(query='set_page_title')
+        # TODO: Fix this to account for returned values.
         await self.change_alias_name(wiki_id, alias_id, new_title)
         # Return the `alias_id` to facilitate error handling up above.
         return alias_id
@@ -1390,10 +1391,11 @@ class MongoDBInterface(AbstractDBInterface):
         for passive_link_id in alias['passive_links']:
             await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, old_name)
         # Alias with page title renamed, need to recreate primary alias
+        replacement_alias_id = None
         if not await self._page_title_is_alias(page):
-            await self._create_alias(page_id, old_name)
-        # TODO: Return deleted passive link ids
-        # TODO: Return new alias_id if one is created
+            replacement_alias_id = await self._create_alias(page_id, old_name)
+        # Return the deleted passive link IDs and the new alias ID, if one was created.
+        return alias['passive_links'], replacement_alias_id
 
     async def get_alias(self, alias_id: ObjectId):
         try:

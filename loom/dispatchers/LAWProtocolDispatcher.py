@@ -375,8 +375,9 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def add_page(self, uuid, message_id, wiki_id, title, parent_id):
-        page_id = await self.db_interface.create_page(wiki_id, title, parent_id)
+        page_id, alias_id = await self.db_interface.create_page(wiki_id, title, parent_id)
         yield AddPageOutgoingMessage(uuid, message_id, page_id=page_id, title=title, parent_id=parent_id)
+        yield CreateAliasOutgoingMessage(uuid, message_id, alias_id=alias_id, page_id=page_id, alias_name=title)
 
     @handle_interface_errors
     async def add_heading(self, uuid, message_id, title, page_id, index=None):
