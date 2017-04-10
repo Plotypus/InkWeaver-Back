@@ -22,6 +22,17 @@ class CreatePassiveLinkOutgoingMessage(StoryBroadcastMessage):
 
 ###########################################################################
 #
+# Edit Messages
+#
+###########################################################################
+class RejectPassiveLinkOutgoingMessage(StoryBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, passive_link_id: ObjectId):
+        super().__init__(uuid, message_id, 'passive_link_rejected')
+        self.passive_link_id = passive_link_id
+
+
+###########################################################################
+#
 # Delete Messages
 #
 ###########################################################################
