@@ -6,19 +6,13 @@ from loom.database.clients import *
 from loom.serialize import decode_string_to_bson, encode_bson_to_string
 from loom.tokenizer import LoomTokenizer
 
-import nltk
 import re
 
 from bson.objectid import ObjectId
 from collections import Counter, defaultdict
 from itertools import chain
-from nltk.tokenize.moses import MosesDetokenizer
-from os.path import dirname, join as pathjoin
 from string import punctuation
 from typing import ClassVar
-
-# Adjust the NLTK path.
-nltk.data.path.insert(0, pathjoin(dirname(dirname(dirname(__file__))), 'nltk_data'))
 
 CREATE_LINK_REGEX = re.compile(r'{#\|(.*?)\|#}')
 
@@ -69,11 +63,6 @@ class MongoDBInterface(AbstractDBInterface):
     @staticmethod
     def tokenize_sentence(sentence):
         return LoomTokenizer.word_tokenize(sentence)
-
-    @staticmethod
-    def detokenize_sentence(sentence_tokens):
-        detokenizer = MosesDetokenizer()
-        return detokenizer.detokenize(sentence_tokens, return_str=True)
 
     @staticmethod
     def encode_object_id(object_id: ObjectId) -> str:
