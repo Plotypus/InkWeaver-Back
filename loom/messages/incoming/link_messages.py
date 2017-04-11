@@ -19,6 +19,15 @@ class ApprovePassiveLinkMessage(IncomingMessage):
                                                      self.wiki_id)
 
 
+class RejectPassiveLinkMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.passive_link_id = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.reject_passive_link(self.uuid, self.message_id, self.passive_link_id)
+
+
 ###########################################################################
 #
 # Edit Messages
