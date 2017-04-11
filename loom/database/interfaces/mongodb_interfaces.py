@@ -594,8 +594,8 @@ class MongoDBInterface(AbstractDBInterface):
                 if match is not None:
                     passive_link_id = await self.create_passive_link(section_id, paragraph_id, match.alias_id,
                                                                      match.page_id)
-                    match_name = ' '.join(tokens[token_index:token_index+match.length])
-                    passive_links.append((passive_link_id, match.page_id, match_name))
+                    # Create passive link message requires the passive_link_id and the alias_id
+                    passive_links.append((passive_link_id, match.alias_id))
                     encoded_link_id = self.encode_object_id(passive_link_id)
                     for j in range(match.length):
                         sent_index += len(tokens[token_index])
