@@ -587,10 +587,10 @@ class LAWProtocolDispatcher(AbstractDispatcher):
             'update_type': 'set_text',
             'text':        new_paragraph_text,
         }
-        yield EditParagraphOutgoingMessage(uuid, message_id, section_id=section_id, update=update,
-                                           paragraph_id=paragraph_id)
         link_id, alias_id = created_link
         yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, alias_id=alias_id)
+        yield EditParagraphOutgoingMessage(uuid, message_id, section_id=section_id, update=update,
+                                           paragraph_id=paragraph_id)
 
     @handle_interface_errors
     async def reject_passive_link(self, uuid, message_id, passive_link_id):
