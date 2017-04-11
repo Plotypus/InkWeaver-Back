@@ -559,9 +559,8 @@ class MongoDBInterface(AbstractDBInterface):
         # Iterate through each encoded request and replace with a link_id.
         for match in CREATE_LINK_REGEX.finditer(text):
             start, end = match.span()
-            link_id, page_id, name = await self._create_link_and_replace_text(section_id, paragraph_id, text, start,
-                                                                              end)
-            links_created.append((link_id, page_id, name))
+            link_id, alias_id = await self._create_link_and_replace_text(section_id, paragraph_id, text, start, end)
+            links_created.append((link_id, alias_id))
             encoded_link_id = self.encode_object_id(link_id)
             # Add the previous text and link_id to the buffer.
             buffer.append(text[prev_end:start])
@@ -620,8 +619,8 @@ class MongoDBInterface(AbstractDBInterface):
         # Convert oids from strings to ObjectId.
         story_id = decode_string_to_bson(story_id)
         page_id = decode_string_to_bson(page_id)
-        link_id = await self.create_link(story_id, section_id, paragraph_id, name, page_id)
-        return link_id, page_id, name
+        link_id, alias_id = await self.create_link(story_id, section_id, paragraph_id, name, page_id)
+        return link_id, alias_id
 
     async def set_bookmark_name(self, story_id, bookmark_id, new_name):
         try:
@@ -1243,7 +1242,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='create_link')
         else:
-            return link_id
+            return link_id, alias_id
 
     async def get_link(self, link_id):
         try:
