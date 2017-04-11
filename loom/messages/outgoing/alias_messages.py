@@ -1,4 +1,4 @@
-from .outgoing_message import StoryBroadcastMessage
+from .outgoing_message import StoryBroadcastMessage, WikiBroadcastMessage
 
 from bson import ObjectId
 from uuid import UUID
@@ -15,6 +15,17 @@ class CreateAliasOutgoingMessage(StoryBroadcastMessage):
         self.alias_id = alias_id
         self.page_id = page_id
         self.alias_name = alias_name
+
+
+###########################################################################
+#
+# Delete Messages
+#
+###########################################################################
+class DeleteAliasOutgoingMessage(WikiBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, alias_id: ObjectId):
+        super().__init__(uuid, message_id, 'alias_deleted')
+        self.alias_id = alias_id
 
 
 ###########################################################################

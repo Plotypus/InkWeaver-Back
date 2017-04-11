@@ -186,12 +186,6 @@ class DeleteHeadingOutgoingMessage(WikiBroadcastMessage):
         self.page_id = page_id
         self.heading_title = heading_title
 
-    
-class DeleteAliasOutgoingMessage(WikiBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, *, alias_id: ObjectId):
-        super().__init__(uuid, message_id, 'alias_deleted')
-        self.alias_id = alias_id
-
 
 ###########################################################################
 #
