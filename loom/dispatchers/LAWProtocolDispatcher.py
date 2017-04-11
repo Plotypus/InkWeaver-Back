@@ -173,8 +173,11 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         (
             paragraph_id,
             links_created,
-            passive_links_created
+            passive_links_created,
+            aliases_created
         ) = await self.db_interface.add_paragraph(wiki_id, section_id, text, succeeding_paragraph_id)
+        for alias_id, page_id, name in aliases_created:
+            yield CreateAliasOutgoingMessage(uuid, message_id, alias_id=alias_id, page_id=page_id, alias_name=name)
         for link_id, alias_id in links_created:
             yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, alias_id=alias_id)
         for passive_link_id, alias_id in passive_links_created:
@@ -211,9 +214,13 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def edit_paragraph(self, uuid, message_id, wiki_id, section_id, update, paragraph_id):
         if update['update_type'] == 'set_text':
             text = update['text']
-            links_created, passive_links_created = await self.db_interface.set_paragraph_text(wiki_id, section_id,
-                                                                                              paragraph_id=paragraph_id,
-                                                                                              text=text)
+            (
+                links_created,
+                passive_links_created,
+                aliases_created
+            ) = await self.db_interface.set_paragraph_text(wiki_id, section_id, paragraph_id=paragraph_id, text=text)
+            for alias_id, page_id, name in aliases_created:
+                yield CreateAliasOutgoingMessage(uuid, message_id, alias_id=alias_id, page_id=page_id, alias_name=name)
             for link_id, alias_id in links_created:
                 yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, alias_id=alias_id)
             for passive_link_id, alias_id in passive_links_created:
