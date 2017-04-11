@@ -175,13 +175,8 @@ class LAWProtocolDispatcher(AbstractDispatcher):
             links_created,
             passive_links_created
         ) = await self.db_interface.add_paragraph(wiki_id, section_id, text, succeeding_paragraph_id)
-        for link_id, page_id, name in links_created:
-            yield CreateLinkOutgoingMessage(uuid, message_id,
-                                            link_id=link_id,
-                                            section_id=section_id,
-                                            paragraph_id=paragraph_id,
-                                            name=name,
-                                            page_id=page_id)
+        for link_id, alias_id in links_created:
+            yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, alias_id=alias_id)
         for passive_link_id, page_id, name in passive_links_created:
             yield CreatePassiveLinkOutgoingMessage(uuid, message_id,
                                                    passive_link_id=passive_link_id,
@@ -224,13 +219,8 @@ class LAWProtocolDispatcher(AbstractDispatcher):
             links_created, passive_links_created = await self.db_interface.set_paragraph_text(wiki_id, section_id,
                                                                                               paragraph_id=paragraph_id,
                                                                                               text=text)
-            for link_id, page_id, name in links_created:
-                yield CreateLinkOutgoingMessage(uuid, message_id,
-                                                link_id=link_id,
-                                                section_id=section_id,
-                                                paragraph_id=paragraph_id,
-                                                name=name,
-                                                page_id=page_id)
+            for link_id, alias_id in links_created:
+                yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, alias_id=alias_id)
             for passive_link_id, page_id, name in passive_links_created:
                 yield CreatePassiveLinkOutgoingMessage(uuid, message_id,
                                                        passive_link_id=passive_link_id,
@@ -596,9 +586,8 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         }
         yield EditParagraphOutgoingMessage(uuid, message_id, section_id=section_id, update=update,
                                            paragraph_id=paragraph_id)
-        link_id, page_id, name = created_link
-        yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, section_id=section_id,
-                                        paragraph_id=paragraph_id, name=name, page_id=page_id)
+        link_id, alias_id = created_link
+        yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, alias_id=alias_id)
 
     @handle_interface_errors
     async def reject_passive_link(self, uuid, message_id, passive_link_id):
