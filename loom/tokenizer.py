@@ -1,6 +1,10 @@
 import nltk
 import re
 
+# Modify the NLTK data path to limit scope of potential problems.
+from os.path import abspath, dirname, join
+nltk.data.path = [abspath(join(dirname(dirname(__file__)), 'nltk_data'))]  # ./../nltk_data
+
 # This Tokenizer is heavily based on the NLTK Penn Treebank Tokenizer:
 #  https://github.com/nltk/nltk/blob/develop/nltk/tokenize/treebank.py
 
