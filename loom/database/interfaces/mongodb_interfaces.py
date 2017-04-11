@@ -1089,19 +1089,22 @@ class MongoDBInterface(AbstractDBInterface):
                 raise FailedUpdateError(query='delete_wiki')
         # Recursively delete all segments in the wiki.
         segment_id = wiki['segment_id']
-        deleted_link_ids, deleted_passive_link_ids = await self.delete_segment(wiki_id, segment_id)
+        deleted_link_ids, deleted_passive_link_ids, deleted_alias_ids = await self.delete_segment(wiki_id, segment_id)
         # Delete the wiki proper.
         try:
             await self.client.delete_wiki(wiki_id)
         except ClientError:
             raise FailedUpdateError(query='delete_wiki')
         else:
-            return deleted_link_ids, deleted_passive_link_ids
+            return deleted_link_ids, deleted_passive_link_ids, deleted_alias_ids
 
     async def delete_segment(self, wiki_id, segment_id):
-        deleted_link_ids, deleted_passive_link_ids = await self._recur_delete_segment_and_subsegments(wiki_id,
-                                                                                                      segment_id)
-        return deleted_link_ids, deleted_passive_link_ids
+        (
+            deleted_link_ids,
+            deleted_passive_link_ids,
+            deleted_alias_ids
+        ) = await self._recur_delete_segment_and_subsegments(wiki_id, segment_id)
+        return deleted_link_ids, deleted_passive_link_ids, deleted_alias_ids
 
     async def _recur_delete_segment_and_subsegments(self, wiki_id, segment_id):
         try:
@@ -1110,23 +1113,31 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='recur_delete_segment_and_subsegments', value=segment_id)
         deleted_link_ids = []
         deleted_passive_link_ids = []
+        deleted_alias_ids = []
         for subsegment_id in segment['segments']:
             (
                 segment_deleted_link_ids,
-                segment_deleted_passive_link_ids
+                segment_deleted_passive_link_ids,
+                segment_deleted_alias_ids
             ) = await self._recur_delete_segment_and_subsegments(wiki_id, subsegment_id)
             deleted_link_ids.extend(segment_deleted_link_ids)
             deleted_passive_link_ids.extend(segment_deleted_passive_link_ids)
+            deleted_alias_ids.extend(segment_deleted_alias_ids)
         for page_id in segment['pages']:
-            page_deleted_link_ids, page_deleted_passive_link_ids = await self.delete_page(wiki_id, page_id)
+            (
+                page_deleted_link_ids,
+                page_deleted_passive_link_ids,
+                page_deleted_alias_ids
+            ) = await self.delete_page(wiki_id, page_id)
             deleted_link_ids.extend(page_deleted_link_ids)
             deleted_passive_link_ids.extend(page_deleted_passive_link_ids)
+            deleted_alias_ids.extend(page_deleted_link_ids)
         try:
             await self.client.delete_segment(segment_id)
         except ClientError:
             raise FailedUpdateError(query='recur_delete_segment_and_subsegments')
         else:
-            return deleted_link_ids, deleted_passive_link_ids
+            return deleted_link_ids, deleted_passive_link_ids, deleted_alias_ids
 
     async def delete_template_heading(self, title, segment_id):
         try:
