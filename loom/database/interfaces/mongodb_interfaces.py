@@ -1151,7 +1151,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='delete_page')
         else:
-            return deleted_link_ids, deleted_passive_link_ids
+            return deleted_link_ids, deleted_passive_link_ids, page['aliases']
 
     async def delete_heading(self, heading_title: str, page_id: ObjectId):
         try:
