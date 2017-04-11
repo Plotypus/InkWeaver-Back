@@ -100,7 +100,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def add_paragraph(self, section_id, text, succeeding_paragraph_id=None):
+    async def add_paragraph(self, wiki_id, section_id, text, succeeding_paragraph_id=None):
         pass
 
     @abstractmethod
@@ -136,7 +136,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def set_paragraph_text(self, section_id, text, paragraph_id):
+    async def set_paragraph_text(self, wiki_id, section_id, text, paragraph_id):
         pass
 
     @abstractmethod
@@ -194,11 +194,11 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def create_page(self, title, parent_id):
+    async def create_page(self, wiki_id, title, parent_id):
         pass
 
     @abstractmethod
-    async def add_child_segment(self, title, parent_id):
+    async def add_child_segment(self, wiki_id, title, parent_id):
         pass
 
     @abstractmethod
@@ -258,7 +258,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def set_page_title(self, new_title, page_id):
+    async def set_page_title(self, wiki_id, new_title, page_id):
         pass
 
     @abstractmethod
@@ -274,7 +274,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def delete_segment(self, segment_id):
+    async def delete_segment(self, wiki_id, segment_id):
         pass
 
     @abstractmethod
@@ -282,7 +282,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def delete_page(self, page_id):
+    async def delete_page(self, wiki_id, page_id):
         pass
 
     @abstractmethod
@@ -325,6 +325,32 @@ class AbstractDBInterface(ABC):
 
     ###########################################################################
     #
+    # Passive Link Methods
+    #
+    ###########################################################################
+
+    @abstractmethod
+    async def create_passive_link(self, section_id, paragraph_id, alias_id, page_id):
+        pass
+
+    @abstractmethod
+    async def get_passive_link(self, passive_link_id):
+        pass
+
+    @abstractmethod
+    async def approve_passive_link(self, passive_link_id, story_id, wiki_id):
+        pass
+
+    @abstractmethod
+    async def reject_passive_link(self, passive_link_id):
+        pass
+
+    @abstractmethod
+    async def delete_passive_link(self, passive_link_id):
+        pass
+
+    ###########################################################################
+    #
     # Alias Methods
     #
     ###########################################################################
@@ -334,11 +360,11 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def change_alias_name(self, alias_id, name):
+    async def change_alias_name(self, wiki_id, alias_id, name):
         pass
 
     @abstractmethod
-    async def delete_alias(self, alias_id):
+    async def delete_alias(self, wiki_id, alias_id):
         pass
 
     ###########################################################################

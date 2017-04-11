@@ -36,7 +36,7 @@ class Router:
         self.message_factory = IncomingMessageFactory()
         self.message_tuples = Queue()
         # Various dictionaries for keeping track of user information.
-        self.user_to_uuids: Dict[UUID, Set[LoomHandler]] = defaultdict(set)
+        self.user_to_uuids: Dict[ObjectId, Set[UUID]] = defaultdict(set)
         self.story_to_uuids: Dict[ObjectId, Set[UUID]] = defaultdict(set)
         self.wiki_to_uuids: Dict[ObjectId, Set[UUID]] = defaultdict(set)
         self.uuid_to_user: Dict[UUID, ObjectId] = dict()

@@ -92,6 +92,7 @@ class MongoDBClient:
             self.segments,
             self.pages,
             self.links,
+            self.passive_links,
             self.aliases,
         ]
 
@@ -122,6 +123,10 @@ class MongoDBClient:
     @property
     def links(self) -> AgnosticCollection:
         return self.database.links
+
+    @property
+    def passive_links(self) -> AgnosticCollection:
+        return self.database.passive_links
 
     @property
     def aliases(self) -> AgnosticCollection:
@@ -390,6 +395,7 @@ class MongoDBClient:
             'succeeding_subsections': list(),
             'statistics':             {'word_frequency': {}, 'word_count': 0},
             'links':                  list(),  # links is a list of lists of links (runs parallel to paragraphs)
+            'passive_links':          list(),
             'notes':                  list(),
         }
         if _id is not None:
@@ -712,6 +718,9 @@ class MongoDBClient:
                         '_id': paragraph_id,
                     },
                     'links': {
+                        'paragraph_id': paragraph_id,
+                    },
+                    'passive_links': {
                         'paragraph_id': paragraph_id,
                     },
                     'notes': {
@@ -1146,18 +1155,18 @@ class MongoDBClient:
     ###########################################################################
 
     @staticmethod
-    def _build_context(story_id, section_id, paragraph_id, text):
+    def _build_link_context(story_id, section_id, paragraph_id, text):
         context = {
-            'story_id':      story_id,
-            'section_id':    section_id,
+            'story_id':     story_id,
+            'section_id':   section_id,
             'paragraph_id': paragraph_id,
-            'text':          text,
+            'text':         text,
         }
         return context
 
     async def create_link(self, alias_id: ObjectId, page_id: ObjectId, story_id=None, section_id=None,
                           paragraph_id=None, text=None, _id=None) -> ObjectId:
-        context = self._build_context(story_id, section_id, paragraph_id, text)
+        context = self._build_link_context(story_id, section_id, paragraph_id, text)
         link = {
             'context':  context,
             'alias_id': alias_id,
@@ -1219,7 +1228,7 @@ class MongoDBClient:
 
     async def insert_reference_to_page(self, page_id: ObjectId, link_id: ObjectId, story_id: ObjectId,
                                        section_id: ObjectId, paragraph_id: ObjectId, text=None, index=None):
-        context = self._build_context(story_id, section_id, paragraph_id, text)
+        context = self._build_link_context(story_id, section_id, paragraph_id, text)
         reference = {
             'link_id': link_id,
             'context': context,
@@ -1289,15 +1298,127 @@ class MongoDBClient:
 
     ###########################################################################
     #
+    # Passive Link Methods
+    #
+    ###########################################################################
+
+    @staticmethod
+    def _build_passive_link_context(section_id, paragraph_id):
+        context = {
+            'section_id':   section_id,
+            'paragraph_id': paragraph_id,
+        }
+        return context
+
+    async def create_passive_link(self, alias_id: ObjectId, page_id: ObjectId, section_id=None, paragraph_id=None,
+                                  _id=None):
+        context = self._build_passive_link_context(section_id, paragraph_id)
+        passive_link = {
+            'context':  context,
+            'alias_id': alias_id,
+            'page_id':  page_id,
+            'pending':  True,
+        }
+        if _id is not None:
+            passive_link['_id'] = _id
+        result = await self.passive_links.insert_one(passive_link)
+        self.log(f'create_passive_link to page {{{page_id}}} for alias {{{alias_id}}}; '
+                 f'inserted ID {{{result.inserted_id}}}')
+        return result.inserted_id
+    
+    async def get_passive_link(self, passive_link_id: ObjectId):
+        result = await self.passive_links.find_one({'_id': passive_link_id})
+        if result is None:
+            self.log(f'get_passive_link {{{passive_link_id}}} FAILED')
+            raise NoMatchError
+        self.log(f'get_passive_link {{{passive_link_id}}}')
+        return result
+
+    async def get_passive_links_in_paragraph(self, paragraph_id: ObjectId, section_id: ObjectId):
+        section_projection = await self.sections.find_one(
+            filter={'_id': section_id, 'passive_links.paragraph_id': paragraph_id},
+            projection={'passive_links.passive_links': 1, '_id': 0}
+        )
+        if section_projection is None:
+            self.log(f'get_passive_links_in_paragraph {{{paragraph_id}}} in section {{{section_id}}} FAILED')
+            raise NoMatchError
+        self.log(f'get_passive_links_in_paragraph {{{paragraph_id}}} in section {{{section_id}}}')
+        return section_projection['passive_links'][0]['passive_links']
+
+    async def set_passive_link_context(self, passive_link_id: ObjectId, context: Dict):
+        update_result: UpdateResult = await self.passive_links.update_one(
+            filter={'_id': passive_link_id},
+            update={
+                '$set': {
+                    'context': context,
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'set_passive_link_context {{{passive_link_id}}}')
+
+    async def reject_passive_link(self, passive_link_id: ObjectId):
+        update_result: UpdateResult = await self.passive_links.update_one(
+            filter={'_id': passive_link_id},
+            update={
+                '$set': {
+                    'pending': False,
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'reject_passive_link {{{passive_link_id}}}')
+
+    async def insert_passive_links_for_paragraph(self, paragraph_id: ObjectId, passive_links: List[ObjectId],
+                                                 in_section_id: ObjectId, at_index=None):
+        inner_parameters = self._insertion_parameters({
+            'paragraph_id': paragraph_id,
+            'passive_links':        passive_links,
+        }, at_index)
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': in_section_id},
+            update={
+                '$push': {
+                    'passive_links': inner_parameters,
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'insert_passive_links_for_paragraph {{{paragraph_id}}} in section {{{in_section_id}}} at index '
+                 f'{{{at_index}}}')
+
+    async def set_passive_links_in_section(self, section_id: ObjectId, passive_links: List[ObjectId],
+                                           paragraph_id: ObjectId):
+        update_result: UpdateResult = await self.sections.update_one(
+            filter={'_id': section_id, 'passive_links.paragraph_id': paragraph_id},
+            update={
+                '$set': {
+                    'passive_links.$.passive_links': passive_links,
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'set_passive_links_in_section {{{section_id}}}')
+
+    async def delete_passive_link(self, passive_link_id: ObjectId):
+        delete_result: DeleteResult = await self.passive_links.delete_one(
+            filter={'_id': passive_link_id}
+        )
+        self.assert_delete_one_successful(delete_result)
+        self.log(f'delete_passive_link {{{passive_link_id}}}')
+
+    ###########################################################################
+    #
     # Alias Methods
     #
     ###########################################################################
 
     async def create_alias(self, name: str, page_id: ObjectId, _id=None) -> ObjectId:
         alias = {
-            'name':    name,
-            'page_id': page_id,
-            'links':   list(),
+            'name':          name,
+            'page_id':       page_id,
+            'links':         list(),
+            'passive_links': list(),
         }
         if _id is not None:
             alias['_id'] = _id
@@ -1328,6 +1449,18 @@ class MongoDBClient:
         )
         self.assert_update_was_successful(update_result)
         self.log(f'insert_link_to_alias {{{link_id}}} to alias {{{alias_id}}}')
+
+    async def insert_passive_link_to_alias(self, passive_link_id: ObjectId, alias_id: ObjectId):
+        update_result: UpdateResult = await self.aliases.update_one(
+            filter={'_id': alias_id},
+            update={
+                '$push': {
+                    'passive_links': passive_link_id,
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'insert_passive_link_to_alias {{{passive_link_id}}} to alias {{{alias_id}}}')
 
     async def get_alias(self, alias_id: ObjectId):
         result = await self.aliases.find_one({'_id': alias_id})
@@ -1412,6 +1545,18 @@ class MongoDBClient:
         )
         self.assert_update_was_successful(update_result)
         self.log(f'remove_link_from_alias {{{link_id}}} from alias {{{alias_id}}}')
+
+    async def remove_passive_link_from_alias(self, passive_link_id: ObjectId, alias_id: ObjectId):
+        update_result: UpdateResult = await self.aliases.update_one(
+            filter={'_id': alias_id},
+            update={
+                '$pull': {
+                    'passive_links': passive_link_id,
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'remove_link_from_alias {{{passive_link_id}}} from alias {{{alias_id}}}')
 
     async def delete_alias(self, alias_id: ObjectId):
         delete_result: DeleteResult = await self.aliases.delete_one(

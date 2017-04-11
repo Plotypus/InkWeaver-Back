@@ -21,11 +21,11 @@ class DemoDataDispatcher(LAWProtocolDispatcher):
         return
         yield
 
-    async def add_text_to_section(self, uuid, message_id, text, section_id):
+    async def add_text_to_section(self, uuid, message_id, wiki_id, text, section_id):
         paragraphs = text.split('\n\n')
         for paragraph in paragraphs:
             # Don't care about the return contents, just force execution
-            async for _ in super().add_paragraph(uuid, message_id, section_id, paragraph):
+            async for _ in super().add_paragraph(uuid, message_id, wiki_id, section_id, paragraph):
                 continue
         # Async equivalent to `return None`
         return

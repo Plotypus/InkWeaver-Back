@@ -75,6 +75,10 @@ APPROVED_MESSAGES = {
     # Links
     'delete_link':                     DeleteLinkIncomingMessage,
 
+    # Passive Links
+    'approve_passive_link':            ApprovePassiveLinkMessage,
+    'reject_passive_link':             RejectPassiveLinkMessage,
+
     # Aliases
     'delete_alias':                    DeleteAliasIncomingMessage,
     'change_alias_name':               ChangeAliasNameIncomingMessage,

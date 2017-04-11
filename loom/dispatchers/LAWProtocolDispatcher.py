@@ -169,15 +169,16 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                      index=index)
 
     @handle_interface_errors
-    async def add_paragraph(self, uuid, message_id, section_id, text, succeeding_paragraph_id=None):
-        paragraph_id, links_created = await self.db_interface.add_paragraph(section_id, text, succeeding_paragraph_id)
-        for link_id, page_id, name in links_created:
-            yield CreateLinkOutgoingMessage(uuid, message_id,
-                                            link_id=link_id,
-                                            section_id=section_id,
-                                            paragraph_id=paragraph_id,
-                                            name=name,
-                                            page_id=page_id)
+    async def add_paragraph(self, uuid, message_id, wiki_id, section_id, text, succeeding_paragraph_id=None):
+        (
+            paragraph_id,
+            links_created,
+            passive_links_created
+        ) = await self.db_interface.add_paragraph(wiki_id, section_id, text, succeeding_paragraph_id)
+        for link_id, alias_id in links_created:
+            yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, alias_id=alias_id)
+        for passive_link_id, alias_id in passive_links_created:
+            yield CreatePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id, alias_id=alias_id)
         yield AddParagraphOutgoingMessage(uuid, message_id,
                                           paragraph_id=paragraph_id,
                                           section_id=section_id,
@@ -207,17 +208,17 @@ class LAWProtocolDispatcher(AbstractDispatcher):
             raise LAWUnimplementedError("invalid `update_type`: {}".format(update['update_type']))
 
     @handle_interface_errors
-    async def edit_paragraph(self, uuid, message_id, section_id, update, paragraph_id):
+    async def edit_paragraph(self, uuid, message_id, wiki_id, section_id, update, paragraph_id):
         if update['update_type'] == 'set_text':
             text = update['text']
-            links_created = await self.db_interface.set_paragraph_text(section_id, paragraph_id=paragraph_id, text=text)
-            for link_id, page_id, name in links_created:
-                yield CreateLinkOutgoingMessage(uuid, message_id,
-                                                link_id=link_id,
-                                                section_id=section_id,
-                                                paragraph_id=paragraph_id,
-                                                name=name,
-                                                page_id=page_id)
+            links_created, passive_links_created = await self.db_interface.set_paragraph_text(wiki_id, section_id,
+                                                                                              paragraph_id=paragraph_id,
+                                                                                              text=text)
+            for link_id, alias_id in links_created:
+                yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, alias_id=alias_id)
+            for passive_link_id, alias_id in passive_links_created:
+                yield CreatePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id,
+                                                       alias_id=alias_id)
             yield EditParagraphOutgoingMessage(uuid, message_id,
                                                section_id=section_id,
                                                update=update,
@@ -344,8 +345,8 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                         summary=wiki['summary'])
 
     @handle_interface_errors
-    async def add_segment(self, uuid, message_id, title, parent_id):
-        segment_id = await self.db_interface.add_child_segment(title, parent_id)
+    async def add_segment(self, uuid, message_id, wiki_id, title, parent_id):
+        segment_id = await self.db_interface.add_child_segment(wiki_id, title, parent_id)
         yield AddSegmentOutgoingMessage(uuid, message_id, segment_id=segment_id, title=title, parent_id=parent_id)
 
     @handle_interface_errors
@@ -354,9 +355,10 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         yield AddTemplateHeadingOutgoingMessage(uuid, message_id, title=title, segment_id=segment_id)
 
     @handle_interface_errors
-    async def add_page(self, uuid, message_id, title, parent_id):
-        page_id = await self.db_interface.create_page(title, parent_id)
+    async def add_page(self, uuid, message_id, wiki_id, title, parent_id):
+        page_id, alias_id = await self.db_interface.create_page(wiki_id, title, parent_id)
         yield AddPageOutgoingMessage(uuid, message_id, page_id=page_id, title=title, parent_id=parent_id)
+        yield CreateAliasOutgoingMessage(uuid, message_id, alias_id=alias_id, page_id=page_id, alias_name=title)
 
     @handle_interface_errors
     async def add_heading(self, uuid, message_id, title, page_id, index=None):
@@ -402,12 +404,20 @@ class LAWProtocolDispatcher(AbstractDispatcher):
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
     @handle_interface_errors
-    async def edit_page(self, uuid, message_id, page_id, update):
+    async def edit_page(self, uuid, message_id, wiki_id, page_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
-            alias_id = await self.db_interface.set_page_title(title, page_id)
+            alias_id, deleted_passive_link_ids, replacement_alias_info = await self.db_interface.set_page_title(wiki_id,
+                                                                                                                title,
+                                                                                                                page_id)
             yield EditPageOutgoingMessage(uuid, message_id, page_id=page_id, update=update)
             yield ChangeAliasNameOutgoingMessage(uuid, message_id, alias_id=alias_id, new_name=title)
+            for passive_link_id in deleted_passive_link_ids:
+                yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
+            if replacement_alias_info is not None:
+                replacement_alias_id, prev_name = replacement_alias_info
+                yield CreateAliasOutgoingMessage(uuid, message_id, alias_id=replacement_alias_id, page_id=page_id,
+                                                 alias_name=prev_name)
         else:
             raise LAWUnimplementedError(f"invalid `update_type`: {update['update_type']}")
 
@@ -474,16 +484,29 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def delete_wiki(self, uuid, message_id, user_id, wiki_id):
-        deleted_link_ids = await self.db_interface.delete_wiki(user_id, wiki_id)
+        deleted_link_ids, deleted_passive_link_ids, deleted_alias_ids = await self.db_interface.delete_wiki(user_id,
+                                                                                                            wiki_id)
         for link_id in deleted_link_ids:
             yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
+        for passive_link_id in deleted_passive_link_ids:
+            yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
+        for alias_id in deleted_alias_ids:
+            yield DeleteAliasOutgoingMessage(uuid, message_id, alias_id=alias_id)
         yield DeleteWikiOutgoingMessage(uuid, message_id, wiki_id=wiki_id)
 
     @handle_interface_errors
-    async def delete_segment(self, uuid, message_id, segment_id):
-        deleted_link_ids = await self.db_interface.delete_segment(segment_id)
+    async def delete_segment(self, uuid, message_id, wiki_id, segment_id):
+        (
+            deleted_link_ids,
+            deleted_passive_link_ids,
+            deleted_alias_ids
+        ) = await self.db_interface.delete_segment(wiki_id, segment_id)
         for link_id in deleted_link_ids:
             yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
+        for passive_link_id in deleted_passive_link_ids:
+            yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
+        for alias_id in deleted_alias_ids:
+            yield DeleteAliasOutgoingMessage(uuid, message_id, alias_id=alias_id)
         yield DeleteSegmentOutgoingMessage(uuid, message_id, segment_id=segment_id)
 
     @handle_interface_errors
@@ -494,10 +517,15 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                                    template_heading_title=template_heading_title)
 
     @handle_interface_errors
-    async def delete_page(self, uuid, message_id, page_id):
-        deleted_link_ids = await self.db_interface.delete_page(page_id)
+    async def delete_page(self, uuid, message_id, wiki_id, page_id):
+        deleted_link_ids, deleted_passive_link_ids, deleted_alias_ids = await self.db_interface.delete_page(wiki_id,
+                                                                                                            page_id)
         for link_id in deleted_link_ids:
             yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
+        for passive_link_id in deleted_passive_link_ids:
+            yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
+        for alias_id in deleted_alias_ids:
+            yield DeleteAliasOutgoingMessage(uuid, message_id, alias_id=alias_id)
         yield DeletePageOutgoingMessage(uuid, message_id, page_id=page_id)
 
     @handle_interface_errors
@@ -541,21 +569,61 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     ###########################################################################
     #
+    # Passive Link Methods
+    #
+    ###########################################################################
+
+    @handle_interface_errors
+    async def approve_passive_link(self, uuid, message_id, passive_link_id, story_id, wiki_id):
+        (
+            passive_link_id,
+            section_id,
+            paragraph_id,
+            created_link,
+            new_paragraph_text,
+        ) = await self.db_interface.approve_passive_link(passive_link_id, story_id, wiki_id)
+        yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
+        update = {
+            'update_type': 'set_text',
+            'text':        new_paragraph_text,
+        }
+        yield EditParagraphOutgoingMessage(uuid, message_id, section_id=section_id, update=update,
+                                           paragraph_id=paragraph_id)
+        link_id, alias_id = created_link
+        yield CreateLinkOutgoingMessage(uuid, message_id, link_id=link_id, alias_id=alias_id)
+
+    @handle_interface_errors
+    async def reject_passive_link(self, uuid, message_id, passive_link_id):
+        await self.db_interface.reject_passive_link(passive_link_id)
+        yield RejectPassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
+
+    ###########################################################################
+    #
     # Alias Methods
     #
     ###########################################################################
 
     @handle_interface_errors
-    async def change_alias_name(self, uuid, message_id, alias_id, new_name):
-        await self.db_interface.change_alias_name(alias_id, new_name)
+    async def change_alias_name(self, uuid, message_id, wiki_id, alias_id, new_name):
+        deleted_passive_link_ids, replacement_alias_info = await self.db_interface.change_alias_name(wiki_id, alias_id,
+                                                                                                     new_name)
         yield ChangeAliasNameOutgoingMessage(uuid, message_id, alias_id=alias_id, new_name=new_name)
-        # TODO: Also yield message for recreated original alias name
+        for passive_link_id in deleted_passive_link_ids:
+            yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
+        if replacement_alias_info is not None:
+            replacement_alias_id, old_alias_name = replacement_alias_info
+            alias = await self.db_interface.get_alias(alias_id)
+            page_id = alias['page_id']
+            yield CreateAliasOutgoingMessage(uuid, message_id, alias_id=replacement_alias_id, page_id=page_id,
+                                             alias_name=old_alias_name)
 
     @handle_interface_errors
-    async def delete_alias(self, uuid, message_id, alias_id):
-        deleted_link_ids = await self.db_interface.delete_alias(alias_id)
+    async def delete_alias(self, uuid, message_id, wiki_id, alias_id):
+        deleted_link_ids, deleted_passive_link_ids = await self.db_interface.delete_alias(wiki_id, alias_id)
         for link_id in deleted_link_ids:
             yield DeleteLinkOutgoingMessage(uuid, message_id, link_id=link_id)
+        for passive_link_id in deleted_passive_link_ids:
+            yield DeletePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id)
         yield DeleteAliasOutgoingMessage(uuid, message_id, alias_id=alias_id)
 
     ###########################################################################
