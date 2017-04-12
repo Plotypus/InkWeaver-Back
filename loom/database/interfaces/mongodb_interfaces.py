@@ -251,6 +251,15 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='set_story_position_context')
 
+    @staticmethod
+    async def _build_user_description(user_id: ObjectId, name: str, access_level: str):
+        user_description = {
+            'user_id':      user_id,
+            'name':         name,
+            'access_level': access_level
+        }
+        return user_description
+
     ###########################################################################
     #
     # Story Methods
@@ -259,11 +268,7 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def create_story(self, user_id, title, summary, wiki_id) -> ObjectId:
         user = await self.get_user_preferences(user_id)
-        user_description = {
-            'user_id':      user_id,
-            'name':         user['name'],
-            'access_level': 'owner',
-        }
+        user_description = self._build_user_description(user_id, user['name'], 'owner')
         section_id = await self.create_section(title)
         await self.add_paragraph(wiki_id, section_id, summary)
         story_id = await self.client.create_story(title, wiki_id, user_description, section_id)
@@ -799,11 +804,7 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def create_wiki(self, user_id, title, summary):
         user = await self.get_user_preferences(user_id)
-        user_description = {
-            'user_id':      user_id,
-            'name':         user['name'],
-            'access_level': 'owner',
-        }
+        user_description = self._build_user_description(user_id, user['name'], 'owner')
         segment_id = await self.create_segment(title)
         wiki_id = await self.client.create_wiki(title, user_description, summary, segment_id)
         await self._add_wiki_id_to_user(user_id, wiki_id)
