@@ -108,6 +108,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def add_story_collaborator(self, story_id, username):
+        pass
+
+    @abstractmethod
     async def get_story(self, story_id):
         pass
 
@@ -168,6 +172,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def remove_story_collaborator(self, story_id, user_id):
+        pass
+
+    @abstractmethod
     async def move_subsection_as_preceding(self, section_id, to_parent_id, to_index):
         pass
 
@@ -207,6 +215,10 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def add_heading(self, title, page_id, index=None):
+        pass
+
+    @abstractmethod
+    async def add_wiki_collaborator(self, wiki_id, username):
         pass
 
     @abstractmethod
@@ -287,6 +299,10 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def delete_heading(self, heading_title, page_id):
+        pass
+
+    @abstractmethod
+    async def remove_wiki_collaborator(self, wiki_id, user_id):
         pass
 
     @abstractmethod
