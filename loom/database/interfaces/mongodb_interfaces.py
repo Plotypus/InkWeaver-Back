@@ -758,6 +758,9 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='delete_bookmark')
 
+    async def remove_story_collaborator(self, story_id, user_id):
+        pass
+
     async def move_subsection_as_preceding(self, section_id, to_parent_id, to_index):
         if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
             raise BadValueError(query='move_subsection_as_preceding', value=to_parent_id)
@@ -887,6 +890,9 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.insert_heading(title, page_id, text='', at_index=index)
         except ClientError:
             raise FailedUpdateError(query='add_heading')
+
+    async def add_wiki_collaborator(self, wiki_id, username):
+        pass
 
     async def get_wiki(self, wiki_id):
         try:
@@ -1203,6 +1209,9 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.delete_heading(heading_title, page_id)
         except ClientError:
             raise FailedUpdateError(query='delete_heading')
+
+    async def remove_wiki_collaborator(self, wiki_id, user_id):
+        pass
 
     async def move_segment(self, segment_id, to_parent_id, to_index):
         if await self._segment_is_ancestor_of_candidate(segment_id, to_parent_id):
