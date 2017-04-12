@@ -218,6 +218,16 @@ class MongoDBClient:
         self.log(f'get_user_id_for_username {{{username}}}; user ID {{{user_id}}}')
         return user_id
 
+    async def get_user_for_username(self, username: str):
+        user = await self.users.find_one(
+            filter={'username': username}
+        )
+        if user is None:
+            self.log(f'get_user_for_username {{{username}}} FAILED')
+            raise NoMatchError
+        self.log(f'get_user_for_username {{{username}}}')
+        return user
+
     async def username_exists(self, username: str) -> bool:
         user = await self.users.find_one(
             filter={'username': username}
