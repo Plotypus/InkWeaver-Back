@@ -423,6 +423,20 @@ class MongoDBClient:
             inner_parameters['$position'] = position
         return inner_parameters
 
+    async def insert_user_description_to_story(self, user_description: dict, story_id: ObjectId, at_index=None):
+        inner_parameters = self._insertion_parameters(user_description, at_index)
+        update_result: UpdateResult = await self.stories.update_one(
+            filter={'_id': story_id},
+            update={
+                '$push': {
+                    'users': inner_parameters
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'insert_user_description_to_story {{{user_description}}} to story {{{story_id}}} at index '
+                 f'{{{at_index}}}')
+
     async def insert_preceding_subsection(self, subsection_id, to_section_id, at_index=None):
         inner_parameters = self._insertion_parameters(subsection_id, at_index)
         update_result: UpdateResult = await self.sections.update_one(
@@ -833,6 +847,20 @@ class MongoDBClient:
         result = await self.pages.insert_one(page)
         self.log(f'create_page {{{title}}}; inserted ID {{{result.inserted_id}}}')
         return result.inserted_id
+
+    async def insert_user_description_to_wiki(self, user_description: dict, wiki_id: ObjectId, at_index=None):
+        inner_parameters = self._insertion_parameters(user_description, at_index)
+        update_result: UpdateResult = await self.wiikis.update_one(
+            filter={'_id': wiki_id},
+            update={
+                '$push': {
+                    'users': inner_parameters
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'insert_user_description_to_wiki {{{user_description}}} to wiki {{{wiki_id}}} at index '
+                 f'{{{at_index}}}')
 
     async def insert_segment_to_parent_segment(self, child_segment: ObjectId, parent_segment: ObjectId, at_index=None):
         inner_parameters = self._insertion_parameters(child_segment, at_index)
