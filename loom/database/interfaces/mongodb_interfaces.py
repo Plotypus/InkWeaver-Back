@@ -359,6 +359,28 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return bookmark_id
 
+    async def add_story_collaborator(self, story_id, username):
+        user = await self._get_user_for_username(username)
+        user_id = user['_id']
+        # Already has access to the story, should also have access to wiki
+        if self._user_has_access_to_story(user, story_id):
+            raise BadValueError(query='add_story_collaborator', value=story_id)
+        # Add story access for user
+        await self._add_story_to_user(user_id, story_id)
+        user_description = self._build_user_description(user_id, user['name'], 'collaborator')
+        await self._add_user_description_to_story(user_description, story_id, index=None)
+        # Check if user has access to wiki, if not add access
+        story = await self.get_story(story_id)
+        # Return the wiki_id if user did not have access previously
+        wiki_id = story['wiki_id']
+        if not self._user_has_access_to_wiki(user, wiki_id):
+            await self._add_wiki_id_to_user(user_id, wiki_id)
+            await self._add_user_description_to_wiki(user_description, wiki_id, index=None)
+        else:
+            # Return None if the user already had access to the wiki
+            wiki_id = None
+        return user_id, story_id, wiki_id
+
     async def _add_user_description_to_story(self, user_description: dict, story_id: ObjectId, index=None):
         try:
             await self.client.insert_user_description_to_story(user_description, story_id, index)
