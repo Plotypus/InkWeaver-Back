@@ -1,4 +1,4 @@
-from .outgoing_message import UnicastMessage, MulticastMessage, StoryBroadcastMessage
+from .outgoing_message import UnicastMessage, MulticastMessage, UserSpecifiedMulticastMessage, StoryBroadcastMessage
 
 from bson import ObjectId
 from uuid import UUID
@@ -78,10 +78,15 @@ class AddBookmarkOutgoingMessage(StoryBroadcastMessage):
 
 
 class AddStoryCollaboratorOutgoingMessage(StoryBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId, name: str):
+    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId, username: str):
         super().__init__(uuid, message_id, 'story_collaborator_added')
         self.user_id = user_id
-        self.name = name
+        self.username = username
+
+
+class InformNewStoryCollaboratorOutgoingMessage(UserSpecifiedMulticastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId):
+        super().__init__(uuid, message_id, 'added_as_collaborator_to_story', user_id=user_id)
 
 
 ###########################################################################
