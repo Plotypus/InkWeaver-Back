@@ -197,9 +197,10 @@ class GetSectionContentIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
         self.section_id = RequiredField()
+        self.wiki_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.get_section_content(self.uuid, self.message_id, self.section_id)
+        return self._dispatcher.get_section_content(self.uuid, self.message_id, self.wiki_id, self.section_id)
 
 
 ###########################################################################

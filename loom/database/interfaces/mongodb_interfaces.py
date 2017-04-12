@@ -368,7 +368,8 @@ class MongoDBInterface(AbstractDBInterface):
         }
         return hierarchy
 
-    async def get_section_content(self, section_id):
+    async def get_section_content(self, wiki_id, section_id):
+        await self._refresh_section(wiki_id, section_id)
         try:
             section = await self.client.get_section(section_id)
         except ClientError:
@@ -380,6 +381,14 @@ class MongoDBInterface(AbstractDBInterface):
                 return paragraph
             paragraphs.append(join_dictionaries_and_return(db_paragraph, db_note))
         return paragraphs
+
+    async def _refresh_section(self, wiki_id, section_id):
+        try:
+            section = await self.client.get_section(section_id)
+        except ClientError:
+            raise BadValueError(query='get_section_content', value=section_id)
+        for paragraph in section['content']:
+            await self.set_paragraph_text(wiki_id, section_id, paragraph['text'], paragraph['_id'])
 
     async def set_story_title(self, story_id, title):
         try:

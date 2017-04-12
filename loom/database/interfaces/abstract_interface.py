@@ -124,7 +124,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_section_content(self, section_id):
+    async def get_section_content(self, wiki_id, section_id):
         pass
 
     @abstractmethod

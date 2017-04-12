@@ -105,7 +105,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def get_section_content(self, uuid, message_id, section_id):
+    async def get_section_content(self, uuid, message_id, wiki_id, section_id):
         pass
 
     @abstractmethod

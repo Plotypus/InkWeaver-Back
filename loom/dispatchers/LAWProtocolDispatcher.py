@@ -285,8 +285,8 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         yield GetSectionHierarchyOutgoingMessage(uuid, message_id, hierarchy=hierarchy)
 
     @handle_interface_errors
-    async def get_section_content(self, uuid, message_id, section_id):
-        paragraphs = await self.db_interface.get_section_content(section_id)
+    async def get_section_content(self, uuid, message_id, wiki_id, section_id):
+        paragraphs = await self.db_interface.get_section_content(wiki_id, section_id)
         content = [{'text': paragraph['text'], 'paragraph_id': paragraph['_id'], 'note': paragraph['note']}
                    for paragraph in paragraphs]
         yield GetSectionContentOutgoingMessage(uuid, message_id, content=content)
