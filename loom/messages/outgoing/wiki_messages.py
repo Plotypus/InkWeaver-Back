@@ -55,6 +55,13 @@ class AddHeadingOutgoingMessage(WikiBroadcastMessage):
         self.page_id = page_id
         self.index = index
 
+
+class AddWikiCollaboratorOutgoingMessage(WikiBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId, name: str):
+        super().__init__(uuid, message_id, 'wiki_collaborator_added')
+        self.user_id = user_id
+        self.name = name
+
     
 ###########################################################################
 #
@@ -185,6 +192,12 @@ class DeleteHeadingOutgoingMessage(WikiBroadcastMessage):
         super().__init__(uuid, message_id, 'heading_deleted')
         self.page_id = page_id
         self.heading_title = heading_title
+
+
+class RemoveWikiCollaboratorOutgoingMessage(WikiBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId):
+        super().__init__(uuid, message_id, 'wiki_collaborator_removed')
+        self.user_id = user_id
 
 
 ###########################################################################
