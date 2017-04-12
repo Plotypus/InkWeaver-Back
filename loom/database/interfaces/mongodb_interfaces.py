@@ -184,6 +184,12 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='_add_wiki_id_to_user')
 
+    async def _add_story_to_user(self, user_id, story_id):
+        try:
+            await self.client.add_story_to_user(user_id, story_id)
+        except ClientError:
+            raise FailedUpdateError(query='_add_story_to_user')
+
     async def set_user_password(self, user_id, password):
         # TODO: Check the password is not equal to the previous password.
         # Maybe even check that it's not too similar, like:
@@ -241,13 +247,9 @@ class MongoDBInterface(AbstractDBInterface):
         }
         section_id = await self.create_section(title)
         await self.add_paragraph(wiki_id, section_id, summary)
-        inserted_id = await self.client.create_story(title, wiki_id, user_description, section_id)
-        try:
-            await self.client.add_story_to_user(user_id, inserted_id)
-        except ClientError:
-            raise FailedUpdateError(query='create_story')
-        else:
-            return inserted_id
+        story_id = await self.client.create_story(title, wiki_id, user_description, section_id)
+        await self._add_story_to_user(user_id, story_id)
+        return story_id
 
     async def create_section(self, title) -> ObjectId:
         inserted_id = await self.client.create_section(title)
