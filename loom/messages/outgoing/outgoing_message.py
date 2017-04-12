@@ -24,6 +24,10 @@ class BroadcastMessage(OutgoingMessage):
     pass
 
 
+class DualBroadcastMessage(BroadcastMessage):
+    pass
+
+
 class StoryBroadcastMessage(BroadcastMessage):
     pass
 
