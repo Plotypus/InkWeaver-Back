@@ -87,6 +87,16 @@ class AddBookmarkIncomingMessage(IncomingMessage):
                                              self.paragraph_id, self.index)
 
 
+class AddCollaboratorIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.story_id = RequiredField()
+        self.username = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.add_collaborator(self.uuid, self.message_id, self.story_id, self.username)
+
+
 ###########################################################################
 #
 # Edit Messages
@@ -253,6 +263,16 @@ class DeleteBookmarkIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.delete_bookmark(self.uuid, self.message_id, self.bookmark_id)
+
+
+class RemoveCollaboratorIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.story_id = RequiredField()
+        self.user_id = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.remove_collaborator(self.uuid, self.message_id, self.story_id, self.user_id)
 
 
 ###########################################################################
