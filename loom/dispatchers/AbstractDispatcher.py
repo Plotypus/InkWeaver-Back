@@ -167,6 +167,10 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
+    async def add_collaborator(self, uuid, message_id, story_id, username):
+        pass
+
+    @abstractmethod
     async def edit_wiki(self, uuid, message_id, wiki_id, update):
         pass
 
@@ -224,6 +228,10 @@ class AbstractDispatcher(ABC):
 
     @abstractmethod
     async def delete_heading(self, uuid, message_id, heading_title, page_id):
+        pass
+
+    @abstractmethod
+    async def remove_collaborator(self, uuid, message_id, story_id, user_id):
         pass
 
     @abstractmethod

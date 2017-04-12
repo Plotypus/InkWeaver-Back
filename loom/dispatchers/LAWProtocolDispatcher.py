@@ -200,6 +200,10 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                          index=index)
 
     @handle_interface_errors
+    async def add_collaborator(self, uuid, message_id, story_id, username):
+        pass
+
+    @handle_interface_errors
     async def edit_story(self, uuid, message_id, story_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
@@ -315,6 +319,10 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def delete_bookmark(self, uuid, message_id, bookmark_id):
         await self.db_interface.delete_bookmark(bookmark_id)
         yield DeleteBookmarkOutgoingMessage(uuid, message_id, bookmark_id=bookmark_id)
+
+    @handle_interface_errors
+    async def remove_collaborator(self, uuid, message_id, story_id, user_id):
+        pass
 
     @handle_interface_errors
     async def move_subsection_as_preceding(self, uuid, message_id, section_id, to_parent_id, to_index):
