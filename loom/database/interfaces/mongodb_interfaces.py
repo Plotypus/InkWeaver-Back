@@ -178,6 +178,17 @@ class MongoDBInterface(AbstractDBInterface):
             if user['user_id'] == user_id:
                 return user['access_level']
 
+    @staticmethod
+    def _user_has_access_to_story(user: dict, story_id: ObjectId):
+        for story in user['stories']:
+            if story['story_id'] == story_id:
+                return True
+        return False
+
+    @staticmethod
+    def _user_has_access_to_wiki(user: dict, wiki_id: ObjectId):
+        return wiki_id in user['wikis']
+
     async def _add_wiki_id_to_user(self, user_id, wiki_id):
         try:
             await self.client.add_wiki_to_user(user_id, wiki_id)
