@@ -850,7 +850,7 @@ class MongoDBClient:
 
     async def insert_user_description_to_wiki(self, user_description: dict, wiki_id: ObjectId, at_index=None):
         inner_parameters = self._insertion_parameters(user_description, at_index)
-        update_result: UpdateResult = await self.wiikis.update_one(
+        update_result: UpdateResult = await self.wikis.update_one(
             filter={'_id': wiki_id},
             update={
                 '$push': {
