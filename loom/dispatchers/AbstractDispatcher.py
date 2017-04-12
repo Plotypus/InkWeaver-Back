@@ -69,6 +69,10 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
+    async def add_story_collaborator(self, uuid, message_id, story_id, username):
+        pass
+
+    @abstractmethod
     async def edit_story(self, uuid, message_id, story_id, update):
         pass
 
@@ -129,6 +133,10 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
+    async def remove_story_collaborator(self, uuid, message_id, story_id, user_id):
+        pass
+
+    @abstractmethod
     async def move_subsection_as_preceding(self, uuid, message_id, section_id, to_parent_id, to_index):
         pass
 
@@ -167,7 +175,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def add_story_collaborator(self, uuid, message_id, story_id, username):
+    async def add_wiki_collaborator(self, uuid, message_id, wiki_id, username):
         pass
 
     @abstractmethod
@@ -231,7 +239,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def remove_story_collaborator(self, uuid, message_id, story_id, user_id):
+    async def remove_wiki_collaborator(self, uuid, message_id, wiki_id, user_id):
         pass
 
     @abstractmethod

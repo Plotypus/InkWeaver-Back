@@ -381,6 +381,10 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         yield AddHeadingOutgoingMessage(uuid, message_id, title=title, page_id=page_id, index=index)
 
     @handle_interface_errors
+    async def add_wiki_collaborator(self, uuid, message_id, wiki_id, username):
+        pass
+
+    @handle_interface_errors
     async def edit_wiki(self, uuid, message_id, wiki_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
@@ -547,6 +551,10 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def delete_heading(self, uuid, message_id, heading_title, page_id):
         await self.db_interface.delete_heading(heading_title, page_id)
         yield DeleteHeadingOutgoingMessage(uuid, message_id, page_id=page_id, heading_title=heading_title)
+
+    @handle_interface_errors
+    async def remove_wiki_collaborator(self, uuid, message_id, wiki_id, user_id):
+        pass
 
     @handle_interface_errors
     async def move_segment(self, uuid, message_id, segment_id, to_parent_id, to_index):
