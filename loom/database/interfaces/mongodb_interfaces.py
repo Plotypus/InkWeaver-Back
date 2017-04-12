@@ -252,7 +252,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='set_story_position_context')
 
     @staticmethod
-    async def _build_user_description(user_id: ObjectId, name: str, access_level: str):
+    def _build_user_description(user_id: ObjectId, name: str, access_level: str):
         user_description = {
             'user_id':      user_id,
             'name':         name,
