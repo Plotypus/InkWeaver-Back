@@ -122,6 +122,14 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return user_id
 
+    async def _get_user_for_username(self, username):
+        try:
+            user = await self.client.get_user_for_username(username)
+        except ClientError:
+            raise BadValueError(query='get_user_for_username', value=username)
+        else:
+            return user
+
     async def get_user_preferences(self, user_id):
         try:
             preferences = await self.client.get_user_preferences(user_id)
