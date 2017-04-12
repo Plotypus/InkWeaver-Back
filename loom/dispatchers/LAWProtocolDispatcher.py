@@ -201,7 +201,12 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def add_story_collaborator(self, uuid, message_id, story_id, username):
-        pass
+        user_id, story_id, wiki_id = await self.db_interface.add_story_collaborator(story_id, username)
+        yield AddStoryCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id, username=username)
+        yield InformNewStoryCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id)
+        if wiki_id is not None:
+            yield AddWikiCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id, username=username)
+            yield InformNewWikiCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id)
 
     @handle_interface_errors
     async def edit_story(self, uuid, message_id, story_id, update):
