@@ -178,6 +178,12 @@ class MongoDBInterface(AbstractDBInterface):
             if user['user_id'] == user_id:
                 return user['access_level']
 
+    async def _add_wiki_id_to_user(self, user_id, wiki_id):
+        try:
+            await self.client.add_wiki_to_user(user_id, wiki_id)
+        except ClientError:
+            raise FailedUpdateError(query='_add_wiki_id_to_user')
+
     async def set_user_password(self, user_id, password):
         # TODO: Check the password is not equal to the previous password.
         # Maybe even check that it's not too similar, like:
@@ -778,13 +784,9 @@ class MongoDBInterface(AbstractDBInterface):
             'access_level': 'owner',
         }
         segment_id = await self.create_segment(title)
-        inserted_id = await self.client.create_wiki(title, user_description, summary, segment_id)
-        try:
-            await self.client.add_wiki_to_user(user_id, inserted_id)
-        except ClientError:
-            raise FailedUpdateError(query='create_wiki')
-        else:
-            return inserted_id
+        wiki_id = await self.client.create_wiki(title, user_description, summary, segment_id)
+        await self._add_wiki_id_to_user(user_id, wiki_id)
+        return wiki_id
 
     async def create_segment(self, title):
         inserted_id = await self.client.create_segment(title)
