@@ -6,8 +6,7 @@ from loom.messages.incoming import (
     UnsubscribeFromStoryIncomingMessage, UnsubscribeFromWikiIncomingMessage, UserSignOutIncomingMessage
 )
 from loom.messages.outgoing import (
-    UnicastMessage, MulticastMessage, StoryBroadcastMessage, WikiBroadcastMessage, DualBroadcastMessage,
-    OutgoingErrorMessage,
+    UnicastMessage, MulticastMessage, StoryBroadcastMessage, WikiBroadcastMessage, OutgoingErrorMessage,
     SubscribeToStoryOutgoingMessage, SubscribeToWikiOutgoingMessage,
     UnsubscribeFromStoryOutgoingMessage, UnsubscribeFromWikiOutgoingMessage
 )
@@ -18,7 +17,7 @@ from tornado.ioloop import IOLoop
 from tornado.queues import Queue
 from uuid import UUID
 
-from typing import Dict, Set, Union
+from typing import Dict, Set
 JSON = Dict
 
 
@@ -113,9 +112,6 @@ class Router:
                 elif isinstance(response, StoryBroadcastMessage):
                     self.broadcast_to_story(story_id, response)
                 elif isinstance(response, WikiBroadcastMessage):
-                    self.broadcast_to_wiki(wiki_id, response)
-                elif isinstance(response, DualBroadcastMessage):
-                    self.broadcast_to_story(story_id, response)
                     self.broadcast_to_wiki(wiki_id, response)
                 else:
                     raise RuntimeError(f"unknown instance of OutgoingMessage: {response}")
@@ -218,12 +214,12 @@ class Router:
             handler = self.uuid_to_handler[handler_uuid]
             handler.write_json(message)
 
-    def broadcast_to_story(self, story_id: ObjectId, message: Union[DualBroadcastMessage, StoryBroadcastMessage]):
+    def broadcast_to_story(self, story_id: ObjectId, message: StoryBroadcastMessage):
         for uuid in self.story_to_uuids[story_id]:
             handler = self.uuid_to_handler[uuid]
             handler.write_json(message)
 
-    def broadcast_to_wiki(self, wiki_id: ObjectId, message: Union[DualBroadcastMessage, WikiBroadcastMessage]):
+    def broadcast_to_wiki(self, wiki_id: ObjectId, message: WikiBroadcastMessage):
         for uuid in self.wiki_to_uuids[wiki_id]:
             handler = self.uuid_to_handler[uuid]
             handler.write_json(message)
