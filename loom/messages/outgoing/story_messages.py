@@ -1,4 +1,4 @@
-from .outgoing_message import UnicastMessage, MulticastMessage, StoryBroadcastMessage
+from .outgoing_message import UnicastMessage, MulticastMessage, DualBroadcastMessage, StoryBroadcastMessage
 
 from bson import ObjectId
 from uuid import UUID
@@ -75,6 +75,13 @@ class AddBookmarkOutgoingMessage(StoryBroadcastMessage):
         self.paragraph_id = paragraph_id
         self.name = name
         self.index = index
+
+
+class AddCollaboratorOutgoingMessage(DualBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId, name: str):
+        super().__init__(uuid, message_id, 'collaborator_added')
+        self.user_id = user_id
+        self.name = name
 
 
 ###########################################################################
@@ -199,6 +206,12 @@ class DeleteBookmarkOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, bookmark_id: ObjectId):
         super().__init__(uuid, message_id, 'bookmark_deleted')
         self.bookmark_id = bookmark_id
+
+
+class RemoveCollaboratorOutoingMessage(DualBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId):
+        super().__init__(uuid, message_id, 'collaborator_removed')
+        self.user_id = user_id
 
 
 ###########################################################################
