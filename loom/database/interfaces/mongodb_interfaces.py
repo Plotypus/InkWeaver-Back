@@ -359,6 +359,18 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return bookmark_id
 
+    async def _add_user_description_to_story(self, user_description: dict, story_id: ObjectId, index=None):
+        try:
+            await self.client.insert_user_description_to_story(user_description, story_id, index)
+        except ClientError:
+            raise FailedUpdateError(query='_add_user_description_to_story')
+
+    async def _add_user_description_to_wiki(self, user_description: dict, wiki_id: ObjectId, index=None):
+        try:
+            await self.client.insert_user_description_to_wiki(user_description, wiki_id, index)
+        except ClientError:
+            raise FailedUpdateError(query='_add_user_description_to_wiki')
+
     async def get_story(self, story_id):
         try:
             story = await self.client.get_story(story_id)
