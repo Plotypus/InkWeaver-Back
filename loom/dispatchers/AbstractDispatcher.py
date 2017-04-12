@@ -167,7 +167,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def add_collaborator(self, uuid, message_id, story_id, username):
+    async def add_story_collaborator(self, uuid, message_id, story_id, username):
         pass
 
     @abstractmethod
@@ -231,7 +231,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def remove_collaborator(self, uuid, message_id, story_id, user_id):
+    async def remove_story_collaborator(self, uuid, message_id, story_id, user_id):
         pass
 
     @abstractmethod

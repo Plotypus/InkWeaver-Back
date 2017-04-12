@@ -200,7 +200,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                          index=index)
 
     @handle_interface_errors
-    async def add_collaborator(self, uuid, message_id, story_id, username):
+    async def add_story_collaborator(self, uuid, message_id, story_id, username):
         pass
 
     @handle_interface_errors
@@ -321,7 +321,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         yield DeleteBookmarkOutgoingMessage(uuid, message_id, bookmark_id=bookmark_id)
 
     @handle_interface_errors
-    async def remove_collaborator(self, uuid, message_id, story_id, user_id):
+    async def remove_story_collaborator(self, uuid, message_id, story_id, user_id):
         pass
 
     @handle_interface_errors
