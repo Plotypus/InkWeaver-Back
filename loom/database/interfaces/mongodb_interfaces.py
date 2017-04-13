@@ -134,7 +134,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             user = await self.client.get_user_for_username(username)
         except ClientError:
-            raise BadValueError(query='get_user_for_username', value=username)
+            raise BadValueError(query='_get_user_for_username', value=username)
         else:
             return user
 
