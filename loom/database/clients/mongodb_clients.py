@@ -818,6 +818,20 @@ class MongoDBClient:
         self.assert_update_was_successful(update_result)
         self.log(f'delete_bookmark_by_paragraph_id {{{paragraph_id}}}')
 
+    async def remove_user_from_stories_with_wiki_id(self, wiki_id: ObjectId, user_id: ObjectId):
+        update_result: UpdateResult = await self.stories.update_many(
+            filter={'wiki_id': wiki_id},
+            update={
+                '$pull': {
+                    'users': {
+                        'user_id': user_id
+                    }
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'remove_user_from_stories_with_wiki_id for wiki id {{{wiki_id}}} for user id {{{user_id}}}')
+
     ###########################################################################
     #
     # Wiki Methods
