@@ -1273,19 +1273,27 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='delete_heading')
 
     async def remove_wiki_collaborator(self, wiki_id, user_id):
+        user = await self._get_user_for_user_id(user_id)
         wiki = await self.get_wiki(wiki_id)
         # Cannot remove the wiki owner from collaborating
         if self._get_current_user_access_level_in_object(user_id, wiki) == 'owner':
             raise BadValueError(query='remove_wiki_collaborator', value=user_id)
-        # Remove user from list of collaborators for the wiki
+        # Remove the user's wiki access
         await self._remove_wiki_from_user(user_id, wiki_id)
+        await self._remove_user_from_wiki(wiki_id, user_id)
+        # Remove access to the stories with this wiki
+        # TODO: Do not remove from story if they are the owner.
+        # TODO: Remove stories before the wiki?
         stories = await self._get_stories_with_wiki_id(wiki_id)
         story_ids = []
         for story in stories:
             story_id = story['_id']
+            # Ignore stories that the user does not have access to
+            if not self._user_has_access_to_story(user, story_id):
+                continue
             story_ids.append(story_id)
-            await self.client.remove_story_from_user(user_id, story_id)
-            await self.client.remove_user_from_story(story_id, user_id)
+            await self._remove_story_from_user(user_id, story_id)
+            await self._remove_user_from_story(story_id, user_id)
         return story_ids
 
     async def _remove_user_from_wiki(self, wiki_id, user_id):
