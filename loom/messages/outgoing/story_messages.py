@@ -85,8 +85,9 @@ class AddStoryCollaboratorOutgoingMessage(StoryBroadcastMessage):
 
 
 class InformNewStoryCollaboratorOutgoingMessage(UserSpecifiedMulticastMessage):
-    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId):
-        super().__init__(uuid, message_id, 'added_as_collaborator_to_story', user_id=user_id)
+    def __init__(self, uuid: UUID, message_id: int, *, story_id: ObjectId, user_id: ObjectId):
+        super().__init__(uuid, message_id, 'story_collaborator_status_granted', user_id=user_id)
+        self.story_id = story_id
 
 
 ###########################################################################
@@ -220,10 +221,16 @@ class DeleteBookmarkOutgoingMessage(StoryBroadcastMessage):
         self.bookmark_id = bookmark_id
 
 
-class RemoveStoryCollaboratorOutoingMessage(StoryBroadcastMessage):
+class RemoveStoryCollaboratorOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId):
         super().__init__(uuid, message_id, 'story_collaborator_removed')
         self.user_id = user_id
+
+
+class InformStoryCollaboratorOfRemovalOutgoingMessage(UserSpecifiedMulticastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, story_id: ObjectId, user_id: ObjectId):
+        super().__init__(uuid, message_id, 'story_collaborator_status_revoked', user_id=user_id)
+        self.story_id = story_id
 
 
 ###########################################################################
