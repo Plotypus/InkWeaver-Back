@@ -382,7 +382,9 @@ class MongoDBClient:
         update_result: UpdateResult = await self.users.update_one(
             filter={'_id': user_id},
             update={
-                '$pull': wiki_id
+                '$pull': {
+                    'wikis': wiki_id
+                }
             }
         )
         self.assert_update_was_successful(update_result)
