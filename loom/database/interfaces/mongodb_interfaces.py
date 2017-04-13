@@ -259,6 +259,18 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='set_story_position_context')
 
+    async def _remove_story_from_user(self, user_id, story_id):
+        try:
+            await self.client.remove_story_from_user(user_id, story_id)
+        except ClientError:
+            raise FailedUpdateError(query='_remove_story_from_user')
+
+    async def _remove_wiki_from_user(self, user_id, wiki_id):
+        try:
+            await self.client.remove_wiki_from_user(user_id, wiki_id)
+        except ClientError:
+            raise FailedUpdateError(query='_remove_wiki_from_user')
+
     @staticmethod
     def _build_user_description(user_id: ObjectId, name: str, access_level: str):
         user_description = {
@@ -796,11 +808,11 @@ class MongoDBInterface(AbstractDBInterface):
     async def remove_story_collaborator(self, story_id, user_id):
         pass
 
-    async def _remove_story_from_user(self, user_id, story_id):
+    async def _remove_user_from_story(self, story_id, user_id):
         try:
-            await self.client.remove_story_from_user(user_id, story_id)
+            await self.client.remove_user_from_story(story_id, user_id)
         except ClientError:
-            raise FailedUpdateError(query='_remove_story_from_user')
+            raise FailedUpdateError(query='_remove_user_from_story')
 
     async def move_subsection_as_preceding(self, section_id, to_parent_id, to_index):
         if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
@@ -1276,17 +1288,11 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.remove_user_from_story(story_id, user_id)
         return story_ids
 
-    async def _remove_wiki_from_user(self, user_id, wiki_id):
+    async def _remove_user_from_wiki(self, wiki_id, user_id):
         try:
-            await self.client.remove_wiki_from_user(user_id, wiki_id)
+            await self.client.remove_user_from_wiki(wiki_id, user_id)
         except ClientError:
-            raise FailedUpdateError(query='_remove_wiki_from_user')
-
-    async def _remove_user_from_stories_with_wiki_id(self, wiki_id, user_id):
-        try:
-            await self.client.remove_user_from_stories_with_wiki_id(wiki_id, user_id)
-        except ClientError:
-            raise FailedUpdateError(query='_remove_user_from_stories_with_wiki_id')
+            raise FailedUpdateError(query='_remove_user_from_wiki')
 
     async def move_segment(self, segment_id, to_parent_id, to_index):
         if await self._segment_is_ancestor_of_candidate(segment_id, to_parent_id):
