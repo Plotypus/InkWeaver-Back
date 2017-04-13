@@ -1247,6 +1247,20 @@ class MongoDBClient:
         self.assert_update_was_successful(update_result)
         self.log(f'delete_heading {{{heading_title}}} in page {{{page_id}}}')
 
+    async def remove_user_from_wiki(self, wiki_id, user_id):
+        update_result: UpdateResult = await self.wikis.update_one(
+            filter={'wiki_id': wiki_id},
+            update={
+                '$pull': {
+                    'users': {
+                        'user_id': user_id
+                    }
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'remove_user_from_wiki for wiki id {{{wiki_id}}} for user id {{{user_id}}}')
+
     ###########################################################################
     #
     # Link Methods
