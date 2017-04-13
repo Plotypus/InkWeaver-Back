@@ -709,8 +709,10 @@ class MongoDBInterface(AbstractDBInterface):
         # The user is allowed to delete the story, so delete it.
         section_id = story['section_id']
         await self.recur_delete_section_and_subsections(section_id)
+        user_ids = []
         for user in story['users']:
             user_id = user['user_id']
+            user_ids.append(user_id)
             try:
                 await self.client.remove_story_from_user(user_id, story_id)
             except ClientError:
@@ -719,6 +721,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.delete_story(story_id)
         except:
             raise FailedUpdateError(query='delete_story')
+        return user_ids
 
     async def delete_section(self, section_id):
         await self.recur_delete_section_and_subsections(section_id)
