@@ -1249,7 +1249,7 @@ class MongoDBClient:
 
     async def remove_user_from_wiki(self, wiki_id, user_id):
         update_result: UpdateResult = await self.wikis.update_one(
-            filter={'wiki_id': wiki_id},
+            filter={'_id': wiki_id},
             update={
                 '$pull': {
                     'users': {
