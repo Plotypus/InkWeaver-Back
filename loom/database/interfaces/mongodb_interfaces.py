@@ -409,6 +409,14 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return story
 
+    async def _get_stories_with_wiki_id(self, wiki_id):
+        try:
+            stories = await self.client.get_stories_with_wiki_id(wiki_id)
+        except ClientError:
+            raise BadValueError(query='_get_stories_with_wiki_id', value=wiki_id)
+        else:
+            return stories
+
     async def get_story_bookmarks(self, story_id):
         try:
             story = await self.client.get_story(story_id)
@@ -1250,7 +1258,32 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='delete_heading')
 
     async def remove_wiki_collaborator(self, wiki_id, user_id):
-        pass
+        wiki = await self.get_wiki(wiki_id)
+        # Cannot remove the wiki owner from collaborating
+        if self._get_current_user_access_level_in_object(user_id, wiki) == 'owner':
+            raise BadValueError(query='remove_wiki_collaborator', value=user_id)
+        # Remove user from list of collaborators for the wiki
+        await self._remove_wiki_from_user(user_id, wiki_id)
+        stories = await self._get_stories_with_wiki_id(wiki_id)
+        story_ids = []
+        for story in stories:
+            story_id = story['_id']
+            story_ids.append(story_id)
+            await self.client.remove_story_from_user(user_id, story_id)
+            await self.client.remove_user_from_story(story_id, user_id)
+        return story_ids
+
+    async def _remove_wiki_from_user(self, user_id, wiki_id):
+        try:
+            await self.client.remove_wiki_from_user(user_id, wiki_id)
+        except ClientError:
+            raise FailedUpdateError(query='_remove_wiki_from_user')
+
+    async def _remove_user_from_stories_with_wiki_id(self, wiki_id, user_id):
+        try:
+            await self.client.remove_user_from_stories_with_wiki_id(wiki_id, user_id)
+        except ClientError:
+            raise FailedUpdateError(query='_remove_user_from_stories_with_wiki_id')
 
     async def move_segment(self, segment_id, to_parent_id, to_index):
         if await self._segment_is_ancestor_of_candidate(segment_id, to_parent_id):
