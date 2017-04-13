@@ -723,10 +723,7 @@ class MongoDBInterface(AbstractDBInterface):
         await self.recur_delete_section_and_subsections(section_id)
         for user in story['users']:
             user_id = user['user_id']
-            try:
-                await self.client.remove_story_from_user(user_id, story_id)
-            except ClientError:
-                raise FailedUpdateError(query='delete_story')
+            await self._remove_story_from_user(user_id, story_id)
         try:
             await self.client.delete_story(story_id)
         except:
@@ -798,6 +795,12 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def remove_story_collaborator(self, story_id, user_id):
         pass
+
+    async def _remove_story_from_user(self, user_id, story_id):
+        try:
+            await self.client.remove_story_from_user(user_id, story_id)
+        except ClientError:
+            raise FailedUpdateError(query='_remove_story_from_user')
 
     async def move_subsection_as_preceding(self, section_id, to_parent_id, to_index):
         if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
