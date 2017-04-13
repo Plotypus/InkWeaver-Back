@@ -1288,13 +1288,15 @@ class MongoDBInterface(AbstractDBInterface):
         # Cannot remove the wiki owner from collaborating
         if self._get_current_user_access_level_in_object(user_id, wiki) == 'owner':
             raise BadValueError(query='remove_wiki_collaborator', value=user_id)
+        stories = await self._get_stories_with_wiki_id(wiki_id)
+        # Cannot remove the story owner from collaborating
+        for story in stories:
+            if self._get_current_user_access_level_in_object(user_id, story) == 'owner':
+                raise BadValueError(query='remove_wiki_collaborator', value=user_id)
         # Remove the user's wiki access
         await self._remove_wiki_from_user(user_id, wiki_id)
         await self._remove_user_from_wiki(wiki_id, user_id)
         # Remove access to the stories with this wiki
-        # TODO: Do not remove from story if they are the owner.
-        # TODO: Remove stories before the wiki?
-        stories = await self._get_stories_with_wiki_id(wiki_id)
         story_ids = []
         for story in stories:
             story_id = story['_id']
