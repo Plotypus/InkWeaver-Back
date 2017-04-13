@@ -1146,6 +1146,9 @@ class MongoDBInterface(AbstractDBInterface):
             wiki = await self.client.get_wiki(wiki_id)
         except ClientError:
             raise BadValueError(query='delete_wiki', value=wiki_id)
+        # Verify this user is allowed to delete this wiki (they are an owner).
+        if self._get_current_user_access_level_in_object(user_id, wiki) != 'owner':
+            raise BadValueError(query='delete_wiki', value=user_id)
         # Update each story using this wiki with a new wiki.
         try:
             story_summaries = await self.client.get_summaries_of_stories_using_wiki(wiki_id)
