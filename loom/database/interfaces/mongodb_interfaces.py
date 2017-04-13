@@ -114,6 +114,14 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return super().verify_hash(password, stored_hash)
 
+    async def _get_user_for_user_id(self, user_id):
+        try:
+            user = await self.client.get_user_for_user_id(user_id)
+        except ClientError:
+            raise BadValueError(query='_get_user_for_user_id', value=user_id)
+        else:
+            return user
+
     async def get_user_id_for_username(self, username):
         try:
             user_id = await self.client.get_user_id_for_username(username)
