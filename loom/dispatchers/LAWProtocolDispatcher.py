@@ -200,6 +200,16 @@ class LAWProtocolDispatcher(AbstractDispatcher):
                                          index=index)
 
     @handle_interface_errors
+    async def add_story_collaborator(self, uuid, message_id, story_id, username):
+        user_id, user_name, wiki_id = await self.db_interface.add_story_collaborator(story_id, username)
+        yield AddStoryCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id, user_name=user_name)
+        # TODO: Return enough info about the story to add to the dashboard.
+        yield InformNewStoryCollaboratorOutgoingMessage(uuid, message_id, story_id=story_id, user_id=user_id)
+        if wiki_id is not None:
+            yield AddWikiCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id, user_name=user_name)
+            yield InformNewWikiCollaboratorOutgoingMessage(uuid, message_id, wiki_id=wiki_id, user_id=user_id)
+
+    @handle_interface_errors
     async def edit_story(self, uuid, message_id, story_id, update):
         if update['update_type'] == 'set_title':
             title = update['title']
@@ -292,9 +302,11 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         yield GetSectionContentOutgoingMessage(uuid, message_id, content=content)
 
     @handle_interface_errors
-    async def delete_story(self, uuid, message_id, story_id):
-        await self.db_interface.delete_story(story_id)
+    async def delete_story(self, uuid, message_id, story_id, user_id):
+        user_ids = await self.db_interface.delete_story(story_id, user_id)
         yield DeleteStoryOutgoingMessage(uuid, message_id, story_id=story_id)
+        for user_id in user_ids:
+            yield DeleteStoryNotificationOutgoingMessage(uuid, message_id, story_id=story_id, user_id=user_id)
 
     @handle_interface_errors
     async def delete_section(self, uuid, message_id, section_id):
@@ -315,6 +327,15 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def delete_bookmark(self, uuid, message_id, bookmark_id):
         await self.db_interface.delete_bookmark(bookmark_id)
         yield DeleteBookmarkOutgoingMessage(uuid, message_id, bookmark_id=bookmark_id)
+
+    @handle_interface_errors
+    async def remove_story_collaborator(self, uuid, message_id, story_id, user_id):
+        wiki_id = await self.db_interface.remove_story_collaborator(story_id, user_id)
+        yield RemoveStoryCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id)
+        yield InformStoryCollaboratorOfRemovalOutgoingMessage(uuid, message_id, story_id=story_id, user_id=user_id)
+        if wiki_id is not None:
+            yield RemoveWikiCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id)
+            yield InformWikiCollaboratorOfRemovalOutgoingMessage(uuid, message_id, wiki_id=wiki_id, user_id=user_id)
 
     @handle_interface_errors
     async def move_subsection_as_preceding(self, uuid, message_id, section_id, to_parent_id, to_index):
@@ -371,6 +392,12 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def add_heading(self, uuid, message_id, title, page_id, index=None):
         await self.db_interface.add_heading(title, page_id, index)
         yield AddHeadingOutgoingMessage(uuid, message_id, title=title, page_id=page_id, index=index)
+
+    @handle_interface_errors
+    async def add_wiki_collaborator(self, uuid, message_id, wiki_id, username):
+        user_id, user_name = await self.db_interface.add_wiki_collaborator(wiki_id, username)
+        yield AddWikiCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id, user_name=user_name)
+        yield InformNewWikiCollaboratorOutgoingMessage(uuid, message_id, wiki_id=wiki_id, user_id=user_id)
 
     @handle_interface_errors
     async def edit_wiki(self, uuid, message_id, wiki_id, update):
@@ -539,6 +566,17 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def delete_heading(self, uuid, message_id, heading_title, page_id):
         await self.db_interface.delete_heading(heading_title, page_id)
         yield DeleteHeadingOutgoingMessage(uuid, message_id, page_id=page_id, heading_title=heading_title)
+
+    @handle_interface_errors
+    async def remove_wiki_collaborator(self, uuid, message_id, wiki_id, user_id):
+        # IDs of the stories where the user had collaborative privileges revoked
+        story_ids = await self.db_interface.remove_wiki_collaborator(wiki_id, user_id)
+        yield RemoveWikiCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id)
+        yield InformWikiCollaboratorOfRemovalOutgoingMessage(uuid, message_id, wiki_id=wiki_id, user_id=user_id)
+        for story_id in story_ids:
+            yield InformStoryCollaboratorOfRemovalOutgoingMessage(uuid, message_id, story_id=story_id, user_id=user_id)
+            # TODO: Send story specified message to all stories that the user was removed from.
+            yield RemoveStoryCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id)
 
     @handle_interface_errors
     async def move_segment(self, uuid, message_id, segment_id, to_parent_id, to_index):

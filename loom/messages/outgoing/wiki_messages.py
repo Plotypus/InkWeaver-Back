@@ -1,4 +1,4 @@
-from .outgoing_message import UnicastMessage, MulticastMessage, WikiBroadcastMessage
+from .outgoing_message import UnicastMessage, MulticastMessage, UserSpecifiedMulticastMessage, WikiBroadcastMessage
 
 from bson import ObjectId
 from uuid import UUID
@@ -54,6 +54,19 @@ class AddHeadingOutgoingMessage(WikiBroadcastMessage):
         self.title = title
         self.page_id = page_id
         self.index = index
+
+
+class AddWikiCollaboratorOutgoingMessage(WikiBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId, user_name: str):
+        super().__init__(uuid, message_id, 'wiki_collaborator_added')
+        self.user_id = user_id
+        self.user_name = user_name
+
+
+class InformNewWikiCollaboratorOutgoingMessage(UserSpecifiedMulticastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, wiki_id: ObjectId, user_id: ObjectId):
+        super().__init__(uuid, message_id, 'wiki_collaborator_status_granted', user_id=user_id)
+        self.wiki_id = wiki_id
 
     
 ###########################################################################
@@ -185,6 +198,18 @@ class DeleteHeadingOutgoingMessage(WikiBroadcastMessage):
         super().__init__(uuid, message_id, 'heading_deleted')
         self.page_id = page_id
         self.heading_title = heading_title
+
+
+class RemoveWikiCollaboratorOutgoingMessage(WikiBroadcastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId):
+        super().__init__(uuid, message_id, 'wiki_collaborator_removed')
+        self.user_id = user_id
+
+
+class InformWikiCollaboratorOfRemovalOutgoingMessage(UserSpecifiedMulticastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, wiki_id: ObjectId, user_id: ObjectId):
+        super().__init__(uuid, message_id, 'wiki_collaborator_status_revoked', user_id=user_id)
+        self.wiki_id = wiki_id
 
 
 ###########################################################################

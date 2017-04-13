@@ -114,6 +114,14 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return super().verify_hash(password, stored_hash)
 
+    async def _get_user_for_user_id(self, user_id):
+        try:
+            user = await self.client.get_user_for_user_id(user_id)
+        except ClientError:
+            raise BadValueError(query='_get_user_for_user_id', value=user_id)
+        else:
+            return user
+
     async def get_user_id_for_username(self, username):
         try:
             user_id = await self.client.get_user_id_for_username(username)
@@ -121,6 +129,14 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='get_user_id_for_username', value=username)
         else:
             return user_id
+
+    async def _get_user_for_username(self, username):
+        try:
+            user = await self.client.get_user_for_username(username)
+        except ClientError:
+            raise BadValueError(query='_get_user_for_username', value=username)
+        else:
+            return user
 
     async def get_user_preferences(self, user_id):
         try:
@@ -178,6 +194,29 @@ class MongoDBInterface(AbstractDBInterface):
             if user['user_id'] == user_id:
                 return user['access_level']
 
+    @staticmethod
+    def _user_has_access_to_story(user: dict, story_id: ObjectId):
+        for story in user['stories']:
+            if story['story_id'] == story_id:
+                return True
+        return False
+
+    @staticmethod
+    def _user_has_access_to_wiki(user: dict, wiki_id: ObjectId):
+        return wiki_id in user['wikis']
+
+    async def _add_wiki_id_to_user(self, user_id, wiki_id):
+        try:
+            await self.client.add_wiki_to_user(user_id, wiki_id)
+        except ClientError:
+            raise FailedUpdateError(query='_add_wiki_id_to_user')
+
+    async def _add_story_to_user(self, user_id, story_id):
+        try:
+            await self.client.add_story_to_user(user_id, story_id)
+        except ClientError:
+            raise FailedUpdateError(query='_add_story_to_user')
+
     async def set_user_password(self, user_id, password):
         # TODO: Check the password is not equal to the previous password.
         # Maybe even check that it's not too similar, like:
@@ -220,6 +259,27 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='set_story_position_context')
 
+    async def _remove_story_from_user(self, user_id, story_id):
+        try:
+            await self.client.remove_story_from_user(user_id, story_id)
+        except ClientError:
+            raise FailedUpdateError(query='_remove_story_from_user')
+
+    async def _remove_wiki_from_user(self, user_id, wiki_id):
+        try:
+            await self.client.remove_wiki_from_user(user_id, wiki_id)
+        except ClientError:
+            raise FailedUpdateError(query='_remove_wiki_from_user')
+
+    @staticmethod
+    def _build_user_description(user_id: ObjectId, name: str, access_level: str):
+        user_description = {
+            'user_id':      user_id,
+            'name':         name,
+            'access_level': access_level
+        }
+        return user_description
+
     ###########################################################################
     #
     # Story Methods
@@ -228,20 +288,12 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def create_story(self, user_id, title, summary, wiki_id) -> ObjectId:
         user = await self.get_user_preferences(user_id)
-        user_description = {
-            'user_id':      user_id,
-            'name':         user['name'],
-            'access_level': 'owner',
-        }
+        user_description = self._build_user_description(user_id, user['name'], 'owner')
         section_id = await self.create_section(title)
         await self.add_paragraph(wiki_id, section_id, summary)
-        inserted_id = await self.client.create_story(title, wiki_id, user_description, section_id)
-        try:
-            await self.client.add_story_to_user(user_id, inserted_id)
-        except ClientError:
-            raise FailedUpdateError(query='create_story')
-        else:
-            return inserted_id
+        story_id = await self.client.create_story(title, wiki_id, user_description, section_id)
+        await self._add_story_to_user(user_id, story_id)
+        return story_id
 
     async def create_section(self, title) -> ObjectId:
         inserted_id = await self.client.create_section(title)
@@ -327,6 +379,40 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             return bookmark_id
 
+    async def add_story_collaborator(self, story_id, username):
+        user = await self._get_user_for_username(username)
+        user_id = user['_id']
+        # Already has access to the story, should also have access to wiki
+        if self._user_has_access_to_story(user, story_id):
+            raise BadValueError(query='add_story_collaborator', value=story_id)
+        # Add story access for user
+        await self._add_story_to_user(user_id, story_id)
+        user_description = self._build_user_description(user_id, user['name'], 'collaborator')
+        await self._add_user_description_to_story(user_description, story_id, index=None)
+        # Check if user has access to wiki, if not add access
+        story = await self.get_story(story_id)
+        # Return the wiki_id if user did not have access previously
+        wiki_id = story['wiki_id']
+        if not self._user_has_access_to_wiki(user, wiki_id):
+            await self._add_wiki_id_to_user(user_id, wiki_id)
+            await self._add_user_description_to_wiki(user_description, wiki_id, index=None)
+        else:
+            # Return None if the user already had access to the wiki
+            wiki_id = None
+        return user_id, user['name'], wiki_id
+
+    async def _add_user_description_to_story(self, user_description: dict, story_id: ObjectId, index=None):
+        try:
+            await self.client.insert_user_description_to_story(user_description, story_id, index)
+        except ClientError:
+            raise FailedUpdateError(query='_add_user_description_to_story')
+
+    async def _add_user_description_to_wiki(self, user_description: dict, wiki_id: ObjectId, index=None):
+        try:
+            await self.client.insert_user_description_to_wiki(user_description, wiki_id, index)
+        except ClientError:
+            raise FailedUpdateError(query='_add_user_description_to_wiki')
+
     async def get_story(self, story_id):
         try:
             story = await self.client.get_story(story_id)
@@ -334,6 +420,14 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='get_story', value=story_id)
         else:
             return story
+
+    async def _get_stories_with_wiki_id(self, wiki_id):
+        try:
+            stories = await self.client.get_stories_with_wiki_id(wiki_id)
+        except ClientError:
+            raise BadValueError(query='_get_stories_with_wiki_id', value=wiki_id)
+        else:
+            return stories
 
     async def get_story_bookmarks(self, story_id):
         try:
@@ -632,23 +726,27 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='set_note')
 
-    async def delete_story(self, story_id):
+    async def delete_story(self, story_id, user_id):
         try:
             story = await self.get_story(story_id)
         except ClientError:
             raise BadValueError(query='delete_story', value=story_id)
+        # Verify this user is allowed to delete the story (is an owner).
+        if self._get_current_user_access_level_in_object(user_id, story) != 'owner':
+            raise BadValueError(query='delete_story', value=user_id)
+        # The user is allowed to delete the story, so delete it.
         section_id = story['section_id']
         await self.recur_delete_section_and_subsections(section_id)
+        user_ids = []
         for user in story['users']:
             user_id = user['user_id']
-            try:
-                await self.client.remove_story_from_user(user_id, story_id)
-            except ClientError:
-                raise FailedUpdateError(query='delete_story')
+            user_ids.append(user_id)
+            await self._remove_story_from_user(user_id, story_id)
         try:
             await self.client.delete_story(story_id)
         except:
             raise FailedUpdateError(query='delete_story')
+        return user_ids
 
     async def delete_section(self, section_id):
         await self.recur_delete_section_and_subsections(section_id)
@@ -714,6 +812,37 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='delete_bookmark')
 
+    async def remove_story_collaborator(self, story_id, user_id):
+        user = await self._get_user_for_user_id(user_id)
+        story = await self.get_story(story_id)
+        wiki = await self.get_wiki(story['wiki_id'])
+        if self._get_current_user_access_level_in_object(user_id, story) == 'owner':
+            raise BadValueError(query='remove_story_collaborator', value=user_id)
+        if self._get_current_user_access_level_in_object(user_id, wiki) == 'owner':
+            raise BadValueError(query='remove_story_collaborator', value=user_id)
+        # Remove access from story
+        await self._remove_story_from_user(user_id, story_id)
+        await self._remove_user_from_story(story_id, user_id)
+        # Only remove wiki access if they don't have any other stories attached to the wiki
+        wiki_id = wiki['_id']
+        stories = await self._get_stories_with_wiki_id(wiki_id)
+        for story in stories:
+            # If user has access to a story, we don't want to remove wiki access
+            if self._user_has_access_to_story(user, story['_id']):
+                break
+        # Only remove wiki access if they don't have access to any stories with this wiki
+        else:
+            await self._remove_wiki_from_user(user_id, wiki_id)
+            await self._remove_user_from_wiki(wiki_id, user_id)
+            return wiki_id
+        return None
+
+    async def _remove_user_from_story(self, story_id, user_id):
+        try:
+            await self.client.remove_user_from_story(story_id, user_id)
+        except ClientError:
+            raise FailedUpdateError(query='_remove_user_from_story')
+
     async def move_subsection_as_preceding(self, section_id, to_parent_id, to_index):
         if await self._section_is_ancestor_of_candidate(section_id, to_parent_id):
             raise BadValueError(query='move_subsection_as_preceding', value=to_parent_id)
@@ -772,19 +901,11 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def create_wiki(self, user_id, title, summary):
         user = await self.get_user_preferences(user_id)
-        user_description = {
-            'user_id':      user_id,
-            'name':         user['name'],
-            'access_level': 'owner',
-        }
+        user_description = self._build_user_description(user_id, user['name'], 'owner')
         segment_id = await self.create_segment(title)
-        inserted_id = await self.client.create_wiki(title, user_description, summary, segment_id)
-        try:
-            await self.client.add_wiki_to_user(user_id, inserted_id)
-        except ClientError:
-            raise FailedUpdateError(query='create_wiki')
-        else:
-            return inserted_id
+        wiki_id = await self.client.create_wiki(title, user_description, summary, segment_id)
+        await self._add_wiki_id_to_user(user_id, wiki_id)
+        return wiki_id
 
     async def create_segment(self, title):
         inserted_id = await self.client.create_segment(title)
@@ -851,6 +972,18 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.insert_heading(title, page_id, text='', at_index=index)
         except ClientError:
             raise FailedUpdateError(query='add_heading')
+
+    async def add_wiki_collaborator(self, wiki_id, username):
+        user = await self._get_user_for_username(username)
+        user_id = user['_id']
+        # Already has access to the wiki
+        if self._user_has_access_to_wiki(user, wiki_id):
+            raise BadValueError(query='add_wiki_collaborator', value=wiki_id)
+        # Add wiki access for user
+        user_description = self._build_user_description(user_id, user['name'], 'collaborator')
+        await self._add_wiki_id_to_user(user_id, wiki_id)
+        await self._add_user_description_to_wiki(user_description, wiki_id, index=None)
+        return user_id, user['name']
 
     async def get_wiki(self, wiki_id):
         try:
@@ -1069,6 +1202,9 @@ class MongoDBInterface(AbstractDBInterface):
             wiki = await self.client.get_wiki(wiki_id)
         except ClientError:
             raise BadValueError(query='delete_wiki', value=wiki_id)
+        # Verify this user is allowed to delete this wiki (they are an owner).
+        if self._get_current_user_access_level_in_object(user_id, wiki) != 'owner':
+            raise BadValueError(query='delete_wiki', value=user_id)
         # Update each story using this wiki with a new wiki.
         try:
             story_summaries = await self.client.get_summaries_of_stories_using_wiki(wiki_id)
@@ -1167,6 +1303,38 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.delete_heading(heading_title, page_id)
         except ClientError:
             raise FailedUpdateError(query='delete_heading')
+
+    async def remove_wiki_collaborator(self, wiki_id, user_id):
+        user = await self._get_user_for_user_id(user_id)
+        wiki = await self.get_wiki(wiki_id)
+        # Cannot remove the wiki owner from collaborating
+        if self._get_current_user_access_level_in_object(user_id, wiki) == 'owner':
+            raise BadValueError(query='remove_wiki_collaborator', value=user_id)
+        stories = await self._get_stories_with_wiki_id(wiki_id)
+        # Cannot remove the story owner from collaborating
+        for story in stories:
+            if self._get_current_user_access_level_in_object(user_id, story) == 'owner':
+                raise BadValueError(query='remove_wiki_collaborator', value=user_id)
+        # Remove the user's wiki access
+        await self._remove_wiki_from_user(user_id, wiki_id)
+        await self._remove_user_from_wiki(wiki_id, user_id)
+        # Remove access to the stories with this wiki
+        story_ids = []
+        for story in stories:
+            story_id = story['_id']
+            # Ignore stories that the user does not have access to
+            if not self._user_has_access_to_story(user, story_id):
+                continue
+            story_ids.append(story_id)
+            await self._remove_story_from_user(user_id, story_id)
+            await self._remove_user_from_story(story_id, user_id)
+        return story_ids
+
+    async def _remove_user_from_wiki(self, wiki_id, user_id):
+        try:
+            await self.client.remove_user_from_wiki(wiki_id, user_id)
+        except ClientError:
+            raise FailedUpdateError(query='_remove_user_from_wiki')
 
     async def move_segment(self, segment_id, to_parent_id, to_index):
         if await self._segment_is_ancestor_of_candidate(segment_id, to_parent_id):

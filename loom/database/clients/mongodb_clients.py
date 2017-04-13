@@ -191,6 +191,16 @@ class MongoDBClient:
         self.log(f'create_user {{{username}}}; inserted ID: {{{result.inserted_id}}}')
         return result.inserted_id
 
+    async def get_user_for_user_id(self, user_id: ObjectId):
+        user = await self.users.find_one(
+            filter={'_id': user_id}
+        )
+        if user is None:
+            self.log(f'get_user_for_user_id {{{user_id}}} FAILED')
+            raise NoMatchError
+        self.log(f'get_user_for_user_id {{{user_id}}}')
+        return user
+
     async def get_password_hash_for_username(self, username: str) -> str:
         user = await self.users.find_one(
             filter={'username': username},
@@ -217,6 +227,16 @@ class MongoDBClient:
         user_id = user['_id']
         self.log(f'get_user_id_for_username {{{username}}}; user ID {{{user_id}}}')
         return user_id
+
+    async def get_user_for_username(self, username: str):
+        user = await self.users.find_one(
+            filter={'username': username}
+        )
+        if user is None:
+            self.log(f'get_user_for_username {{{username}}} FAILED')
+            raise NoMatchError
+        self.log(f'get_user_for_username {{{username}}}')
+        return user
 
     async def username_exists(self, username: str) -> bool:
         user = await self.users.find_one(
@@ -358,6 +378,18 @@ class MongoDBClient:
         self.assert_update_was_successful(update_result)
         self.log(f'remove_story_from_user for user {{{user_id}}} for story {{{story_id}}}')
 
+    async def remove_wiki_from_user(self, user_id: ObjectId, wiki_id: ObjectId):
+        update_result: UpdateResult = await self.users.update_one(
+            filter={'_id': user_id},
+            update={
+                '$pull': {
+                    'wikis': wiki_id
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'remove_wiki_from_user for user {{{user_id}}} for wiki {{{wiki_id}}}')
+
     ###########################################################################
     #
     # Story Methods
@@ -412,6 +444,20 @@ class MongoDBClient:
         if position is not None:
             inner_parameters['$position'] = position
         return inner_parameters
+
+    async def insert_user_description_to_story(self, user_description: dict, story_id: ObjectId, at_index=None):
+        inner_parameters = self._insertion_parameters(user_description, at_index)
+        update_result: UpdateResult = await self.stories.update_one(
+            filter={'_id': story_id},
+            update={
+                '$push': {
+                    'users': inner_parameters
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'insert_user_description_to_story {{{user_description}}} to story {{{story_id}}} at index '
+                 f'{{{at_index}}}')
 
     async def insert_preceding_subsection(self, subsection_id, to_section_id, at_index=None):
         inner_parameters = self._insertion_parameters(subsection_id, at_index)
@@ -618,6 +664,17 @@ class MongoDBClient:
         self.log(f'get_story {{{story_id}}}')
         return result
 
+    async def get_stories_with_wiki_id(self, wiki_id: ObjectId):
+        filter = {'wiki_id': wiki_id}
+        results = []
+        async for doc in self.stories.find(filter):
+            if doc is None:
+                self.log(f'get_stories_with_wiki_id {{{wiki_id}}} FAILED')
+                raise NoMatchError
+            results.append(doc)
+        self.log(f'get_stories_with_wiki_id for wiki {{{wiki_id}}}')
+        return results
+
     async def get_section(self, section_id: ObjectId) -> Dict:
         result = await self.sections.find_one({'_id': section_id})
         if result is None:
@@ -774,6 +831,34 @@ class MongoDBClient:
         self.assert_update_was_successful(update_result)
         self.log(f'delete_bookmark_by_paragraph_id {{{paragraph_id}}}')
 
+    async def remove_user_from_story(self, story_id: ObjectId, user_id: ObjectId):
+        update_result: UpdateResult = await self.stories.update_one(
+            filter={'_id': story_id},
+            update={
+                '$pull': {
+                    'users': {
+                        'user_id': user_id
+                    }
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'remove_user_from_story for story id {{{story_id}}} for user id {{{user_id}}}')
+
+    async def remove_user_from_stories_with_wiki_id(self, wiki_id: ObjectId, user_id: ObjectId):
+        update_result: UpdateResult = await self.stories.update_many(
+            filter={'wiki_id': wiki_id},
+            update={
+                '$pull': {
+                    'users': {
+                        'user_id': user_id
+                    }
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'remove_user_from_stories_with_wiki_id for wiki id {{{wiki_id}}} for user id {{{user_id}}}')
+
     ###########################################################################
     #
     # Wiki Methods
@@ -823,6 +908,20 @@ class MongoDBClient:
         result = await self.pages.insert_one(page)
         self.log(f'create_page {{{title}}}; inserted ID {{{result.inserted_id}}}')
         return result.inserted_id
+
+    async def insert_user_description_to_wiki(self, user_description: dict, wiki_id: ObjectId, at_index=None):
+        inner_parameters = self._insertion_parameters(user_description, at_index)
+        update_result: UpdateResult = await self.wikis.update_one(
+            filter={'_id': wiki_id},
+            update={
+                '$push': {
+                    'users': inner_parameters
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'insert_user_description_to_wiki {{{user_description}}} to wiki {{{wiki_id}}} at index '
+                 f'{{{at_index}}}')
 
     async def insert_segment_to_parent_segment(self, child_segment: ObjectId, parent_segment: ObjectId, at_index=None):
         inner_parameters = self._insertion_parameters(child_segment, at_index)
@@ -1147,6 +1246,20 @@ class MongoDBClient:
         )
         self.assert_update_was_successful(update_result)
         self.log(f'delete_heading {{{heading_title}}} in page {{{page_id}}}')
+
+    async def remove_user_from_wiki(self, wiki_id, user_id):
+        update_result: UpdateResult = await self.wikis.update_one(
+            filter={'_id': wiki_id},
+            update={
+                '$pull': {
+                    'users': {
+                        'user_id': user_id
+                    }
+                }
+            }
+        )
+        self.assert_update_was_successful(update_result)
+        self.log(f'remove_user_from_wiki for wiki id {{{wiki_id}}} for user id {{{user_id}}}')
 
     ###########################################################################
     #

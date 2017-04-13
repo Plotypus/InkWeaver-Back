@@ -1,3 +1,4 @@
+from bson.objectid import ObjectId
 from uuid import UUID
 
 
@@ -18,6 +19,12 @@ class UnicastMessage(OutgoingMessage):
 
 class MulticastMessage(OutgoingMessage):
     pass
+
+
+class UserSpecifiedMulticastMessage(MulticastMessage):
+    def __init__(self, uuid: UUID, message_id: int, event: str, *, user_id: ObjectId):
+        super().__init__(uuid, message_id, event)
+        self.user_id = user_id
 
 
 class BroadcastMessage(OutgoingMessage):
