@@ -914,7 +914,16 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='add_heading')
 
     async def add_wiki_collaborator(self, wiki_id, username):
-        pass
+        user = await self._get_user_for_username(username)
+        user_id = user['_id']
+        # Already has access to the wiki
+        if self._user_has_access_to_wiki(user, wiki_id):
+            raise BadValueError(query='add_wiki_collaborator', value=wiki_id)
+        # Add wiki access for user
+        user_description = self._build_user_description(user_id, user['name'], 'collaborator')
+        await self._add_wiki_id_to_user(user_id, wiki_id)
+        await self._add_user_description_to_wiki(user_description, wiki_id, index=None)
+        return user_id
 
     async def get_wiki(self, wiki_id):
         try:
