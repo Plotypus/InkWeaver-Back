@@ -64,8 +64,9 @@ class AddWikiCollaboratorOutgoingMessage(WikiBroadcastMessage):
 
 
 class InformNewWikiCollaboratorOutgoingMessage(UserSpecifiedMulticastMessage):
-    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId):
-        super().__init__(uuid, message_id, 'added_as_collaborator_to_wiki', user_id=user_id)
+    def __init__(self, uuid: UUID, message_id: int, *, wiki_id: ObjectId, user_id: ObjectId):
+        super().__init__(uuid, message_id, 'wiki_collaborator_status_granted', user_id=user_id)
+        self.wiki_id = wiki_id
 
     
 ###########################################################################
@@ -203,6 +204,12 @@ class RemoveWikiCollaboratorOutgoingMessage(WikiBroadcastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId):
         super().__init__(uuid, message_id, 'wiki_collaborator_removed')
         self.user_id = user_id
+
+
+class InformWikiCollaboratorOfRemovalOutgoingMessage(UserSpecifiedMulticastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, wiki_id: ObjectId, user_id: ObjectId):
+        super().__init__(uuid, message_id, 'wiki_collaborator_status_revoked', user_id=user_id)
+        self.wiki_id = wiki_id
 
 
 ###########################################################################
