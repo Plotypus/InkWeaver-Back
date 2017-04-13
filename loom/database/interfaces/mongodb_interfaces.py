@@ -726,20 +726,27 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='set_note')
 
-    async def delete_story(self, story_id):
+    async def delete_story(self, story_id, user_id):
         try:
             story = await self.get_story(story_id)
         except ClientError:
             raise BadValueError(query='delete_story', value=story_id)
+        # Verify this user is allowed to delete the story (is an owner).
+        if self._get_current_user_access_level_in_object(user_id, story) != 'owner':
+            raise BadValueError(query='delete_story', value=user_id)
+        # The user is allowed to delete the story, so delete it.
         section_id = story['section_id']
         await self.recur_delete_section_and_subsections(section_id)
+        user_ids = []
         for user in story['users']:
             user_id = user['user_id']
+            user_ids.append(user_id)
             await self._remove_story_from_user(user_id, story_id)
         try:
             await self.client.delete_story(story_id)
         except:
             raise FailedUpdateError(query='delete_story')
+        return user_ids
 
     async def delete_section(self, section_id):
         await self.recur_delete_section_and_subsections(section_id)
@@ -1173,6 +1180,9 @@ class MongoDBInterface(AbstractDBInterface):
             wiki = await self.client.get_wiki(wiki_id)
         except ClientError:
             raise BadValueError(query='delete_wiki', value=wiki_id)
+        # Verify this user is allowed to delete this wiki (they are an owner).
+        if self._get_current_user_access_level_in_object(user_id, wiki) != 'owner':
+            raise BadValueError(query='delete_wiki', value=user_id)
         # Update each story using this wiki with a new wiki.
         try:
             story_summaries = await self.client.get_summaries_of_stories_using_wiki(wiki_id)

@@ -187,6 +187,13 @@ class DeleteStoryOutgoingMessage(StoryBroadcastMessage):
         self.story_id = story_id
 
 
+class DeleteStoryNotificationOutgoingMessage(UnicastMessage):
+    def __init__(self, uuid: UUID, message_id: int, *, story_id: ObjectId, user_id: ObjectId):
+        super().__init__(uuid, message_id, 'unsubscribed_story_deleted')
+        self.story_id = story_id
+        self.user_id = user_id
+
+
 class DeleteSectionOutgoingMessage(StoryBroadcastMessage):
     def __init__(self, uuid: UUID, message_id: int, *, section_id: ObjectId):
         super().__init__(uuid, message_id, 'section_deleted')

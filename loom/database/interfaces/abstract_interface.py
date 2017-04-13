@@ -152,7 +152,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def delete_story(self, story_id):
+    async def delete_story(self, story_id, user_id):
         pass
 
     @abstractmethod
