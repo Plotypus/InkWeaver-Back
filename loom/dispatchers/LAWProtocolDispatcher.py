@@ -394,7 +394,6 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         # TODO: Return enough info about the wiki.
         yield InformNewWikiCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id)
 
-
     @handle_interface_errors
     async def edit_wiki(self, uuid, message_id, wiki_id, update):
         if update['update_type'] == 'set_title':

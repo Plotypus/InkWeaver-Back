@@ -191,6 +191,16 @@ class MongoDBClient:
         self.log(f'create_user {{{username}}}; inserted ID: {{{result.inserted_id}}}')
         return result.inserted_id
 
+    async def get_user_for_user_id(self, user_id: ObjectId):
+        user = await self.users.find_one(
+            filter={'_id': user_id}
+        )
+        if user is None:
+            self.log(f'get_user_for_user_id {{{user_id}}} FAILED')
+            raise NoMatchError
+        self.log(f'get_user_for_user_id {{{user_id}}}')
+        return user
+
     async def get_password_hash_for_username(self, username: str) -> str:
         user = await self.users.find_one(
             filter={'username': username},
