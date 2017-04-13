@@ -564,7 +564,14 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def remove_wiki_collaborator(self, uuid, message_id, wiki_id, user_id):
-        pass
+        # IDs of the stories where the user had collaborative privileges revoked
+        story_ids = await self.db_interface.remove_wiki_collaborator(wiki_id, user_id)
+        yield RemoveWikiCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id)
+        yield InformWikiCollaboratorOfRemovalOutgoingMessage(uuid, message_id, wiki_id=wiki_id, user_id=user_id)
+        for story_id in story_ids:
+            yield InformStoryCollaboratorOfRemovalOutgoingMessage(uuid, message_id, story_id=story_id, user_id=user_id)
+            # TODO: Send story specified message to all stories that the user was removed from.
+            yield RemoveStoryCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id)
 
     @handle_interface_errors
     async def move_segment(self, uuid, message_id, segment_id, to_parent_id, to_index):
