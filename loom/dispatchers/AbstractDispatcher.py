@@ -113,7 +113,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def delete_story(self, uuid, message_id, story_id):
+    async def delete_story(self, uuid, message_id, story_id, user_id):
         pass
 
     @abstractmethod
