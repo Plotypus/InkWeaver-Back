@@ -813,7 +813,29 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='delete_bookmark')
 
     async def remove_story_collaborator(self, story_id, user_id):
-        pass
+        user = await self._get_user_for_user_id(user_id)
+        story = await self.get_story(story_id)
+        wiki = await self.get_wiki(story['wiki_id'])
+        if self._get_current_user_access_level_in_object(user_id, story) == 'owner':
+            raise BadValueError(query='remove_story_collaborator', value=user_id)
+        if self._get_current_user_access_level_in_object(user_id, wiki) == 'owner':
+            raise BadValueError(query='remove_story_collaborator', value=user_id)
+        # Remove access from story
+        await self._remove_story_from_user(user_id, story_id)
+        await self._remove_user_from_story(story_id, user_id)
+        # Only remove wiki access if they don't have any other stories attached to the wiki
+        wiki_id = wiki['_id']
+        stories = await self._get_stories_with_wiki_id(wiki_id)
+        for story in stories:
+            # If user has access to a story, we don't want to remove wiki access
+            if self._user_has_access_to_story(user, story['_id']):
+                break
+        # Only remove wiki access if they don't have access to any stories with this wiki
+        else:
+            await self._remove_wiki_from_user(user_id, wiki_id)
+            await self._remove_user_from_wiki(wiki_id, user_id)
+            return wiki_id
+        return None
 
     async def _remove_user_from_story(self, story_id, user_id):
         try:
