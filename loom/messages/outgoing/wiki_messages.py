@@ -57,10 +57,10 @@ class AddHeadingOutgoingMessage(WikiBroadcastMessage):
 
 
 class AddWikiCollaboratorOutgoingMessage(WikiBroadcastMessage):
-    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId, username: str):
+    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId, user_name: str):
         super().__init__(uuid, message_id, 'wiki_collaborator_added')
         self.user_id = user_id
-        self.username = username
+        self.user_name = user_name
 
 
 class InformNewWikiCollaboratorOutgoingMessage(UserSpecifiedMulticastMessage):
