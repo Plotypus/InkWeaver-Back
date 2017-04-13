@@ -379,7 +379,7 @@ class MongoDBInterface(AbstractDBInterface):
         else:
             # Return None if the user already had access to the wiki
             wiki_id = None
-        return user_id, story_id, wiki_id
+        return user_id, wiki_id
 
     async def _add_user_description_to_story(self, user_description: dict, story_id: ObjectId, index=None):
         try:
