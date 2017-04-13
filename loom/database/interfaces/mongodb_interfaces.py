@@ -704,7 +704,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise BadValueError(query='delete_story', value=story_id)
         # Verify this user is allowed to delete the story (is an owner).
-        if not self._get_current_user_access_level_in_object(user_id, story) == 'owner':
+        if self._get_current_user_access_level_in_object(user_id, story) != 'owner':
             raise BadValueError(query='delete_story', value=user_id)
         # The user is allowed to delete the story, so delete it.
         section_id = story['section_id']
