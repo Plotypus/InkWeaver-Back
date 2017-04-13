@@ -94,6 +94,12 @@ APPROVED_MESSAGES = {
     'unsubscribe_from_story':          UnsubscribeFromStoryIncomingMessage,
     'subscribe_to_wiki':               SubscribeToWikiIncomingMessage,
     'unsubscribe_from_wiki':           UnsubscribeFromWikiIncomingMessage,
+
+    # Collaborative
+    'add_story_collaborator':          AddStoryCollaboratorIncomingMessage,
+    'remove_story_collaborator':       RemoveStoryCollaboratorIncomingMessage,
+    'add_wiki_collaborator':           AddWikiCollaboratorIncomingMessage,
+    'remove_wiki_collaborator':        RemoveWikiCollaboratorIncomingMessage,
 }
 
 

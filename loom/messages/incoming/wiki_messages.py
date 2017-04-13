@@ -260,7 +260,7 @@ class DeleteAliasIncomingMessage(IncomingMessage):
         return self._dispatcher.delete_alias(self.uuid, self.message_id, self.wiki_id, self.alias_id)
 
 
-class RemoveWikiCollaborator(IncomingMessage):
+class RemoveWikiCollaboratorIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
         self.wiki_id = RequiredField()
