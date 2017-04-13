@@ -204,7 +204,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         user_id, user_name, wiki_id = await self.db_interface.add_story_collaborator(story_id, username)
         yield AddStoryCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id, user_name=user_name)
         # TODO: Return enough info about the story to add to the dashboard.
-        yield InformNewStoryCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id)
+        yield InformNewStoryCollaboratorOutgoingMessage(uuid, message_id, story_id=story_id, user_id=user_id)
         if wiki_id is not None:
             yield AddWikiCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id, user_name=user_name)
             yield InformNewWikiCollaboratorOutgoingMessage(uuid, message_id, wiki_id=wiki_id, user_id=user_id)
@@ -330,7 +330,12 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def remove_story_collaborator(self, uuid, message_id, story_id, user_id):
-        pass
+        wiki_id = await self.db_interface.remove_story_collaborator(story_id, user_id)
+        yield RemoveStoryCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id)
+        yield InformStoryCollaboratorOfRemovalOutgoingMessage(uuid, message_id, story_id=story_id, user_id=user_id)
+        if wiki_id is not None:
+            yield RemoveWikiCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id)
+            yield InformWikiCollaboratorOfRemovalOutgoingMessage(uuid, message_id, wiki_id=wiki_id, user_id=user_id)
 
     @handle_interface_errors
     async def move_subsection_as_preceding(self, uuid, message_id, section_id, to_parent_id, to_index):
