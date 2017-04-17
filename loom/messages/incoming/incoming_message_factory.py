@@ -1,4 +1,5 @@
 from .link_messages import *
+from .alias_messages import *
 from .statistics_messages import *
 from .story_messages import *
 from .subscription_messages import *
@@ -146,4 +147,3 @@ class IncomingMessageFactory:
             raise
         else:
             return message_object
-
