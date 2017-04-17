@@ -749,9 +749,12 @@ class MongoDBInterface(AbstractDBInterface):
         return user_ids
 
     async def delete_section(self, story_id, section_id):
-        await self.recur_delete_section_and_subsections(section_id)
+        story = await self.get_story(story_id)
+        deleted_bookmarks = await self.recur_delete_section_and_subsections(section_id, story)
+        return deleted_bookmarks
 
-    async def recur_delete_section_and_subsections(self, section_id):
+    async def recur_delete_section_and_subsections(self, section_id, story=None):
+        deleted_bookmarks = []
         try:
             section = await self.client.get_section(section_id)
         except ClientError:
@@ -759,7 +762,8 @@ class MongoDBInterface(AbstractDBInterface):
         for subsection_id in chain(section['preceding_subsections'],
                                    section['inner_subsections'],
                                    section['succeeding_subsections']):
-            await self.recur_delete_section_and_subsections(subsection_id)
+            section_deleted_bookmarks = await self.recur_delete_section_and_subsections(subsection_id)
+            deleted_bookmarks.extend(section_deleted_bookmarks)
         for link_summary in section['links']:
             link_ids = link_summary['links']
             for link_id in link_ids:
@@ -772,10 +776,15 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.delete_section(section['_id'])
         except ClientError:
             raise FailedUpdateError(query='recur_delete_sections_and_subsections')
-        try:
-            await self.client.delete_bookmark_by_section_id(section_id)
-        except ClientError:
-            raise FailedUpdateError(query='recur_delete_sections_and_subsections')
+        if story is not None:
+            for bookmark in story['bookmarks']:
+                if bookmark['section_id'] == section_id:
+                    try:
+                        await self.client.delete_bookmark_by_id(bookmark['bookmark_id'])
+                        deleted_bookmarks.append(bookmark)
+                    except ClientError:
+                        raise FailedUpdateError(query='recur_delete_section_and_subsections')
+        return deleted_bookmarks
 
     async def delete_paragraph(self, story_id, section_id, paragraph_id):
         try:
