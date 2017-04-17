@@ -315,7 +315,9 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def delete_paragraph(self, uuid, message_id, story_id, section_id, paragraph_id):
-        await self.db_interface.delete_paragraph(story_id, section_id, paragraph_id)
+        deleted_bookmarks = await self.db_interface.delete_paragraph(story_id, section_id, paragraph_id)
+        for bookmark in deleted_bookmarks:
+            yield DeleteBookmarkOutgoingMessage(uuid, message_id, bookmark_id=bookmark['bookmark_id'])
         yield DeleteParagraphOutgoingMessage(uuid, message_id, section_id=section_id, paragraph_id=paragraph_id)
 
     @handle_interface_errors
