@@ -203,8 +203,9 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     async def add_story_collaborator(self, uuid, message_id, story_id, username):
         user_id, user_name, wiki_id = await self.db_interface.add_story_collaborator(story_id, username)
         yield AddStoryCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id, user_name=user_name)
-        # TODO: Return enough info about the story to add to the dashboard.
-        yield InformNewStoryCollaboratorOutgoingMessage(uuid, message_id, story_id=story_id, user_id=user_id)
+        story_description = await self.db_interface.get_story_description(user_id, story_id)
+        yield InformNewStoryCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id,
+                                                        story_description=story_description)
         if wiki_id is not None:
             yield AddWikiCollaboratorOutgoingMessage(uuid, message_id, user_id=user_id, user_name=user_name)
             yield InformNewWikiCollaboratorOutgoingMessage(uuid, message_id, wiki_id=wiki_id, user_id=user_id)

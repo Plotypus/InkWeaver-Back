@@ -147,21 +147,12 @@ class MongoDBInterface(AbstractDBInterface):
             return preferences
 
     async def get_user_stories_and_wikis(self, user_id):
-        try:
-            story_ids_and_positions = await self.client.get_user_stories(user_id)
-        except ClientError:
-            raise BadValueError(query='get_user_stories_and_wikis', value=user_id)
-        try:
-            wiki_ids = await self.client.get_user_wiki_ids(user_id)
-        except ClientError:
-            raise BadValueError(query='get_user_stories_and_wikis', value=user_id)
+        story_ids_and_positions = await self._get_user_stories_and_positions(user_id)
+        wiki_ids = await self._get_user_wiki_ids(user_id)
         wiki_ids_to_titles = {}
         wikis = []
         for wiki_id in wiki_ids:
-            try:
-                wiki = await self.client.get_wiki(wiki_id)
-            except ClientError:
-                raise BadValueError(query='get_user_stories_and_wikis', value=wiki_id)
+            wiki = await self.get_wiki(wiki_id)
             wiki_ids_to_titles[wiki_id] = wiki['title']
             access_level = self._get_current_user_access_level_in_object(user_id, wiki)
             wikis.append({
@@ -173,20 +164,28 @@ class MongoDBInterface(AbstractDBInterface):
         for story_id_and_pos in story_ids_and_positions:
             story_id = story_id_and_pos['story_id']
             last_pos = story_id_and_pos['position_context']
-            try:
-                story = await self.client.get_story(story_id)
-            except ClientError:
-                raise BadValueError(query='get_user_stories_and_wikis', value=story_id)
+            story = await self.get_story(story_id)
             access_level = self._get_current_user_access_level_in_object(user_id, story)
             wiki_title = wiki_ids_to_titles[story['wiki_id']]
-            stories.append({
-                'story_id': story_id,
-                'title': story['title'],
-                'wiki_summary': {'wiki_id': story['wiki_id'], 'title': wiki_title},
-                'access_level': access_level,
-                'position_context': last_pos,
-            })
+            story_description = self._build_story_description(story, wiki_title, access_level, last_pos)
+            stories.append(story_description)
         return {'stories': stories, 'wikis': wikis}
+
+    async def _get_user_stories_and_positions(self, user_id):
+        try:
+            story_ids_and_positions = await self.client.get_user_stories(user_id)
+        except ClientError:
+            raise BadValueError(query='_get_user_stories_and_positions', value=user_id)
+        else:
+            return story_ids_and_positions
+
+    async def _get_user_wiki_ids(self, user_id):
+        try:
+            wiki_ids = await self.client.get_user_wiki_ids(user_id)
+        except ClientError:
+            raise BadValueError(query='_get_user_wiki_ids', value=user_id)
+        else:
+            return wiki_ids
 
     @staticmethod
     def _get_current_user_access_level_in_object(user_id, obj):
@@ -204,6 +203,25 @@ class MongoDBInterface(AbstractDBInterface):
     @staticmethod
     def _user_has_access_to_wiki(user: dict, wiki_id: ObjectId):
         return wiki_id in user['wikis']
+
+    async def get_story_description(self, user_id, story_id):
+        story = await self.get_story(story_id)
+        wiki = await self.get_wiki(story['wiki_id'])
+        access_level = self._get_current_user_access_level_in_object(user_id, story)
+        # This makes an assumption that the position_context has not been set for the user.
+        story_description = self._build_story_description(story, wiki['title'], access_level)
+        return story_description
+
+    @staticmethod
+    def _build_story_description(story: dict, wiki_title: str, access_level: str, position_context=None):
+        story_description = {
+            'story_id':         story['_id'],
+            'title':            story['title'],
+            'wiki_summary':     {'wiki_id': story['wiki_id'], 'title': wiki_title},
+            'access_level':     access_level,
+            'position_context': position_context,
+        }
+        return story_description
 
     async def _add_wiki_id_to_user(self, user_id, wiki_id):
         try:

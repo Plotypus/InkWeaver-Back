@@ -50,6 +50,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_story_description(self, user_id, story_id):
+        pass
+
+    @abstractmethod
     async def set_user_password(self, user_id, password):
         pass
 

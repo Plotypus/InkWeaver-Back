@@ -85,9 +85,9 @@ class AddStoryCollaboratorOutgoingMessage(StoryBroadcastMessage):
 
 
 class InformNewStoryCollaboratorOutgoingMessage(UserSpecifiedMulticastMessage):
-    def __init__(self, uuid: UUID, message_id: int, *, story_id: ObjectId, user_id: ObjectId):
+    def __init__(self, uuid: UUID, message_id: int, *, user_id: ObjectId, story_description: dict):
         super().__init__(uuid, message_id, 'story_collaborator_status_granted', user_id=user_id)
-        self.story_id = story_id
+        self.story_description = story_description
 
 
 ###########################################################################
