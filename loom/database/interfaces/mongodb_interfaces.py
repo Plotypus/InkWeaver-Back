@@ -748,7 +748,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='delete_story')
         return user_ids
 
-    async def delete_section(self, section_id):
+    async def delete_section(self, story_id, section_id):
         await self.recur_delete_section_and_subsections(section_id)
 
     async def recur_delete_section_and_subsections(self, section_id):
