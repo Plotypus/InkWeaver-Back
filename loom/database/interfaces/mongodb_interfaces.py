@@ -777,7 +777,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='recur_delete_sections_and_subsections')
 
-    async def delete_paragraph(self, section_id, paragraph_id):
+    async def delete_paragraph(self, story_id, section_id, paragraph_id):
         try:
             link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
         except ClientError:

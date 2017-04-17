@@ -314,8 +314,8 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         yield DeleteSectionOutgoingMessage(uuid, message_id, section_id=section_id)
 
     @handle_interface_errors
-    async def delete_paragraph(self, uuid, message_id, section_id, paragraph_id):
-        await self.db_interface.delete_paragraph(section_id, paragraph_id)
+    async def delete_paragraph(self, uuid, message_id, story_id, section_id, paragraph_id):
+        await self.db_interface.delete_paragraph(story_id, section_id, paragraph_id)
         yield DeleteParagraphOutgoingMessage(uuid, message_id, section_id=section_id, paragraph_id=paragraph_id)
 
     @handle_interface_errors
