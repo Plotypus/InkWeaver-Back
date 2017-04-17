@@ -1420,7 +1420,7 @@ class MongoDBInterface(AbstractDBInterface):
     async def create_link(self, story_id: ObjectId, section_id: ObjectId, paragraph_id: ObjectId, name: str,
                           page_id: ObjectId):
         # Attempt to create the alias.
-        alias_id, alias_was_created = self.create_alias(name, page_id)
+        alias_id, alias_was_created = await self.create_alias(name, page_id)
         # Now create a link with the alias.
         link_id = await self.client.create_link(alias_id, page_id, story_id, section_id, paragraph_id)
         try:
