@@ -795,7 +795,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='delete_paragraph')
         try:
-            await self.client.delete_bookmark_by_paragraph_id(paragraph_id)
+            await self.client.delete_bookmark_by_paragraph_id(story_id, paragraph_id)
         except ClientError:
             raise FailedUpdateError(query='delete_paragraph')
 

@@ -817,9 +817,9 @@ class MongoDBClient:
         self.assert_update_was_successful(update_result)
         self.log(f'delete_bookmark_by_section_id {{{section_id}}}')
 
-    async def delete_bookmark_by_paragraph_id(self, paragraph_id: ObjectId):
-        update_result: UpdateResult = await self.stories.update_many(
-            filter={},
+    async def delete_bookmark_by_paragraph_id(self, story_id: ObjectId, paragraph_id: ObjectId):
+        update_result: UpdateResult = await self.stories.update_one(
+            filter={'_id': story_id},
             update={
                 '$pull': {
                     'bookmarks': {
