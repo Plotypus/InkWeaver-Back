@@ -152,10 +152,7 @@ class MongoDBInterface(AbstractDBInterface):
         wiki_ids_to_titles = {}
         wikis = []
         for wiki_id in wiki_ids:
-            try:
-                wiki = await self.client.get_wiki(wiki_id)
-            except ClientError:
-                raise BadValueError(query='get_user_stories_and_wikis', value=wiki_id)
+            wiki = await self.get_wiki(wiki_id)
             wiki_ids_to_titles[wiki_id] = wiki['title']
             access_level = self._get_current_user_access_level_in_object(user_id, wiki)
             wikis.append({
@@ -167,10 +164,7 @@ class MongoDBInterface(AbstractDBInterface):
         for story_id_and_pos in story_ids_and_positions:
             story_id = story_id_and_pos['story_id']
             last_pos = story_id_and_pos['position_context']
-            try:
-                story = await self.client.get_story(story_id)
-            except ClientError:
-                raise BadValueError(query='get_user_stories_and_wikis', value=story_id)
+            story = await self.get_story(story_id)
             access_level = self._get_current_user_access_level_in_object(user_id, story)
             wiki_title = wiki_ids_to_titles[story['wiki_id']]
             stories.append({
