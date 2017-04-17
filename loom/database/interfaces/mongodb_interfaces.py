@@ -167,13 +167,8 @@ class MongoDBInterface(AbstractDBInterface):
             story = await self.get_story(story_id)
             access_level = self._get_current_user_access_level_in_object(user_id, story)
             wiki_title = wiki_ids_to_titles[story['wiki_id']]
-            stories.append({
-                'story_id': story_id,
-                'title': story['title'],
-                'wiki_summary': {'wiki_id': story['wiki_id'], 'title': wiki_title},
-                'access_level': access_level,
-                'position_context': last_pos,
-            })
+            story_description = self._build_story_description(story, wiki_title, access_level, last_pos)
+            stories.append(story_description)
         return {'stories': stories, 'wikis': wikis}
 
     async def _get_user_stories_and_positions(self, user_id):
