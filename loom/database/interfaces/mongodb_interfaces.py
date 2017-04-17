@@ -917,7 +917,7 @@ class MongoDBInterface(AbstractDBInterface):
         template_headings = parent_segment['template_headings']
         page_id = await self.client.create_page(title, template_headings)
         # Create an alias for the page with the title as the alias name
-        alias_id = await self.create_alias(page_id, title)
+        alias_id = await self._create_alias(page_id, title)
         try:
             await self.client.insert_page_to_parent_segment(page_id, in_parent_segment, at_index=None)
         except ClientError:
@@ -1401,15 +1401,8 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def create_link(self, story_id: ObjectId, section_id: ObjectId, paragraph_id: ObjectId, name: str,
                           page_id: ObjectId):
-        # Check if alias exists.
-        try:
-            alias_id = await self.client.find_alias_in_page(page_id, name)
-        except ClientError:
-            # Create a new alias and add it to the page.
-            alias_id = await self.create_alias(page_id, name)
-            alias_was_created = True
-        else:
-            alias_was_created = False
+        # Attempt to create the alias.
+        alias_id, alias_was_created = self.create_alias(name, page_id)
         # Now create a link with the alias.
         link_id = await self.client.create_link(alias_id, page_id, story_id, section_id, paragraph_id)
         try:
@@ -1540,7 +1533,19 @@ class MongoDBInterface(AbstractDBInterface):
     #
     ###########################################################################
 
-    async def create_alias(self, page_id: ObjectId, name: str):
+    async def create_alias(self, name: str, page_id: ObjectId):
+        # Check if alias exists.
+        try:
+            alias_id = await self.client.find_alias_in_page(page_id, name)
+        except ClientError:
+            # Create a new alias and add it to the page.
+            alias_id = await self._create_alias(page_id, name)
+            alias_was_created = True
+        else:
+            alias_was_created = False
+        return alias_id, alias_was_created
+
+    async def _create_alias(self, page_id: ObjectId, name: str):
         alias_id = await self.client.create_alias(name, page_id)
         try:
             await self.client.insert_alias_to_page(page_id, name, alias_id)
@@ -1580,7 +1585,7 @@ class MongoDBInterface(AbstractDBInterface):
         # Alias with page title renamed, need to recreate primary alias
         replacement_alias_id = None
         if not await self._page_title_is_alias(page):
-            replacement_alias_id = await self.create_alias(page_id, old_name)
+            replacement_alias_id = await self._create_alias(page_id, old_name)
         replacement_alias_info = None if replacement_alias_id is None else (replacement_alias_id, old_name)
         # Return the deleted passive link IDs and the new alias ID, if one was created.
         return alias['passive_links'], replacement_alias_info
@@ -1604,7 +1609,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='delete_alias', value=page_id)
         # Alias with page title deleted, need to recreate primary alias
         if page is not None and not await self._page_title_is_alias(page):
-            await self.create_alias(page_id, alias_name)
+            await self._create_alias(page_id, alias_name)
         return deleted_link_ids, deleted_passive_link_ids
 
     async def _delete_alias_no_replace(self, wiki_id: ObjectId, alias_id: ObjectId):

@@ -14,7 +14,7 @@ class CreateAliasIncomingMessage(IncomingMessage):
         self.page_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.create_alias(self.uuid, self.message_id, self.name, self.page_id)
+        return self._dispatcher._create_alias(self.uuid, self.message_id, self.name, self.page_id)
 
 
 ###########################################################################
