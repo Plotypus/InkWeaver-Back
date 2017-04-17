@@ -304,7 +304,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.insert_preceding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
         except ClientError:
-            await self.delete_section(subsection_id)
+            _ = await self.delete_section(subsection_id)
             raise FailedUpdateError(query='add_preceding_subsection')
         else:
             return subsection_id
@@ -314,7 +314,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.insert_inner_subsection(subsection_id, to_section_id=parent_id, at_index=index)
         except ClientError:
-            await self.delete_section(subsection_id)
+            _ = await self.delete_section(subsection_id)
             raise FailedUpdateError(query='add_inner_subsection')
         else:
             return subsection_id
@@ -324,7 +324,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.insert_succeeding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
         except ClientError:
-            await self.delete_section(subsection_id)
+            _ = await self.delete_section(subsection_id)
             raise FailedUpdateError(query='add_succeeding_subsection')
         else:
             return subsection_id
