@@ -250,16 +250,6 @@ class DeleteHeadingIncomingMessage(IncomingMessage):
         return self._dispatcher.delete_heading(self.uuid, self.message_id, self.heading_title, self.page_id)
 
 
-class DeleteAliasIncomingMessage(IncomingMessage):
-    def __init__(self):
-        super().__init__()
-        self.wiki_id = RequiredField()
-        self.alias_id = RequiredField()
-
-    def dispatch(self):
-        return self._dispatcher.delete_alias(self.uuid, self.message_id, self.wiki_id, self.alias_id)
-
-
 class RemoveWikiCollaboratorIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
