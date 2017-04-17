@@ -4,6 +4,21 @@ from .field_types import RequiredField
 
 ###########################################################################
 #
+# Create Messages
+#
+###########################################################################
+class CreateAliasIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.name = RequiredField()
+        self.page_id = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.create_alias(self.uuid, self.message_id, self.name, self.page_id)
+
+
+###########################################################################
+#
 # Edit Messages
 #
 ###########################################################################
