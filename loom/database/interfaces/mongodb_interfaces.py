@@ -147,14 +147,8 @@ class MongoDBInterface(AbstractDBInterface):
             return preferences
 
     async def get_user_stories_and_wikis(self, user_id):
-        try:
-            story_ids_and_positions = await self.client.get_user_stories(user_id)
-        except ClientError:
-            raise BadValueError(query='get_user_stories_and_wikis', value=user_id)
-        try:
-            wiki_ids = await self.client.get_user_wiki_ids(user_id)
-        except ClientError:
-            raise BadValueError(query='get_user_stories_and_wikis', value=user_id)
+        story_ids_and_positions = await self._get_user_stories_and_positions(user_id)
+        wiki_ids = await self._get_user_wiki_ids(user_id)
         wiki_ids_to_titles = {}
         wikis = []
         for wiki_id in wiki_ids:
@@ -187,6 +181,22 @@ class MongoDBInterface(AbstractDBInterface):
                 'position_context': last_pos,
             })
         return {'stories': stories, 'wikis': wikis}
+
+    async def _get_user_stories_and_positions(self, user_id):
+        try:
+            story_ids_and_positions = await self.client.get_user_stories(user_id)
+        except ClientError:
+            raise BadValueError(query='_get_user_stories_and_positions', value=user_id)
+        else:
+            return story_ids_and_positions
+
+    async def _get_user_wiki_ids(self, user_id):
+        try:
+            wiki_ids = await self.client.get_user_wiki_ids(user_id)
+        except ClientError:
+            raise BadValueError(query='_get_user_wiki_ids', value=user_id)
+        else:
+            return wiki_ids
 
     @staticmethod
     def _get_current_user_access_level_in_object(user_id, obj):
