@@ -209,6 +209,17 @@ class MongoDBInterface(AbstractDBInterface):
     def _user_has_access_to_wiki(user: dict, wiki_id: ObjectId):
         return wiki_id in user['wikis']
 
+    @staticmethod
+    async def _build_story_description(story: dict, wiki_title: str, access_level: str, position_context=None):
+        story_description = {
+            'story_id':         story['_id'],
+            'title':            story['title'],
+            'wiki_summary':     {'wiki_id': story['wiki_id'], 'title': wiki_title},
+            'access_level':     access_level,
+            'position_context': position_context,
+        }
+        return story_description
+
     async def _add_wiki_id_to_user(self, user_id, wiki_id):
         try:
             await self.client.add_wiki_to_user(user_id, wiki_id)
