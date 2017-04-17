@@ -213,7 +213,7 @@ class MongoDBInterface(AbstractDBInterface):
         return story_description
 
     @staticmethod
-    async def _build_story_description(story: dict, wiki_title: str, access_level: str, position_context=None):
+    def _build_story_description(story: dict, wiki_title: str, access_level: str, position_context=None):
         story_description = {
             'story_id':         story['_id'],
             'title':            story['title'],
