@@ -794,10 +794,16 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.delete_paragraph(section_id, paragraph_id)
         except ClientError:
             raise FailedUpdateError(query='delete_paragraph')
-        try:
-            await self.client.delete_bookmark_by_paragraph_id(story_id, paragraph_id)
-        except ClientError:
-            raise FailedUpdateError(query='delete_paragraph')
+        story = await self.get_story(story_id)
+        deleted_bookmarks = []
+        for bookmark in story['bookmarks']:
+            if bookmark['paragraph_id'] == paragraph_id:
+                try:
+                    await self.client.delete_bookmark_by_id(bookmark['bookmark_id'])
+                    deleted_bookmarks.append(bookmark)
+                except ClientError:
+                    raise FailedUpdateError(query='delete_paragraph')
+        return deleted_bookmarks
 
     async def delete_note(self, section_id, paragraph_id):
         # To delete a note, we simply set it as an empty-string.
