@@ -372,6 +372,10 @@ class AbstractDBInterface(ABC):
     ###########################################################################
 
     @abstractmethod
+    async def create_alias(self, name, page_id):
+        pass
+
+    @abstractmethod
     async def get_alias(self, alias_id):
         pass
 

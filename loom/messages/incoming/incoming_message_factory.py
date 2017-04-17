@@ -1,4 +1,5 @@
 from .link_messages import *
+from .alias_messages import *
 from .statistics_messages import *
 from .story_messages import *
 from .subscription_messages import *
@@ -80,6 +81,7 @@ APPROVED_MESSAGES = {
     'reject_passive_link':             RejectPassiveLinkMessage,
 
     # Aliases
+    'create_alias':                    CreateAliasIncomingMessage,
     'delete_alias':                    DeleteAliasIncomingMessage,
     'change_alias_name':               ChangeAliasNameIncomingMessage,
 
@@ -146,4 +148,3 @@ class IncomingMessageFactory:
             raise
         else:
             return message_object
-

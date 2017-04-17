@@ -289,6 +289,10 @@ class AbstractDispatcher(ABC):
     ###########################################################################
 
     @abstractmethod
+    async def create_alias(self, uuid, message_id, name, page_id):
+        pass
+
+    @abstractmethod
     async def change_alias_name(self, uuid, message_id, wiki_id, alias_id, new_name):
         pass
 

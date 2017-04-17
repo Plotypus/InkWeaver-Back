@@ -1401,15 +1401,8 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def create_link(self, story_id: ObjectId, section_id: ObjectId, paragraph_id: ObjectId, name: str,
                           page_id: ObjectId):
-        # Check if alias exists.
-        try:
-            alias_id = await self.client.find_alias_in_page(page_id, name)
-        except ClientError:
-            # Create a new alias and add it to the page.
-            alias_id = await self._create_alias(page_id, name)
-            alias_was_created = True
-        else:
-            alias_was_created = False
+        # Attempt to create the alias.
+        alias_id, alias_was_created = self.create_alias(name, page_id)
         # Now create a link with the alias.
         link_id = await self.client.create_link(alias_id, page_id, story_id, section_id, paragraph_id)
         try:
@@ -1540,6 +1533,27 @@ class MongoDBInterface(AbstractDBInterface):
     #
     ###########################################################################
 
+    async def create_alias(self, name: str, page_id: ObjectId):
+        # Check if alias exists.
+        try:
+            alias_id = await self.client.find_alias_in_page(page_id, name)
+        except ClientError:
+            # Create a new alias and add it to the page.
+            alias_id = await self._create_alias(page_id, name)
+            alias_was_created = True
+        else:
+            alias_was_created = False
+        return alias_id, alias_was_created
+
+    async def _create_alias(self, page_id: ObjectId, name: str):
+        alias_id = await self.client.create_alias(name, page_id)
+        try:
+            await self.client.insert_alias_to_page(page_id, name, alias_id)
+        except ClientError:
+            raise FailedUpdateError(query='_create_alias')
+        else:
+            return alias_id
+
     async def change_alias_name(self, wiki_id: ObjectId, alias_id: ObjectId, new_name: str):
         # Retrieve alias.
         try:
@@ -1616,15 +1630,6 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='_delete_alias_no_replace')
         else:
             return alias['links'], alias['passive_links']
-
-    async def _create_alias(self, page_id: ObjectId, name: str):
-        alias_id = await self.client.create_alias(name, page_id)
-        try:
-            await self.client.insert_alias_to_page(page_id, name, alias_id)
-        except ClientError:
-            raise FailedUpdateError(query='_create_alias')
-        else:
-            return alias_id
 
     @staticmethod
     async def _page_title_is_alias(page):

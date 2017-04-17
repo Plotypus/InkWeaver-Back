@@ -35,6 +35,13 @@
             "parent_id": "${3.segment_id}"
         },
         {
+            "message_id": 777,
+            "uuid": null,
+            "action": "create_alias",
+            "name": "Scrooge",
+            "page_id": "${4.page_id}"
+        },
+        {
             "message_id": 100,
             "uuid": null,
             "action": "add_heading",
