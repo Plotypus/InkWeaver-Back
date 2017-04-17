@@ -736,7 +736,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='delete_story', value=user_id)
         # The user is allowed to delete the story, so delete it.
         section_id = story['section_id']
-        await self.recur_delete_section_and_subsections(section_id)
+        await self._recur_delete_section_and_subsections(section_id)
         user_ids = []
         for user in story['users']:
             user_id = user['user_id']
@@ -750,10 +750,10 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def delete_section(self, story_id, section_id):
         story = await self.get_story(story_id)
-        deleted_bookmarks = await self.recur_delete_section_and_subsections(section_id, story)
+        deleted_bookmarks = await self._recur_delete_section_and_subsections(section_id, story)
         return deleted_bookmarks
 
-    async def recur_delete_section_and_subsections(self, section_id, story=None):
+    async def _recur_delete_section_and_subsections(self, section_id, story=None):
         deleted_bookmarks = []
         try:
             section = await self.client.get_section(section_id)
@@ -762,7 +762,7 @@ class MongoDBInterface(AbstractDBInterface):
         for subsection_id in chain(section['preceding_subsections'],
                                    section['inner_subsections'],
                                    section['succeeding_subsections']):
-            section_deleted_bookmarks = await self.recur_delete_section_and_subsections(subsection_id)
+            section_deleted_bookmarks = await self._recur_delete_section_and_subsections(subsection_id)
             deleted_bookmarks.extend(section_deleted_bookmarks)
         for link_summary in section['links']:
             link_ids = link_summary['links']
