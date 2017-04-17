@@ -204,6 +204,14 @@ class MongoDBInterface(AbstractDBInterface):
     def _user_has_access_to_wiki(user: dict, wiki_id: ObjectId):
         return wiki_id in user['wikis']
 
+    async def get_story_description(self, user_id, story_id):
+        story = await self.get_story(story_id)
+        wiki = await self.get_wiki(story['wiki_id'])
+        access_level = self._get_current_user_access_level_in_object(user_id, story)
+        # This makes an assumption that the position_context has not been set for the user.
+        story_description = self._build_story_description(story, wiki['title'], access_level)
+        return story_description
+
     @staticmethod
     async def _build_story_description(story: dict, wiki_title: str, access_level: str, position_context=None):
         story_description = {
