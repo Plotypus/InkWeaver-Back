@@ -649,6 +649,11 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     ###########################################################################
 
     @handle_interface_errors
+    async def create_alias(self, uuid, message_id, name, page_id):
+        alias_id = await self.db_interface.create_alias(name, page_id)
+        yield CreateAliasOutgoingMessage(uuid, message_id, alias_id=alias_id, page_id=page_id, alias_name=name)
+
+    @handle_interface_errors
     async def change_alias_name(self, uuid, message_id, wiki_id, alias_id, new_name):
         deleted_passive_link_ids, replacement_alias_info = await self.db_interface.change_alias_name(wiki_id, alias_id,
                                                                                                      new_name)
