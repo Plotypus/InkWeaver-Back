@@ -1576,6 +1576,7 @@ class MongoDBInterface(AbstractDBInterface):
         for passive_link_id in alias['passive_links']:
             await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, old_name)
         # Alias with page title renamed, need to recreate primary alias
+        page = await self._get_page(page_id)
         replacement_alias_id = None
         if not self._page_has_primary_alias(page):
             replacement_alias_id = await self._create_alias(page_id, old_name)
