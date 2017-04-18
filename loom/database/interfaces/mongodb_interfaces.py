@@ -579,15 +579,9 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='set_paragraph_text')
         # Get statistics for section and paragraph
-        try:
-            section_stats = await self.client.get_section_statistics(section_id)
-        except ClientError:
-            raise FailedUpdateError(query='set_paragraph_text')
+        section_stats = await self.get_section_statistics(section_id)
         section_wf = Counter(section_stats['word_frequency'])
-        try:
-            paragraph_stats = await self.client.get_paragraph_statistics(section_id, paragraph_id)
-        except ClientError:
-            raise FailedUpdateError(query='set_paragraph_text')
+        paragraph_stats = await self.get_paragraph_statistics(section_id, paragraph_id)
         paragraph_wf = Counter(paragraph_stats['word_frequency'])
         # Update statistics for section and paragraph
         section_wf.subtract(paragraph_wf)
@@ -1659,6 +1653,14 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def get_section_statistics_recursive(self, section_id):
         return await self._recur_get_section_statistics(section_id)
+
+    async def get_section_statistics(self, section_id):
+        try:
+            section_stats = await self.client.get_section_statistics(section_id)
+        except ClientError:
+            raise BadValueError(query='_get_section_statistics', value=section_id)
+        else:
+            return section_stats
 
     async def get_paragraph_statistics(self, section_id, paragraph_id):
         try:
