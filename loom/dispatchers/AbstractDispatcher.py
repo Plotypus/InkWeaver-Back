@@ -69,6 +69,10 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
+    async def add_story_collaborator(self, uuid, message_id, story_id, username):
+        pass
+
+    @abstractmethod
     async def edit_story(self, uuid, message_id, story_id, update):
         pass
 
@@ -109,7 +113,7 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def delete_story(self, uuid, message_id, story_id):
+    async def delete_story(self, uuid, message_id, story_id, user_id):
         pass
 
     @abstractmethod
@@ -126,6 +130,10 @@ class AbstractDispatcher(ABC):
 
     @abstractmethod
     async def delete_bookmark(self, uuid, message_id, bookmark_id):
+        pass
+
+    @abstractmethod
+    async def remove_story_collaborator(self, uuid, message_id, story_id, user_id):
         pass
 
     @abstractmethod
@@ -164,6 +172,10 @@ class AbstractDispatcher(ABC):
 
     @abstractmethod
     async def add_heading(self, uuid, message_id, title, page_id, index=None):
+        pass
+
+    @abstractmethod
+    async def add_wiki_collaborator(self, uuid, message_id, wiki_id, username):
         pass
 
     @abstractmethod
@@ -227,6 +239,10 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
+    async def remove_wiki_collaborator(self, uuid, message_id, wiki_id, user_id):
+        pass
+
+    @abstractmethod
     async def move_segment(self, uuid, message_id, segment_id, to_parent_id, to_index):
         pass
 
@@ -271,6 +287,10 @@ class AbstractDispatcher(ABC):
     # Alias Methods
     #
     ###########################################################################
+
+    @abstractmethod
+    async def create_alias(self, uuid, message_id, name, page_id):
+        pass
 
     @abstractmethod
     async def change_alias_name(self, uuid, message_id, wiki_id, alias_id, new_name):

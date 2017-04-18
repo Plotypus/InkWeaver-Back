@@ -87,6 +87,16 @@ class AddBookmarkIncomingMessage(IncomingMessage):
                                              self.paragraph_id, self.index)
 
 
+class AddStoryCollaboratorIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.story_id = RequiredField()
+        self.username = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.add_story_collaborator(self.uuid, self.message_id, self.story_id, self.username)
+
+
 ###########################################################################
 #
 # Edit Messages
@@ -212,9 +222,10 @@ class DeleteStoryIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
         self.story_id = RequiredField()
+        self.user_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_story(self.uuid, self.message_id, self.story_id)
+        return self._dispatcher.delete_story(self.uuid, self.message_id, self.story_id, self.user_id)
 
 
 class DeleteSectionIncomingMessage(IncomingMessage):
@@ -254,6 +265,16 @@ class DeleteBookmarkIncomingMessage(IncomingMessage):
 
     def dispatch(self):
         return self._dispatcher.delete_bookmark(self.uuid, self.message_id, self.bookmark_id)
+
+
+class RemoveStoryCollaboratorIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.story_id = RequiredField()
+        self.user_id = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.remove_story_collaborator(self.uuid, self.message_id, self.story_id, self.user_id)
 
 
 ###########################################################################

@@ -50,6 +50,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_story_description(self, user_id, story_id):
+        pass
+
+    @abstractmethod
     async def set_user_password(self, user_id, password):
         pass
 
@@ -108,6 +112,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def add_story_collaborator(self, story_id, username):
+        pass
+
+    @abstractmethod
     async def get_story(self, story_id):
         pass
 
@@ -148,7 +156,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def delete_story(self, story_id):
+    async def delete_story(self, story_id, user_id):
         pass
 
     @abstractmethod
@@ -165,6 +173,10 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def delete_bookmark(self, bookmark_id):
+        pass
+
+    @abstractmethod
+    async def remove_story_collaborator(self, story_id, user_id):
         pass
 
     @abstractmethod
@@ -210,6 +222,10 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
+    async def add_wiki_collaborator(self, wiki_id, username):
+        pass
+
+    @abstractmethod
     async def get_wiki(self, wiki_id):
         pass
 
@@ -234,7 +250,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_page(self, page_id):
+    async def get_page_for_frontend(self, page_id):
         pass
 
     @abstractmethod
@@ -287,6 +303,10 @@ class AbstractDBInterface(ABC):
 
     @abstractmethod
     async def delete_heading(self, heading_title, page_id):
+        pass
+
+    @abstractmethod
+    async def remove_wiki_collaborator(self, wiki_id, user_id):
         pass
 
     @abstractmethod
@@ -356,6 +376,10 @@ class AbstractDBInterface(ABC):
     ###########################################################################
 
     @abstractmethod
+    async def create_alias(self, name, page_id):
+        pass
+
+    @abstractmethod
     async def get_alias(self, alias_id):
         pass
 
@@ -378,7 +402,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_section_statistics(self, section_id):
+    async def get_section_statistics_recursive(self, section_id):
         pass
 
     @abstractmethod

@@ -549,7 +549,7 @@ class TestDBInterface:
         await self.interface.add_template_heading(template_title, segment_id)
         page_id = await self.interface.create_page(page_title, segment_id)
         assert page_id is not None
-        page = await self.interface.get_page(page_id)
+        page = await self.interface.get_page_for_frontend(page_id)
         assert page['title'] == page_title
         assert len(page['headings']) == 1
         heading = page['headings'][0]
@@ -571,7 +571,7 @@ class TestDBInterface:
         await self.interface.add_heading(second_heading, page_id)
         await self.interface.add_heading(first_heading, page_id, 0)
         await self.interface.add_heading(third_heading, page_id, 2)
-        page = await self.interface.get_page(page_id)
+        page = await self.interface.get_page_for_frontend(page_id)
         assert len(page['headings']) == 3
         expected_title_order = [first_heading, second_heading, third_heading]
         headings = page['headings']
@@ -605,12 +605,12 @@ class TestDBInterface:
             await self.interface.add_heading(title, page_id)
         new_titles = ['Family', 'Relationships']
         await self.interface.set_heading_title(heading_titles[0], new_titles[0], page_id)
-        page = await self.interface.get_page(page_id)
+        page = await self.interface.get_page_for_frontend(page_id)
         headings = page['headings']
         assert headings[0]['title'] == new_titles[0]
         assert headings[1]['title'] == heading_titles[1]
         await self.interface.set_heading_title(heading_titles[1], new_titles[1], page_id)
-        page = await self.interface.get_page(page_id)
+        page = await self.interface.get_page_for_frontend(page_id)
         headings = page['headings']
         assert headings[0]['title'] == new_titles[0]
         assert headings[1]['title'] == new_titles[1]
@@ -630,7 +630,7 @@ class TestDBInterface:
             text = heading['text']
             await self.interface.add_heading(title, page_id)
             await self.interface.set_heading_text(title, text, page_id)
-        page = await self.interface.get_page(page_id)
+        page = await self.interface.get_page_for_frontend(page_id)
         db_headings = page['headings']
         assert db_headings == headings
 
@@ -690,7 +690,7 @@ class TestDBInterface:
         assert len(alias['links']) == 1
         assert link_id in alias['links']
 
-        page = await self.interface.get_page(page_id)
+        page = await self.interface.get_page_for_frontend(page_id)
         assert len(page['aliases']) == 2
         assert page['aliases'][link_name] == alias_id
         hierarchy = await self.interface.get_wiki_hierarchy(wiki_id)
@@ -710,7 +710,7 @@ class TestDBInterface:
         # Insert link into paragraph text.
         text = "Four score and seven {} ago...".format(encode_bson_to_string(link_id))
         paragraph_id = await self.interface.add_paragraph(section_id, text, succeeding_paragraph_id=None)
-        page = await self.interface.get_page(page_id)
+        page = await self.interface.get_page_for_frontend(page_id)
         reference = {
             'link_id':      link_id,
             'story_id':     story_id,
@@ -722,7 +722,7 @@ class TestDBInterface:
 
         # Remove link
         await self.interface.delete_link(link_id)
-        page = await self.interface.get_page(page_id)
+        page = await self.interface.get_page_for_frontend(page_id)
         assert reference not in page['references']
         alias = await self.interface.get_alias(alias_id)
         assert link_id not in alias['links']

@@ -1,12 +1,15 @@
 from loom.dispatchers.LAWProtocolDispatcher import LAWProtocolDispatcher
 from loom.handlers.websockets.LoomHandler import LoomHandler
 from loom.messages.incoming import (
-    IncomingMessage, IncomingMessageFactory, SubscriptionIncomingMessage,
-    SubscribeToStoryIncomingMessage, SubscribeToWikiIncomingMessage,
+    IncomingMessageFactory,
+    IncomingMessage, SubscriptionIncomingMessage, SubscribeToStoryIncomingMessage, SubscribeToWikiIncomingMessage,
     UnsubscribeFromStoryIncomingMessage, UnsubscribeFromWikiIncomingMessage, UserSignOutIncomingMessage
 )
 from loom.messages.outgoing import (
-    UnicastMessage, MulticastMessage, StoryBroadcastMessage, WikiBroadcastMessage, OutgoingErrorMessage,
+    UnicastMessage,
+    MulticastMessage, UserSpecifiedMulticastMessage,
+    StoryBroadcastMessage, WikiBroadcastMessage,
+    OutgoingErrorMessage,
     SubscribeToStoryOutgoingMessage, SubscribeToWikiOutgoingMessage,
     UnsubscribeFromStoryOutgoingMessage, UnsubscribeFromWikiOutgoingMessage
 )
@@ -108,7 +111,10 @@ class Router:
                 if isinstance(response, UnicastMessage):
                     self.unicast(response)
                 elif isinstance(response, MulticastMessage):
-                    self.multicast(response)
+                    if isinstance(response, UserSpecifiedMulticastMessage):
+                        self.multicast(response, response.user_id)
+                    else:
+                        self.multicast(response)
                 elif isinstance(response, StoryBroadcastMessage):
                     self.broadcast_to_story(story_id, response)
                 elif isinstance(response, WikiBroadcastMessage):
@@ -207,9 +213,10 @@ class Router:
         handler = self.uuid_to_handler[uuid]
         handler.write_json(message)
 
-    def multicast(self, message: MulticastMessage):
-        uuid = message.identifier.uuid
-        user_id = self.uuid_to_user[uuid]
+    def multicast(self, message: MulticastMessage, user_id=None):
+        if user_id is None:
+            uuid = message.identifier.uuid
+            user_id = self.uuid_to_user[uuid]
         for handler_uuid in self.user_to_uuids[user_id]:
             handler = self.uuid_to_handler[handler_uuid]
             handler.write_json(message)

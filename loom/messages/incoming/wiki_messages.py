@@ -66,6 +66,16 @@ class AddHeadingIncomingMessage(IncomingMessage):
         return self._dispatcher.add_heading(self.uuid, self.message_id, self.title, self.page_id, self.index)
 
 
+class AddWikiCollaboratorIncomingMessage(IncomingMessage):
+    def __init__(self):
+        super().__init__()
+        self.wiki_id = RequiredField()
+        self.username = RequiredField()
+
+    def dispatch(self):
+        return self._dispatcher.add_wiki_collaborator(self.uuid, self.message_id, self.wiki_id, self.username)
+
+
 ###########################################################################
 #
 # Edit Messages
@@ -240,14 +250,14 @@ class DeleteHeadingIncomingMessage(IncomingMessage):
         return self._dispatcher.delete_heading(self.uuid, self.message_id, self.heading_title, self.page_id)
 
 
-class DeleteAliasIncomingMessage(IncomingMessage):
+class RemoveWikiCollaboratorIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
         self.wiki_id = RequiredField()
-        self.alias_id = RequiredField()
+        self.user_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_alias(self.uuid, self.message_id, self.wiki_id, self.alias_id)
+        return self._dispatcher.remove_wiki_collaborator(self.uuid, self.message_id, self.wiki_id, self.user_id)
 
 
 ###########################################################################

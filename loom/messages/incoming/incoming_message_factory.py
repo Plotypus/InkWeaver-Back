@@ -1,4 +1,5 @@
 from .link_messages import *
+from .alias_messages import *
 from .statistics_messages import *
 from .story_messages import *
 from .subscription_messages import *
@@ -80,6 +81,7 @@ APPROVED_MESSAGES = {
     'reject_passive_link':             RejectPassiveLinkMessage,
 
     # Aliases
+    'create_alias':                    CreateAliasIncomingMessage,
     'delete_alias':                    DeleteAliasIncomingMessage,
     'change_alias_name':               ChangeAliasNameIncomingMessage,
 
@@ -94,6 +96,12 @@ APPROVED_MESSAGES = {
     'unsubscribe_from_story':          UnsubscribeFromStoryIncomingMessage,
     'subscribe_to_wiki':               SubscribeToWikiIncomingMessage,
     'unsubscribe_from_wiki':           UnsubscribeFromWikiIncomingMessage,
+
+    # Collaborative
+    'add_story_collaborator':          AddStoryCollaboratorIncomingMessage,
+    'remove_story_collaborator':       RemoveStoryCollaboratorIncomingMessage,
+    'add_wiki_collaborator':           AddWikiCollaboratorIncomingMessage,
+    'remove_wiki_collaborator':        RemoveWikiCollaboratorIncomingMessage,
 }
 
 
@@ -140,4 +148,3 @@ class IncomingMessageFactory:
             raise
         else:
             return message_object
-
