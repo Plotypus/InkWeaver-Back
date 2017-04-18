@@ -586,6 +586,13 @@ class MongoDBInterface(AbstractDBInterface):
         # Update statistics for section and paragraph
         section_wf.subtract(paragraph_wf)
         section_wf.update(word_frequencies)
+        # Remove words with frequencies of 0 in section word frequencies
+        for word, frequency in reversed(section_wf.most_common()):
+            if frequency == 0:
+                del(section_wf[word])
+            # We can stop iterating after finding a non-zero frequency because we are iterating from least common.
+            else:
+                break
         await self.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
         await self.set_paragraph_statistics(paragraph_id, word_frequencies, sum(word_frequencies.values()), section_id)
         return links_created, passive_links_created, aliases_created
