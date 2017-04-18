@@ -1082,16 +1082,9 @@ class MongoDBInterface(AbstractDBInterface):
             segments.append(inner_segment)
         # Iterate through the pages, pulling the links from the aliases inside of each.
         for page_id in segment['pages']:
-            page = await self._get_page_for_hierarchy(page_id)
+            page = await self.get_page_summary(page_id)
             pages.append(page)
         return hierarchy
-
-    async def _get_page_for_hierarchy(self, page_id):
-        page = await self._get_page(page_id)
-        return {
-            'title':     page['title'],
-            'page_id':   page_id,
-            }
 
     async def get_segment(self, segment_id):
         try:
