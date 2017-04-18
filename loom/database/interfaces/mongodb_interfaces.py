@@ -1127,11 +1127,19 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             page = await self.client.get_page(page_id)
         except ClientError:
-            raise BadValueError(query='get_page', value=page_id)
+            raise BadValueError(query='get_page_for_frontend', value=page_id)
         for reference in page['references']:
             # Take the context from inside the reference and push it to the next level up.
             reference.update(reference.pop('context'))
         return page
+
+    async def _get_page(self, page_id):
+        try:
+            page = await self.client.get_page(page_id)
+        except ClientError:
+            raise BadValueError(query='_get_page', value=page_id)
+        else:
+            return page
 
     async def get_page_summary(self, page_id):
         try:
