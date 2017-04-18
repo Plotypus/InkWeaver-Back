@@ -586,10 +586,7 @@ class MongoDBInterface(AbstractDBInterface):
         # Update statistics for section and paragraph
         section_wf.subtract(paragraph_wf)
         section_wf.update(word_frequencies)
-        try:
-            await self.client.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
-        except ClientError:
-            raise FailedUpdateError(query='set_paragraph_text')
+        await self.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
         try:
             await self.client.set_paragraph_statistics(paragraph_id, word_frequencies, sum(word_frequencies.values()),
                                                        section_id)
@@ -722,6 +719,12 @@ class MongoDBInterface(AbstractDBInterface):
         if alias_was_created:
             alias_info = (alias_id, page_id, name)
         return link_id, alias_id, alias_info
+
+    async def set_section_statistics(self, section_id: ObjectId, word_frequency_table: dict, word_count: int):
+        try:
+            await self.client.set_section_statistics(section_id, word_frequency_table, word_count)
+        except ClientError:
+            raise FailedUpdateError(query='set_section_statistics')
 
     async def set_bookmark_name(self, story_id, bookmark_id, new_name):
         try:
