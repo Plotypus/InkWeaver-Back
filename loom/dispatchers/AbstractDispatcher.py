@@ -117,11 +117,11 @@ class AbstractDispatcher(ABC):
         pass
 
     @abstractmethod
-    async def delete_section(self, uuid, message_id, section_id):
+    async def delete_section(self, uuid, message_id, story_id, section_id):
         pass
 
     @abstractmethod
-    async def delete_paragraph(self, uuid, message_id, section_id, paragraph_id):
+    async def delete_paragraph(self, uuid, message_id, story_id, section_id, paragraph_id):
         pass
 
     @abstractmethod

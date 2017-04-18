@@ -322,7 +322,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.insert_preceding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
         except ClientError:
-            await self.delete_section(subsection_id)
+            _ = await self.delete_section(subsection_id)
             raise FailedUpdateError(query='add_preceding_subsection')
         else:
             return subsection_id
@@ -332,7 +332,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.insert_inner_subsection(subsection_id, to_section_id=parent_id, at_index=index)
         except ClientError:
-            await self.delete_section(subsection_id)
+            _ = await self.delete_section(subsection_id)
             raise FailedUpdateError(query='add_inner_subsection')
         else:
             return subsection_id
@@ -342,7 +342,7 @@ class MongoDBInterface(AbstractDBInterface):
         try:
             await self.client.insert_succeeding_subsection(subsection_id, to_section_id=parent_id, at_index=index)
         except ClientError:
-            await self.delete_section(subsection_id)
+            _ = await self.delete_section(subsection_id)
             raise FailedUpdateError(query='add_succeeding_subsection')
         else:
             return subsection_id
@@ -751,7 +751,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='delete_story', value=user_id)
         # The user is allowed to delete the story, so delete it.
         section_id = story['section_id']
-        await self.recur_delete_section_and_subsections(section_id)
+        await self._recur_delete_section_and_subsections(section_id)
         user_ids = []
         for user in story['users']:
             user_id = user['user_id']
@@ -763,10 +763,24 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='delete_story')
         return user_ids
 
-    async def delete_section(self, section_id):
-        await self.recur_delete_section_and_subsections(section_id)
+    async def delete_section(self, section_id, story_id=None):
+        if story_id is not None:
+            story = await self.get_story(story_id)
+        else:
+            story = None
+        deleted_bookmarks = await self._recur_delete_section_and_subsections(section_id, story)
+        return deleted_bookmarks
 
-    async def recur_delete_section_and_subsections(self, section_id):
+    async def _recur_delete_section_and_subsections(self, section_id, story=None):
+        deleted_bookmarks = []
+        if story is not None:
+            for bookmark in story['bookmarks']:
+                if bookmark['section_id'] == section_id:
+                    try:
+                        await self.client.delete_bookmark_by_id(bookmark['bookmark_id'])
+                        deleted_bookmarks.append(bookmark)
+                    except ClientError:
+                        raise FailedUpdateError(query='recur_delete_section_and_subsections')
         try:
             section = await self.client.get_section(section_id)
         except ClientError:
@@ -774,7 +788,8 @@ class MongoDBInterface(AbstractDBInterface):
         for subsection_id in chain(section['preceding_subsections'],
                                    section['inner_subsections'],
                                    section['succeeding_subsections']):
-            await self.recur_delete_section_and_subsections(subsection_id)
+            section_deleted_bookmarks = await self._recur_delete_section_and_subsections(subsection_id)
+            deleted_bookmarks.extend(section_deleted_bookmarks)
         for link_summary in section['links']:
             link_ids = link_summary['links']
             for link_id in link_ids:
@@ -787,12 +802,18 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.delete_section(section['_id'])
         except ClientError:
             raise FailedUpdateError(query='recur_delete_sections_and_subsections')
-        try:
-            await self.client.delete_bookmark_by_section_id(section_id)
-        except ClientError:
-            raise FailedUpdateError(query='recur_delete_sections_and_subsections')
+        return deleted_bookmarks
 
-    async def delete_paragraph(self, section_id, paragraph_id):
+    async def delete_paragraph(self, story_id, section_id, paragraph_id):
+        story = await self.get_story(story_id)
+        deleted_bookmarks = []
+        for bookmark in story['bookmarks']:
+            if bookmark['paragraph_id'] == paragraph_id:
+                try:
+                    await self.client.delete_bookmark_by_id(bookmark['bookmark_id'])
+                    deleted_bookmarks.append(bookmark)
+                except ClientError:
+                    raise FailedUpdateError(query='delete_paragraph')
         try:
             link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
         except ClientError:
@@ -809,10 +830,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.delete_paragraph(section_id, paragraph_id)
         except ClientError:
             raise FailedUpdateError(query='delete_paragraph')
-        try:
-            await self.client.delete_bookmark_by_paragraph_id(paragraph_id)
-        except ClientError:
-            raise FailedUpdateError(query='delete_paragraph')
+        return deleted_bookmarks
 
     async def delete_note(self, section_id, paragraph_id):
         # To delete a note, we simply set it as an empty-string.
