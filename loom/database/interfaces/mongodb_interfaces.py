@@ -1602,7 +1602,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, old_name)
         # Alias with page title renamed, need to recreate primary alias
         replacement_alias_id = None
-        if not await self._page_has_primary_alias(page):
+        if not self._page_has_primary_alias(page):
             replacement_alias_id = await self._create_alias(page_id, old_name)
         replacement_alias_info = None if replacement_alias_id is None else (replacement_alias_id, old_name)
         # Return the deleted passive link IDs and the new alias ID, if one was created.
@@ -1626,7 +1626,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise BadValueError(query='delete_alias', value=page_id)
         # Alias with page title deleted, need to recreate primary alias
-        if not await self._page_has_primary_alias(page):
+        if not self._page_has_primary_alias(page):
             await self._create_alias(page_id, alias_name)
         return deleted_link_ids, deleted_passive_link_ids
 
@@ -1650,7 +1650,7 @@ class MongoDBInterface(AbstractDBInterface):
             return alias['links'], alias['passive_links']
 
     @staticmethod
-    async def _page_has_primary_alias(page):
+    def _page_has_primary_alias(page):
         title = page['title']
         # Not None if the primary alias exists
         return page['aliases'].get(title) is not None
