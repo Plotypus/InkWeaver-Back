@@ -692,7 +692,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def get_section_statistics(self, uuid, message_id, section_id):
-        stats = await self.db_interface.get_section_statistics(section_id)
+        stats = await self.db_interface.get_section_statistics_recursive(section_id)
         yield GetSectionStatisticsOutgoingMessage(uuid, message_id, statistics=stats)
 
     @handle_interface_errors

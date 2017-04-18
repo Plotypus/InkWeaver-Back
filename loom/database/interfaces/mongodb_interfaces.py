@@ -1657,7 +1657,7 @@ class MongoDBInterface(AbstractDBInterface):
             section['statistics']['word_count'] += subsection_stats['word_count']
         return section['statistics']
 
-    async def get_section_statistics(self, section_id):
+    async def get_section_statistics_recursive(self, section_id):
         return await self._recur_get_section_statistics(section_id)
 
     async def get_paragraph_statistics(self, section_id, paragraph_id):
