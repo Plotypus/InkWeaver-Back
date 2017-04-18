@@ -776,6 +776,14 @@ class MongoDBInterface(AbstractDBInterface):
 
     async def _recur_delete_section_and_subsections(self, section_id, story=None):
         deleted_bookmarks = []
+        if story is not None:
+            for bookmark in story['bookmarks']:
+                if bookmark['section_id'] == section_id:
+                    try:
+                        await self.client.delete_bookmark_by_id(bookmark['bookmark_id'])
+                        deleted_bookmarks.append(bookmark)
+                    except ClientError:
+                        raise FailedUpdateError(query='recur_delete_section_and_subsections')
         try:
             section = await self.client.get_section(section_id)
         except ClientError:
@@ -797,17 +805,18 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.delete_section(section['_id'])
         except ClientError:
             raise FailedUpdateError(query='recur_delete_sections_and_subsections')
-        if story is not None:
-            for bookmark in story['bookmarks']:
-                if bookmark['section_id'] == section_id:
-                    try:
-                        await self.client.delete_bookmark_by_id(bookmark['bookmark_id'])
-                        deleted_bookmarks.append(bookmark)
-                    except ClientError:
-                        raise FailedUpdateError(query='recur_delete_section_and_subsections')
         return deleted_bookmarks
 
     async def delete_paragraph(self, story_id, section_id, paragraph_id):
+        story = await self.get_story(story_id)
+        deleted_bookmarks = []
+        for bookmark in story['bookmarks']:
+            if bookmark['paragraph_id'] == paragraph_id:
+                try:
+                    await self.client.delete_bookmark_by_id(bookmark['bookmark_id'])
+                    deleted_bookmarks.append(bookmark)
+                except ClientError:
+                    raise FailedUpdateError(query='delete_paragraph')
         try:
             link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
         except ClientError:
@@ -824,15 +833,6 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.delete_paragraph(section_id, paragraph_id)
         except ClientError:
             raise FailedUpdateError(query='delete_paragraph')
-        story = await self.get_story(story_id)
-        deleted_bookmarks = []
-        for bookmark in story['bookmarks']:
-            if bookmark['paragraph_id'] == paragraph_id:
-                try:
-                    await self.client.delete_bookmark_by_id(bookmark['bookmark_id'])
-                    deleted_bookmarks.append(bookmark)
-                except ClientError:
-                    raise FailedUpdateError(query='delete_paragraph')
         return deleted_bookmarks
 
     async def delete_note(self, section_id, paragraph_id):
