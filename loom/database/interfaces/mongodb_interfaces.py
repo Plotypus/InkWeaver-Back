@@ -1626,7 +1626,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise BadValueError(query='delete_alias', value=page_id)
         # Alias with page title deleted, need to recreate primary alias
-        if page is not None and not await self._page_has_primary_alias(page):
+        if not await self._page_has_primary_alias(page):
             await self._create_alias(page_id, alias_name)
         return deleted_link_ids, deleted_passive_link_ids
 
