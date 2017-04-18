@@ -510,7 +510,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
 
     @handle_interface_errors
     async def get_wiki_page(self, uuid, message_id, page_id):
-        page = await self.db_interface.get_page(page_id)
+        page = await self.db_interface.get_page_for_frontend(page_id)
         yield GetWikiPageOutgoingMessage(uuid, message_id,
                                          title=page['title'],
                                          aliases=page['aliases'],

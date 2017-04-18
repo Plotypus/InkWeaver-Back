@@ -557,10 +557,7 @@ class MongoDBInterface(AbstractDBInterface):
                 section_passive_links.append(passive_link_id)
         # Apply updates to references in pages.
         for page_id, updates in page_updates.items():
-            try:
-                page = await self.client.get_page(page_id)
-            except ClientError:
-                raise BadValueError(query='set_paragraph_text', value=page_id)
+            page = await self._get_page(page_id)
             references = page['references']
             for link_id, context in updates.items():
                 self._update_link_in_references_with_context(references, link_id, context)
@@ -1036,10 +1033,7 @@ class MongoDBInterface(AbstractDBInterface):
         return segment_alias_list
 
     async def _get_page_alias_list(self, page_id):
-        try:
-            page = await self.client.get_page(page_id)
-        except ClientError:
-            raise BadValueError(query='_get_page_alias_list', value=page_id)
+        page = await self._get_page(page_id)
         alias_list = []
         for alias_name, alias_id in page['aliases'].items():
             try:
@@ -1088,20 +1082,9 @@ class MongoDBInterface(AbstractDBInterface):
             segments.append(inner_segment)
         # Iterate through the pages, pulling the links from the aliases inside of each.
         for page_id in segment['pages']:
-            page = await self._get_page_for_hierarchy(page_id)
+            page = await self.get_page_summary(page_id)
             pages.append(page)
         return hierarchy
-
-    async def _get_page_for_hierarchy(self, page_id):
-        try:
-            page = await self.client.get_page(page_id)
-        except ClientError:
-            raise BadValueError(query='_get_page_for_hierarchy', value=page_id)
-        else:
-            return {
-                'title':   page['title'],
-                'page_id': page_id,
-            }
 
     async def get_segment(self, segment_id):
         try:
@@ -1123,26 +1106,27 @@ class MongoDBInterface(AbstractDBInterface):
                 'title':      segment['title'],
             }
 
-    async def get_page(self, page_id):
-        try:
-            page = await self.client.get_page(page_id)
-        except ClientError:
-            raise BadValueError(query='get_page', value=page_id)
+    async def get_page_for_frontend(self, page_id):
+        page = await self._get_page(page_id)
         for reference in page['references']:
             # Take the context from inside the reference and push it to the next level up.
             reference.update(reference.pop('context'))
         return page
 
-    async def get_page_summary(self, page_id):
+    async def _get_page(self, page_id):
         try:
             page = await self.client.get_page(page_id)
         except ClientError:
-            raise BadValueError(query='get_page_summary', value=page_id)
+            raise BadValueError(query='_get_page', value=page_id)
         else:
-            return {
-                'page_id':   page_id,
-                'title':     page['title'],
-            }
+            return page
+
+    async def get_page_summary(self, page_id):
+        page = await self._get_page(page_id)
+        return {
+            'page_id':   page_id,
+            'title':     page['title'],
+        }
 
     async def set_wiki_title(self, title, wiki_id):
         try:
@@ -1177,10 +1161,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='set_template_heading_text')
 
     async def set_page_title(self, wiki_id, new_title, page_id):
-        try:
-            page = await self.client.get_page(page_id)
-        except ClientError:
-            raise BadValueError(query='set_page_title', value=page_id)
+        page = await self._get_page(page_id)
         old_title = page['title']
         alias_id = page['aliases'][old_title]
         # It's important that we change the page title before renaming the alias
@@ -1298,10 +1279,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='delete_template_heading', value=title)
 
     async def delete_page(self, wiki_id, page_id):
-        try:
-            page = await self.client.get_page(page_id)
-        except ClientError:
-            raise BadValueError(query='delete_page', value=page_id)
+        page = await self._get_page(page_id)
         deleted_link_ids = []
         deleted_passive_link_ids = []
         for alias_id in page['aliases'].values():
@@ -1581,10 +1559,7 @@ class MongoDBInterface(AbstractDBInterface):
         # Update name in alias.
         page_id = alias['page_id']
         old_name = alias['name']
-        try:
-            page = await self.client.get_page(page_id)
-        except ClientError:
-            raise BadValueError(query='change_alias_name', value=page_id)
+        page = await self._get_page(page_id)
         # Prevent users from renaming an alias into an existing one
         if page['aliases'].get(new_name) is not None:
             raise BadValueError(query='change_alias_name', value=new_name)
@@ -1601,8 +1576,9 @@ class MongoDBInterface(AbstractDBInterface):
         for passive_link_id in alias['passive_links']:
             await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, old_name)
         # Alias with page title renamed, need to recreate primary alias
+        page = await self._get_page(page_id)
         replacement_alias_id = None
-        if not await self._page_title_is_alias(page):
+        if not self._page_has_primary_alias(page):
             replacement_alias_id = await self._create_alias(page_id, old_name)
         replacement_alias_info = None if replacement_alias_id is None else (replacement_alias_id, old_name)
         # Return the deleted passive link IDs and the new alias ID, if one was created.
@@ -1621,12 +1597,9 @@ class MongoDBInterface(AbstractDBInterface):
         deleted_link_ids, deleted_passive_link_ids = await self._delete_alias_no_replace(wiki_id, alias_id)
         alias_name = alias['name']
         page_id = alias['page_id']
-        try:
-            page = await self.client.get_page(page_id)
-        except ClientError:
-            raise BadValueError(query='delete_alias', value=page_id)
+        page = await self._get_page(page_id)
         # Alias with page title deleted, need to recreate primary alias
-        if page is not None and not await self._page_title_is_alias(page):
+        if not self._page_has_primary_alias(page):
             await self._create_alias(page_id, alias_name)
         return deleted_link_ids, deleted_passive_link_ids
 
@@ -1650,8 +1623,9 @@ class MongoDBInterface(AbstractDBInterface):
             return alias['links'], alias['passive_links']
 
     @staticmethod
-    async def _page_title_is_alias(page):
+    def _page_has_primary_alias(page):
         title = page['title']
+        # Not None if the primary alias exists
         return page['aliases'].get(title) is not None
 
     ###########################################################################
@@ -1710,7 +1684,7 @@ class MongoDBInterface(AbstractDBInterface):
         pages = []
         for page_id in segment['pages']:
             try:
-                page = await self.get_page(page_id)
+                page = await self.get_page_for_frontend(page_id)
             except ClientError:
                 raise BadValueError(query='_get_page_section_frequencies', value=page_id)
             frequencies = defaultdict(int)
