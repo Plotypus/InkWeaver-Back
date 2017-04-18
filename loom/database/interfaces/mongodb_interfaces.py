@@ -1123,7 +1123,7 @@ class MongoDBInterface(AbstractDBInterface):
                 'title':      segment['title'],
             }
 
-    async def get_page(self, page_id):
+    async def get_page_for_frontend(self, page_id):
         try:
             page = await self.client.get_page(page_id)
         except ClientError:
@@ -1711,7 +1711,7 @@ class MongoDBInterface(AbstractDBInterface):
         pages = []
         for page_id in segment['pages']:
             try:
-                page = await self.get_page(page_id)
+                page = await self.get_page_for_frontend(page_id)
             except ClientError:
                 raise BadValueError(query='_get_page_section_frequencies', value=page_id)
             frequencies = defaultdict(int)

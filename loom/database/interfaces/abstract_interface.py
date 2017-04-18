@@ -250,7 +250,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_page(self, page_id):
+    async def get_page_for_frontend(self, page_id):
         pass
 
     @abstractmethod

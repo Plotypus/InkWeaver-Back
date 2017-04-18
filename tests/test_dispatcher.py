@@ -63,7 +63,7 @@ class TestLAWDispatcher:
         await self.interface.add_heading(title, page_id, None)
 
     async def get_test_page(self, page_id):
-        page = await self.interface.get_page(page_id)
+        page = await self.interface.get_page_for_frontend(page_id)
         return page
 
     async def create_test_link(self, story_id, section_id, paragraph_id, name, page_id):
