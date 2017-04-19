@@ -800,11 +800,25 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='recur_delete_sections_and_subsections')
 
     async def delete_paragraph(self, section_id, paragraph_id):
-        # TODO: Update parent section's statistics
         try:
             link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
         except ClientError:
             raise BadValueError(query='delete_paragraph', value=paragraph_id)
+        # FIXME: This is not the best way to do this.
+        section_stats = await self.get_section_statistics(section_id)
+        section_wf = Counter(section_stats['word_frequency'])
+        paragraph_stats = await self.get_paragraph_statistics(section_id, paragraph_id)
+        paragraph_wf = Counter(paragraph_stats['word_frequency'])
+        # Remove the paragraph word counts from the parent section
+        section_wf.subtract(paragraph_wf)
+        # Remove words with frequencies of 0 in section word frequencies
+        for word, frequency in reversed(section_wf.most_common()):
+            if frequency == 0:
+                del (section_wf[word])
+            # We can stop iterating after finding a non-zero frequency because we are iterating from least common.
+            else:
+                break
+        await self.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
         try:
             passive_link_ids = await self.client.get_passive_links_in_paragraph(paragraph_id, section_id)
         except ClientError:
