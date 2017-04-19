@@ -380,13 +380,15 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='add_paragraph')
         if text is not None:
-            links_created, passive_links_created, aliases_created = await self.set_paragraph_text(wiki_id, section_id,
-                                                                                                  text, paragraph_id)
+            text, links_created, passive_links_created, aliases_created = await self.set_paragraph_text(wiki_id,
+                                                                                                        section_id,
+                                                                                                        text,
+                                                                                                        paragraph_id)
         else:
             links_created = []
             passive_links_created = []
             aliases_created = []
-        return paragraph_id, links_created, passive_links_created, aliases_created
+        return text, paragraph_id, links_created, passive_links_created, aliases_created
 
     async def add_bookmark(self, name, story_id, section_id, paragraph_id, index=None):
         bookmark_id = ObjectId()
@@ -1549,8 +1551,8 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='comprehensive_remove_passive_link', value=passive_link_id)
         encoded_passive_link_id = self.encode_object_id(passive_link_id)
         updated_text = text.replace(encoded_passive_link_id, replacement_text)
-        links_created, _, _ = await self.set_paragraph_text(wiki_id, context['section_id'], updated_text,
-                                                            context['paragraph_id'])
+        _, links_created, _, _ = await self.set_paragraph_text(wiki_id, context['section_id'], updated_text,
+                                                               context['paragraph_id'])
         await self.delete_passive_link(passive_link_id)
         return links_created
 

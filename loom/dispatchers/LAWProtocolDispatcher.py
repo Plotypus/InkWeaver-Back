@@ -171,6 +171,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     @handle_interface_errors
     async def add_paragraph(self, uuid, message_id, wiki_id, section_id, text, succeeding_paragraph_id=None):
         (
+            text,
             paragraph_id,
             links_created,
             passive_links_created,
