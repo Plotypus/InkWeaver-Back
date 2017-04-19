@@ -171,6 +171,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
     @handle_interface_errors
     async def add_paragraph(self, uuid, message_id, wiki_id, section_id, text, succeeding_paragraph_id=None):
         (
+            text,
             paragraph_id,
             links_created,
             passive_links_created,
@@ -226,6 +227,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
         if update['update_type'] == 'set_text':
             text = update['text']
             (
+                text,
                 links_created,
                 passive_links_created,
                 aliases_created
@@ -237,6 +239,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
             for passive_link_id, alias_id in passive_links_created:
                 yield CreatePassiveLinkOutgoingMessage(uuid, message_id, passive_link_id=passive_link_id,
                                                        alias_id=alias_id)
+            update['text'] = text
             yield EditParagraphOutgoingMessage(uuid, message_id,
                                                section_id=section_id,
                                                update=update,
