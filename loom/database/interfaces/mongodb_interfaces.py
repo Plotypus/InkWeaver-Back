@@ -800,10 +800,6 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='recur_delete_sections_and_subsections')
 
     async def delete_paragraph(self, section_id, paragraph_id):
-        try:
-            link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
-        except ClientError:
-            raise BadValueError(query='delete_paragraph', value=paragraph_id)
         # FIXME: This is not the best way to do this.
         section_stats = await self.get_section_statistics(section_id)
         section_wf = Counter(section_stats['word_frequency'])
@@ -819,6 +815,7 @@ class MongoDBInterface(AbstractDBInterface):
             else:
                 break
         await self.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
+        link_ids = await self._get_links_in_paragraph(paragraph_id, section_id)
         try:
             passive_link_ids = await self.client.get_passive_links_in_paragraph(paragraph_id, section_id)
         except ClientError:
@@ -835,6 +832,14 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.delete_bookmark_by_paragraph_id(paragraph_id)
         except ClientError:
             raise FailedUpdateError(query='delete_paragraph')
+
+    async def _get_links_in_paragraph(self, paragraph_id, section_id):
+        try:
+            link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
+        except ClientError:
+            raise BadValueError(query='delete_paragraph', value=paragraph_id)
+        else:
+            return link_ids
 
     async def delete_note(self, section_id, paragraph_id):
         # To delete a note, we simply set it as an empty-string.
