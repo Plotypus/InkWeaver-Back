@@ -836,30 +836,8 @@ class MongoDBInterface(AbstractDBInterface):
             else:
                 break
         await self.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
-        link_ids = await self._get_links_in_paragraph(paragraph_id, section_id)
-        passive_link_ids = await self._get_passive_links_in_paragraph(paragraph_id, section_id)
-        for link_id in link_ids:
-            await self.delete_link(link_id)
-        for passive_link_id in passive_link_ids:
-            await self.delete_passive_link(passive_link_id)
         await self._delete_paragraph(section_id, paragraph_id)
         return deleted_bookmarks
-
-    async def _get_links_in_paragraph(self, paragraph_id, section_id):
-        try:
-            link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
-        except ClientError:
-            raise BadValueError(query='_get_links_in_paragraph', value=paragraph_id)
-        else:
-            return link_ids
-
-    async def _get_passive_links_in_paragraph(self, paragraph_id, section_id):
-        try:
-            passive_link_ids = await self.client.get_passive_links_in_paragraph(paragraph_id, section_id)
-        except ClientError:
-            raise BadValueError(query='_get_passive_links_in_paragraph', value=paragraph_id)
-        else:
-            return passive_link_ids
 
     async def _delete_paragraph(self, section_id, paragraph_id):
         try:
