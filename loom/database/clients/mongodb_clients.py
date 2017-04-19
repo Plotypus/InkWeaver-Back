@@ -1274,13 +1274,15 @@ class MongoDBClient:
     async def get_links_in_paragraph(self, paragraph_id: ObjectId, section_id: ObjectId):
         section_projection = await self.sections.find_one(
             filter={'_id': section_id, 'links.paragraph_id': paragraph_id},
-            projection={'links.links': 1, '_id': 0}
+            projection={'links': 1, '_id': 0}
         )
         if section_projection is None:
             self.log(f'get_links_in_paragraph {{{paragraph_id}}} in section {{{section_id}}} FAILED')
             raise NoMatchError
         self.log(f'get_links_in_paragraph {{{paragraph_id}}} in section {{{section_id}}}')
-        return section_projection['links'][0]['links']
+        for paragraph in section_projection['links']:
+            if paragraph['paragraph_id'] == paragraph_id:
+                return paragraph['links']
 
     async def set_link_context(self, link_id: ObjectId, context: Dict):
         update_result: UpdateResult = await self.links.update_one(
