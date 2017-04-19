@@ -822,10 +822,7 @@ class MongoDBInterface(AbstractDBInterface):
         for passive_link_id in passive_link_ids:
             await self.delete_passive_link(passive_link_id)
         await self._delete_paragraph(section_id, paragraph_id)
-        try:
-            await self.client.delete_bookmark_by_paragraph_id(paragraph_id)
-        except ClientError:
-            raise FailedUpdateError(query='delete_paragraph')
+        await self._delete_bookmark_by_paragraph_id(paragraph_id)
 
     async def _get_links_in_paragraph(self, paragraph_id, section_id):
         try:
@@ -848,6 +845,12 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.delete_paragraph(section_id, paragraph_id)
         except ClientError:
             raise FailedUpdateError(query='_delete_paragraph')
+
+    async def _delete_bookmark_by_paragraph_id(self, paragraph_id):
+        try:
+            await self.client.delete_bookmark_by_paragraph_id(paragraph_id)
+        except ClientError:
+            raise FailedUpdateError(query='_delete_bookmark_by_paragraph_id')
 
     async def delete_note(self, section_id, paragraph_id):
         # To delete a note, we simply set it as an empty-string.
