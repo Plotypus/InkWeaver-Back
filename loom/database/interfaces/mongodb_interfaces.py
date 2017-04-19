@@ -579,28 +579,22 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='set_paragraph_text')
         # Get statistics for section and paragraph
-        try:
-            section_stats = await self.client.get_section_statistics(section_id)
-        except ClientError:
-            raise FailedUpdateError(query='set_paragraph_text')
+        section_stats = await self.get_section_statistics(section_id)
         section_wf = Counter(section_stats['word_frequency'])
-        try:
-            paragraph_stats = await self.client.get_paragraph_statistics(section_id, paragraph_id)
-        except ClientError:
-            raise FailedUpdateError(query='set_paragraph_text')
+        paragraph_stats = await self.get_paragraph_statistics(section_id, paragraph_id)
         paragraph_wf = Counter(paragraph_stats['word_frequency'])
         # Update statistics for section and paragraph
         section_wf.subtract(paragraph_wf)
         section_wf.update(word_frequencies)
-        try:
-            await self.client.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
-        except ClientError:
-            raise FailedUpdateError(query='set_paragraph_text')
-        try:
-            await self.client.set_paragraph_statistics(paragraph_id, word_frequencies, sum(word_frequencies.values()),
-                                                       section_id)
-        except ClientError:
-            raise FailedUpdateError(query='set_paragraph_text')
+        # Remove words with frequencies of 0 in section word frequencies
+        for word, frequency in reversed(section_wf.most_common()):
+            if frequency == 0:
+                del(section_wf[word])
+            # We can stop iterating after finding a non-zero frequency because we are iterating from least common.
+            else:
+                break
+        await self.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
+        await self.set_paragraph_statistics(paragraph_id, word_frequencies, sum(word_frequencies.values()), section_id)
         return links_created, passive_links_created, aliases_created
 
     @staticmethod
@@ -729,6 +723,19 @@ class MongoDBInterface(AbstractDBInterface):
             alias_info = (alias_id, page_id, name)
         return link_id, alias_id, alias_info
 
+    async def set_section_statistics(self, section_id: ObjectId, word_frequency_table: dict, word_count: int):
+        try:
+            await self.client.set_section_statistics(section_id, word_frequency_table, word_count)
+        except ClientError:
+            raise FailedUpdateError(query='set_section_statistics')
+
+    async def set_paragraph_statistics(self, paragraph_id: ObjectId, word_frequency_table: dict, word_count: int,
+                                       in_section_id: ObjectId):
+        try:
+            await self.client.set_paragraph_statistics(paragraph_id, word_frequency_table, word_count, in_section_id)
+        except ClientError:
+            raise FailedUpdateError(query='set_paragraph_statistics')
+
     async def set_bookmark_name(self, story_id, bookmark_id, new_name):
         try:
             await self.client.set_bookmark_name(story_id, bookmark_id, new_name)
@@ -814,23 +821,51 @@ class MongoDBInterface(AbstractDBInterface):
                     deleted_bookmarks.append(bookmark)
                 except ClientError:
                     raise FailedUpdateError(query='delete_paragraph')
-        try:
-            link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
-        except ClientError:
-            raise BadValueError(query='delete_paragraph', value=paragraph_id)
-        try:
-            passive_link_ids = await self.client.get_passive_links_in_paragraph(paragraph_id, section_id)
-        except ClientError:
-            raise BadValueError(query='delete_paragraph', value=paragraph_id)
+        # FIXME: This is not the best way to do this.
+        section_stats = await self.get_section_statistics(section_id)
+        section_wf = Counter(section_stats['word_frequency'])
+        paragraph_stats = await self.get_paragraph_statistics(section_id, paragraph_id)
+        paragraph_wf = Counter(paragraph_stats['word_frequency'])
+        # Remove the paragraph word counts from the parent section
+        section_wf.subtract(paragraph_wf)
+        # Remove words with frequencies of 0 in section word frequencies
+        for word, frequency in reversed(section_wf.most_common()):
+            if frequency == 0:
+                del (section_wf[word])
+            # We can stop iterating after finding a non-zero frequency because we are iterating from least common.
+            else:
+                break
+        await self.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
+        link_ids = await self._get_links_in_paragraph(paragraph_id, section_id)
+        passive_link_ids = await self._get_passive_links_in_paragraph(paragraph_id, section_id)
         for link_id in link_ids:
             await self.delete_link(link_id)
         for passive_link_id in passive_link_ids:
             await self.delete_passive_link(passive_link_id)
+        await self._delete_paragraph(section_id, paragraph_id)
+        return deleted_bookmarks
+
+    async def _get_links_in_paragraph(self, paragraph_id, section_id):
+        try:
+            link_ids = await self.client.get_links_in_paragraph(paragraph_id, section_id)
+        except ClientError:
+            raise BadValueError(query='_get_links_in_paragraph', value=paragraph_id)
+        else:
+            return link_ids
+
+    async def _get_passive_links_in_paragraph(self, paragraph_id, section_id):
+        try:
+            passive_link_ids = await self.client.get_passive_links_in_paragraph(paragraph_id, section_id)
+        except ClientError:
+            raise BadValueError(query='_get_passive_links_in_paragraph', value=paragraph_id)
+        else:
+            return passive_link_ids
+
+    async def _delete_paragraph(self, section_id, paragraph_id):
         try:
             await self.client.delete_paragraph(section_id, paragraph_id)
         except ClientError:
-            raise FailedUpdateError(query='delete_paragraph')
-        return deleted_bookmarks
+            raise FailedUpdateError(query='_delete_paragraph')
 
     async def delete_note(self, section_id, paragraph_id):
         # To delete a note, we simply set it as an empty-string.
@@ -1675,8 +1710,16 @@ class MongoDBInterface(AbstractDBInterface):
             section['statistics']['word_count'] += subsection_stats['word_count']
         return section['statistics']
 
-    async def get_section_statistics(self, section_id):
+    async def get_section_statistics_recursive(self, section_id):
         return await self._recur_get_section_statistics(section_id)
+
+    async def get_section_statistics(self, section_id):
+        try:
+            section_stats = await self.client.get_section_statistics(section_id)
+        except ClientError:
+            raise BadValueError(query='_get_section_statistics', value=section_id)
+        else:
+            return section_stats
 
     async def get_paragraph_statistics(self, section_id, paragraph_id):
         try:

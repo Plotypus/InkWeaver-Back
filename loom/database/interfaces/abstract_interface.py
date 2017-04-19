@@ -402,7 +402,7 @@ class AbstractDBInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_section_statistics(self, section_id):
+    async def get_section_statistics_recursive(self, section_id):
         pass
 
     @abstractmethod
