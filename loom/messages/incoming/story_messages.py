@@ -240,11 +240,13 @@ class DeleteSectionIncomingMessage(IncomingMessage):
 class DeleteParagraphIncomingMessage(IncomingMessage):
     def __init__(self):
         super().__init__()
+        self.story_id = RequiredField()
         self.section_id = RequiredField()
         self.paragraph_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_paragraph(self.uuid, self.message_id, self.section_id, self.paragraph_id)
+        return self._dispatcher.delete_paragraph(self.uuid, self.message_id, self.story_id, self.section_id,
+                                                 self.paragraph_id)
 
 
 class DeleteNoteIncomingMessage(IncomingMessage):
