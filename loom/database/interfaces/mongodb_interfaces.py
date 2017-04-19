@@ -595,7 +595,7 @@ class MongoDBInterface(AbstractDBInterface):
                 break
         await self.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
         await self.set_paragraph_statistics(paragraph_id, word_frequencies, sum(word_frequencies.values()), section_id)
-        return links_created, passive_links_created, aliases_created
+        return text, links_created, passive_links_created, aliases_created
 
     @staticmethod
     def _update_link_in_references_with_context(references, link_id, context):
