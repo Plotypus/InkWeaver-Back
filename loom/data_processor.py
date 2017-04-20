@@ -58,6 +58,7 @@ class DataProcessor:
                                                  segment_id=wiki_dict['segment_id'],
                                                  users=wiki_dict['users'],
                                                  summary=wiki_dict['summary'])
+        wiki_message.wiki_id = wiki_id
         self.responses['wiki'] = wiki_message
         story_dict = await self.dispatcher.db_interface.get_story(story_id)
         story_message = GetStoryInformationOutgoingMessage('', '',
@@ -65,6 +66,7 @@ class DataProcessor:
                                                    section_id=story_dict['section_id'],
                                                    wiki_id=story_dict['wiki_id'],
                                                    users=story_dict['users'])
+        story_message.story_id = story_id
         self.responses['story'] = story_message
         for dispatch_item in dispatch_list:
             revised: JSON = {k: self.replace_id(v) for k, v in dispatch_item.items()}
