@@ -1,0 +1,592 @@
+{
+  "name": "Game of Thrones",
+  "last_updated": "2017-04-29",
+  "user": {
+    "username": "dbeni",
+    "password": " ",
+    "name": "David Benioff",
+    "email": "benioff@hbo.com"
+  },
+  "extra_users": [
+    {
+      "username": "grrm",
+      "password": " ",
+      "name": "George R. R. Martin",
+      "email": "george@hbo.com"
+    }
+  ],
+  "wiki": {
+    "title": "Game of Thrones Story Bible",
+    "summary": "Episode summaries and character descriptions."
+  },
+  "story": {
+    "title": "Game of Thrones",
+    "summary": "The best show we're ever gonna do."
+  },
+  "dispatch_list": [
+    {
+      "message_id": 1,
+      "uuid": null,
+      "action": "add_segment",
+      "title": "Characters",
+      "parent_id": "${wiki.segment_id}"
+    },
+    {
+      "message_id": 2,
+      "uuid": null,
+      "action": "add_segment",
+      "title": "Houses",
+      "parent_id": "${1.segment_id}"
+    },
+    {
+      "message_id": 3,
+      "uuid": null,
+      "action": "add_segment",
+      "title": "House Targaryen",
+      "parent_id": "${2.segment_id}"
+    },
+    {
+      "message_id": 4,
+      "uuid": null,
+      "action": "add_template_heading",
+      "title": "Background",
+      "segment_id": "${1.segment_id}"
+    },
+    {
+      "message_id": 5,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Daenerys Targaryen",
+      "parent_id": "${3.segment_id}"
+    },
+    {
+      "message_id": 500,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Daenerys",
+      "page_id": "${5.page_id}"
+    },
+    {
+      "message_id": 6,
+      "uuid": null,
+      "action": "add_heading_with_text",
+      "page_id": "${5.page_id}",
+      "title": "Background",
+      "text": "<p>Daenerys is the only daughter and youngest child of King Aerys II Targaryen, the \"Mad King\", and his sister-wife, Rhaella. Her father died during the Sack of King's Landing, before she was even born.</p>\n<p>Daenerys believes herself to be the rightful ruler of Westeros, and she intends to make her way across the Narrow Sea to reclaim the Iron Throne.</p>"
+    },
+    {
+      "message_id": 7,
+      "uuid": null,
+      "action": "add_segment",
+      "title": "House Stark",
+      "parent_id": "${2.segment_id}"
+    },
+    {
+      "message_id": 8,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Ned Stark",
+      "parent_id": "${7.segment_id}"
+    },
+    {
+      "message_id": 501,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Eddard",
+      "page_id": "${8.page_id}"
+    },
+    {
+      "message_id": 502,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Ned",
+      "page_id": "${8.page_id}"
+    },
+    {
+      "message_id": 9,
+      "uuid": null,
+      "action": "add_heading_with_text",
+      "page_id": "${8.page_id}",
+      "title": "Background",
+      "text": "<p>Lord Eddard \"Ned\" Stark is the ruler of Winterfell and Warden of the North. He is married to Lady Catelyn Stark (née Tully). Together they have five children: Robb Stark, Sansa Stark, Arya, Stark, Bran Stark, and Rickon Stark. Ned is also the father of Jon Snow, but Catelyn is not his mother (oooooh!).</p>"
+    },
+    {
+      "message_id": 10,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Sansa Stark",
+      "parent_id": "${7.segment_id}"
+    },
+    {
+      "message_id": 503,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Sansa",
+      "page_id": "${10.page_id}"
+    },
+    {
+      "message_id": 11,
+      "uuid": null,
+      "action": "add_heading_with_text",
+      "page_id": "${10.page_id}",
+      "title": "Background",
+      "text": "<p>Sansa Stark is the daughter of Ned Stark and Catelyn Stark. Sansa is very prissy and self-righteous.</p>"
+    },
+    {
+      "message_id": 12,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Catelyn Stark",
+      "parent_id": "${7.segment_id}"
+    },
+    {
+      "message_id": 514,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Catelyn",
+      "page_id": "${12.page_id}"
+    },
+    {
+      "message_id": 13,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Robb Stark",
+      "parent_id": "${7.segment_id}"
+    },
+    {
+      "message_id": 504,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Robb",
+      "page_id": "${13.page_id}"
+    },
+    {
+      "message_id": 14,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Arya Stark",
+      "parent_id": "${7.segment_id}"
+    },
+    {
+      "message_id": 505,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Arya",
+      "page_id": "${14.page_id}"
+    },
+    {
+      "message_id": 15,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Bran Stark",
+      "parent_id": "${7.segment_id}"
+    },
+    {
+      "message_id": 506,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Bran",
+      "page_id": "${15.page_id}"
+    },
+    {
+      "message_id": 507,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Brandon",
+      "page_id": "${15.page_id}"
+    },
+    {
+      "message_id": 16,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Rickon Stark",
+      "parent_id": "${7.segment_id}"
+    },
+    {
+      "message_id": 508,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Rickon",
+      "page_id": "${16.page_id}"
+    },
+    {
+      "message_id": 17,
+      "uuid": null,
+      "action": "add_segment",
+      "title": "House Lannister",
+      "parent_id": "${2.segment_id}"
+    },
+    {
+      "message_id": 18,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Jaime Lannister",
+      "parent_id": "${17.segment_id}"
+    },
+    {
+      "message_id": 509,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Jaime",
+      "page_id": "${18.page_id}"
+    },
+    {
+      "message_id": 19,
+      "uuid": null,
+      "action": "add_heading_with_text",
+      "page_id": "${18.page_id}",
+      "title": "Background",
+      "text": "<p>Jaime Lannister is the son and rightful heir of Tywin Lannister, the Lord of Casterly Rock.</p>"
+    },
+    {
+      "message_id": 20,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Cersei Lannister",
+      "parent_id": "${17.segment_id}"
+    },
+    {
+      "message_id": 510,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Cersei",
+      "page_id": "${20.page_id}"
+    },
+    {
+      "message_id": 21,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Tyrion Lannister",
+      "parent_id": "${17.segment_id}"
+    },
+    {
+      "message_id": 511,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Tyrion",
+      "page_id": "${21.page_id}"
+    },
+    {
+      "message_id": 22,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Tywin Lannister",
+      "parent_id": "${17.segment_id}"
+    },
+    {
+      "message_id": 512,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Tywin",
+      "page_id": "${22.page_id}"
+    },
+    {
+      "message_id": 23,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Khal Drogo",
+      "parent_id": "${1.segment_id}"
+    },
+    {
+      "message_id": 513,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Drogo",
+      "page_id": "${23.page_id}"
+    },
+    {
+      "message_id": 1100,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Season 1",
+      "parent_id": "${story.section_id}"
+    },
+    {
+      "message_id": 1101,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 1",
+      "parent_id": "${1100.section_id}"
+    },
+    {
+      "message_id": 1102,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1101.section_id}",
+      "text": "In the Seven Kingdoms of Westeros, a soldier survives an attack by the supernatural creatures known as the White Walkers. He rushes to Castle Winterfell, which is ruled by Eddard, who decapitates him for deserting his post. In King's Landing, the capital, Jon Arryn, the \"Hand of the King\", dies under mysterious circumstances. King Robert Baratheon, Eddard's longtime friend, travels to Winterfell, offering the position to him and also proposing marriage between his firstborn son Joffrey and Eddard's older daughter Sansa. Eddard's wife Catelyn receives a letter from her sister Lysa, Jon Arryn's widow, saying that she has escaped King's Landing and that Jon was murdered by the Lannisters, Queen Cersei's family. Catelyn burns the letter and tells Eddard about it, believing that the Lannisters are plotting against Robert. Eddard's youngest son, Brandon, climbs a tower, where he witnesses Cersei having sex with her twin brother, Jaime, who then pushes him out the window from a presumably fatal height. Meanwhile across the narrow sea in Essos, the exiled Prince Viserys Targaryen makes a deal with the Dothraki warlord Khal Drogo, who marries Viserys' younger sister, Daenerys, in exchange for an army to conquer Westeros and reclaim the Iron Throne."
+    },
+    {
+      "message_id": 1103,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 2",
+      "parent_id": "${1100.section_id}"
+    },
+    {
+      "message_id": 1104,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1103.section_id}",
+      "text": "Having accepted his new role as the Hand of the King, Eddard leaves Winterfell with his daughters Sansa and Arya, while Catelyn stays behind to tend to Bran. The unconscious Bran is attacked by an assassin, but his direwolf saves him. Catelyn decides to go to King's Landing to tell Eddard about the attempt and suspected Lannister involvement. Jon Snow, Eddard's illegitimate son, heads north to join the brotherhood of the Night's Watch, protectors of the Wall that keeps the White Walkers and the wildlings from entering civilized Westeros. Tyrion, Cersei's brother, decides to forego the trip south with his family and instead accompanies Snow's entourage to the Wall. When Joffrey threatens Arya and her friend, Arya's direwolf defends her and escapes, provoking a conflict between the Starks and the Lannisters. To resolve the insult, Robert ordering Eddard to execute Sansa's direwolf. In Winterfell, Brandon awakens from unconsciousness. Meanwhile, Daenerys focuses her attention on learning how to please Drogo."
+    },
+    {
+      "message_id": 1105,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 3",
+      "parent_id": "${1100.section_id}"
+    },
+    {
+      "message_id": 1106,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1105.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1107,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 4",
+      "parent_id": "${1100.section_id}"
+    },
+    {
+      "message_id": 1108,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1107.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1109,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 5",
+      "parent_id": "${1100.section_id}"
+    },
+    {
+      "message_id": 1110,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1109.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1111,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 6",
+      "parent_id": "${1100.section_id}"
+    },
+    {
+      "message_id": 1112,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1111.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1113,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 7",
+      "parent_id": "${1100.section_id}"
+    },
+    {
+      "message_id": 1114,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1113.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1115,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 8",
+      "parent_id": "${1100.section_id}"
+    },
+    {
+      "message_id": 1116,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1115.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1117,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 9",
+      "parent_id": "${1100.section_id}"
+    },
+    {
+      "message_id": 1118,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1117.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1119,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 10",
+      "parent_id": "${1100.section_id}"
+    },
+    {
+      "message_id": 1120,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1119.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1200,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Season 2",
+      "parent_id": "${story.section_id}"
+    },
+    {
+      "message_id": 1201,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 1",
+      "parent_id": "${1200.section_id}"
+    },
+    {
+      "message_id": 1202,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1201.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1203,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 2",
+      "parent_id": "${1200.section_id}"
+    },
+    {
+      "message_id": 1204,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1203.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1205,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 3",
+      "parent_id": "${1200.section_id}"
+    },
+    {
+      "message_id": 1206,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1205.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1207,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 4",
+      "parent_id": "${1200.section_id}"
+    },
+    {
+      "message_id": 1208,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1207.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1209,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 5",
+      "parent_id": "${1200.section_id}"
+    },
+    {
+      "message_id": 1210,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1209.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1211,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 6",
+      "parent_id": "${1200.section_id}"
+    },
+    {
+      "message_id": 1212,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1211.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1213,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 7",
+      "parent_id": "${1200.section_id}"
+    },
+    {
+      "message_id": 1214,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1213.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1215,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 8",
+      "parent_id": "${1200.section_id}"
+    },
+    {
+      "message_id": 1216,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1215.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1217,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 9",
+      "parent_id": "${1200.section_id}"
+    },
+    {
+      "message_id": 1218,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1217.section_id}",
+      "text": ""
+    },
+    {
+      "message_id": 1219,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 10",
+      "parent_id": "${1200.section_id}"
+    },
+    {
+      "message_id": 1220,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1219.section_id}",
+      "text": ""
+    }
+  ]
+}
