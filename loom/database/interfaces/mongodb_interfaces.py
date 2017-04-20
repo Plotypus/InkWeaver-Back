@@ -680,7 +680,7 @@ class MongoDBInterface(AbstractDBInterface):
     async def _find_and_create_passive_links_in_paragraph(self, section_id, paragraph_id, wiki_id, text):
         # Build a trie of the alias names to parse paragraph text.
         trie = AliasTrie()
-        aliases = await self.get_wiki_alias_list(wiki_id)
+        aliases = await self.get_wiki_alias_list(wiki_id)  # TODO: Make this faster.
         for alias in aliases:
             path = alias['alias_name'].split()
             trie.add_path(path, alias['page_id'], alias['alias_id'])
