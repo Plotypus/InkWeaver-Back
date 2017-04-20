@@ -25,9 +25,12 @@ class DataProcessor:
         user_json = json['user']
         wiki_json = json['wiki']
         story_json = json['story']
+        extra_users_json = json['extra_users']
         user_id = await self.create_user(user_json)
         wiki_id = await self.create_wiki(user_id, wiki_json)
         story_id = await self.create_story(user_id, wiki_id, story_json)
+        for extra_user_json in extra_users_json:
+            await self.create_user(extra_user_json)
         await self.process_list(json['dispatch_list'], user_id, wiki_id, story_id)
 
     async def create_user(self, user_json):
