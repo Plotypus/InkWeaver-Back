@@ -1483,7 +1483,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='comprehensive_remove_link', value=link_id)
         encoded_link_id = self.encode_object_id(link_id)
         updated_text = text.replace(encoded_link_id, replacement_text)
-        await self.set_paragraph_text(wiki_id, context['section_id'], updated_text, context['paragraph_id'])
+        await self._set_paragraph_text(context['section_id'], updated_text, context['paragraph_id'])
         await self.delete_link(link_id)
 
     ###########################################################################
@@ -1519,7 +1519,7 @@ class MongoDBInterface(AbstractDBInterface):
         alias = await self.get_alias(alias_id)
         alias_name = alias['name']
         create_link_encoding = generate_create_link_encoding(story_id, page_id, alias_name)
-        links_created = await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, create_link_encoding)
+        links_created = await self._approve_and_remove_passive_link(wiki_id, passive_link_id, create_link_encoding)
         if len(links_created) != 1:
             raise FailedUpdateError(query='approve_passive_link')
         paragraph_text = await self.client.get_paragraph_text(section_id, paragraph_id)
@@ -1543,9 +1543,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='delete_passive_link')
 
-    async def _comprehensive_remove_passive_link(self, wiki_id: ObjectId, passive_link_id: ObjectId,
-                                                 replacement_text: str):
-        # TODO: handle different encoding?
+    async def _get_text_with_passive_link_replaced_for_removal(self, passive_link_id: ObjectId, replacement_text: str):
         passive_link = await self.get_passive_link(passive_link_id)
         context = passive_link['context']
         try:
@@ -1621,7 +1619,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='change_alias_name')
         # Delete existing passive links to this alias.
         for passive_link_id in alias['passive_links']:
-            await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, old_name)
+            await self._comprehensive_remove_passive_link(passive_link_id, old_name)
         # Alias with page title renamed, need to recreate primary alias
         page = await self._get_page(page_id)
         replacement_alias_id = None
@@ -1656,7 +1654,7 @@ class MongoDBInterface(AbstractDBInterface):
         for link_id in alias['links']:
             await self._comprehensive_remove_link(wiki_id, link_id, alias_name)
         for passive_link_id in alias['passive_links']:
-            await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, alias_name)
+            await self._comprehensive_remove_passive_link(passive_link_id, alias_name)
         page_id = alias['page_id']
         try:
             await self.client.remove_alias_from_page(alias_name, page_id)
