@@ -576,10 +576,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_passive_links_in_section(section_id, section_passive_links, paragraph_id)
         except ClientError:
             raise FailedUpdateError(query='set_paragraph_text')
-        try:
-            await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
-        except ClientError:
-            raise FailedUpdateError(query='set_paragraph_text')
+        await self._set_paragraph_text(section_id, text, paragraph_id)
         # Get statistics for section and paragraph
         section_stats = await self.get_section_statistics(section_id)
         section_wf = Counter(section_stats['word_frequency'])
@@ -598,6 +595,12 @@ class MongoDBInterface(AbstractDBInterface):
         await self.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
         await self.set_paragraph_statistics(paragraph_id, word_frequencies, sum(word_frequencies.values()), section_id)
         return text, links_created, passive_links_created, aliases_created
+
+    async def _set_paragraph_text(self, section_id, text, paragraph_id):
+        try:
+            await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
+        except ClientError:
+            raise FailedUpdateError(query='_set_paragraph_text')
 
     @staticmethod
     def _update_link_in_references_with_context(references, link_id, context):
