@@ -67,6 +67,13 @@
       "page_id": "${5.page_id}"
     },
     {
+      "message_id": 5000000,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Daenerys Stormborn of the House Targaryen, First of Her Name, the Unburnt, Queen of the Andals and the First Men, Khaleesi of the Great Grass Sea, Breaker of Chains, and Mother of Dragons",
+      "page_id": "${5.page_id}"
+    },
+    {
       "message_id": 6,
       "uuid": null,
       "action": "add_heading_with_text",
@@ -302,6 +309,69 @@
       "page_id": "${23.page_id}"
     },
     {
+      "message_id": 8888,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Jon Arryn",
+      "parent_id": "${1.segment_id}"
+    },
+    {
+      "message_id": 8887,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Petyr Baelish",
+      "parent_id": "${1.segment_id}"
+    },
+    {
+      "message_id": 88871,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Littlefinger",
+      "page_id": "${8887.page_id}"
+    },
+    {
+      "message_id": 8886,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Samwell Tarly",
+      "parent_id": "${1.segment_id}"
+    },
+    {
+      "message_id": 123456,
+      "uuid": null,
+      "action": "add_segment",
+      "title": "House Baratheon",
+      "parent_id": "${2.segment_id}"
+    },
+    {
+      "message_id": 123457,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Robert Baratheon",
+      "parent_id": "${123456.segment_id}"
+    },
+    {
+      "message_id": 1234571,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Robert",
+      "page_id": "${123457.page_id}"
+    },
+    {
+      "message_id": 123458,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Joffrey Baratheon",
+      "parent_id": "${123456.segment_id}"
+    },
+    {
+      "message_id": 1234581,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Joffrey",
+      "page_id": "${123458.page_id}"
+    },
+    {
       "message_id": 10000,
       "uuid": null,
       "action": "add_segment",
@@ -358,11 +428,25 @@
       "parent_id": "${10000.segment_id}"
     },
     {
+      "message_id": 100071,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "the Wall",
+      "page_id": "${10007.page_id}"
+    },
+    {
       "message_id": 10008,
       "uuid": null,
       "action": "add_page",
       "title": "The North",
       "parent_id": "${10000.segment_id}"
+    },
+    {
+      "message_id": 100081,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "the North",
+      "page_id": "${10008.page_id}"
     },
     {
       "message_id": 10009,
@@ -372,6 +456,20 @@
       "parent_id": "${10000.segment_id}"
     },
     {
+      "message_id": 100091,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "the Vale",
+      "page_id": "${10009.page_id}"
+    },
+    {
+      "message_id": 100092,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Vale",
+      "page_id": "${10009.page_id}"
+    },
+    {
       "message_id": 10010,
       "uuid": null,
       "action": "add_page",
@@ -379,11 +477,32 @@
       "parent_id": "${10000.segment_id}"
     },
     {
+      "message_id": 100101,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "the Twins",
+      "page_id": "${10010.page_id}"
+    },
+    {
       "message_id": 10011,
       "uuid": null,
       "action": "add_page",
       "title": "The Eyrie",
       "parent_id": "${10000.segment_id}"
+    },
+    {
+      "message_id": 10011,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "the Eyrie",
+      "page_id": "${10011.page_id}"
+    },
+    {
+      "message_id": 10012,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Eyrie",
+      "page_id": "${10011.page_id}"
     },
     {
       "message_id": 10012,
@@ -407,6 +526,13 @@
       "parent_id": "${11000.segment_id}"
     },
     {
+      "message_id": 110011,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "the throne",
+      "page_id": "${11001.page_id}"
+    },
+    {
       "message_id": 11002,
       "uuid": null,
       "action": "add_page",
@@ -421,11 +547,39 @@
       "parent_id": "${11000.segment_id}"
     },
     {
+      "message_id": 110031,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "trial by combat",
+      "page_id": "${11003.page_id}"
+    },
+    {
       "message_id": 11004,
       "uuid": null,
       "action": "add_page",
       "title": "Marriage",
       "parent_id": "${11000.segment_id}"
+    },
+    {
+      "message_id": 110041,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "marriage",
+      "page_id": "${11004.page_id}"
+    },
+    {
+      "message_id": 110042,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "marry",
+      "page_id": "${11004.page_id}"
+    },
+    {
+      "message_id": 110043,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Marry",
+      "page_id": "${11004.page_id}"
     },
     {
       "message_id": 11005,
@@ -435,11 +589,25 @@
       "parent_id": "${11000.segment_id}"
     },
     {
+      "message_id": 110051,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "the Hand",
+      "page_id": "${11005.page_id}"
+    },
+    {
       "message_id": 11006,
       "uuid": null,
       "action": "add_page",
       "title": "Assassination",
       "parent_id": "${11000.segment_id}"
+    },
+    {
+      "message_id": 110061,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "asssassinate",
+      "page_id": "${11006.page_id}"
     },
     {
       "message_id": 11007,
@@ -461,6 +629,13 @@
       "action": "add_page",
       "title": "Protector of the Realm",
       "parent_id": "${11000.segment_id}"
+    },
+    {
+      "message_id": 110091,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Protector of the realm",
+      "page_id": "${11009.page_id}"
     },
     {
       "message_id": 1100,
