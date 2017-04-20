@@ -132,13 +132,6 @@
       "page_id": "${10.page_id}"
     },
     {
-      "message_id": 5030,
-      "uuid": null,
-      "action": "create_alias",
-      "name": "Luke Skywalker",
-      "page_id": "${10.page_id}"
-    },
-    {
       "message_id": 11,
       "uuid": null,
       "action": "add_heading_with_text",
@@ -810,7 +803,7 @@
       "uuid": null,
       "action": "add_paragraph",
       "section_id": "${1201.section_id}",
-      "text": "{#|${story.story_id}|${10.page_id}|Luke Skywalker|#}, from Starfleet, lands in Mordor just as the Daleks begin their invasion. He calls upon Pallet Town's Buzzlight Year to help him save the world."
+      "text": "Luke Skywalker, from Starfleet, lands in Mordor just as the Daleks begin their invasion. He calls upon Pallet Town's Buzzlight Year to help him save the world."
     },
     {
       "message_id": 1203,
