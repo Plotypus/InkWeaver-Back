@@ -1658,6 +1658,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self._comprehensive_remove_link(wiki_id, link_id, alias_name)
         for passive_link_id in alias['passive_links']:
             await self._comprehensive_remove_passive_link(passive_link_id, alias_name)
+            await self._update_references_when_removing_alias(passive_link_id, alias_name)
         page_id = alias['page_id']
         try:
             await self.client.remove_alias_from_page(alias_name, page_id)
@@ -1675,6 +1676,22 @@ class MongoDBInterface(AbstractDBInterface):
         title = page['title']
         # Not None if the primary alias exists
         return page['aliases'].get(title) is not None
+
+    async def _update_references_when_removing_alias(self, passive_link_id: ObjectId, alias_name: str):
+        encoded_passive_link_id = self.encode_object_id(passive_link_id)
+        pages = await self._get_pages_with_passive_link_in_references(encoded_passive_link_id)
+        for page in pages:
+            for reference in page['references']:
+                reference['context']['text'] = reference['context']['text'].replace(encoded_passive_link_id, alias_name)
+            await self._set_page_references(page['_id'], page['references'])
+
+    async def _get_pages_with_passive_link_in_references(self, encoded_passive_link_id):
+        try:
+            pages = await self.client.get_pages_with_passive_link_in_references(encoded_passive_link_id)
+        except ClientError:
+            raise BadValueError(query='_get_pages_with_passive_link_in_references', value=encoded_passive_link_id)
+        else:
+            return pages
 
     ###########################################################################
     #
