@@ -563,10 +563,7 @@ class MongoDBInterface(AbstractDBInterface):
             references = page['references']
             for link_id, context in updates.items():
                 self._update_link_in_references_with_context(references, link_id, context)
-            try:
-                await self.client.set_page_references(page_id, references)
-            except ClientError:
-                raise FailedUpdateError(query='set_paragraph_text')
+            await self._set_page_references(page_id, references)
         # Update links for this paragraph for the section.
         try:
             await self.client.set_links_in_section(section_id, section_links, paragraph_id)
@@ -601,6 +598,12 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
         except ClientError:
             raise FailedUpdateError(query='_set_paragraph_text')
+
+    async def _set_page_references(self, page_id: ObjectId, references: list):
+        try:
+            await self.client.set_page_references(page_id, references)
+        except ClientError:
+            raise FailedUpdateError(query='_set_page_references')
 
     @staticmethod
     def _update_link_in_references_with_context(references, link_id, context):
