@@ -25,9 +25,12 @@ class DataProcessor:
         user_json = json['user']
         wiki_json = json['wiki']
         story_json = json['story']
+        extra_users_json = json['extra_users']
         user_id = await self.create_user(user_json)
         wiki_id = await self.create_wiki(user_id, wiki_json)
         story_id = await self.create_story(user_id, wiki_id, story_json)
+        for extra_user_json in extra_users_json:
+            await self.create_user(extra_user_json)
         await self.process_list(json['dispatch_list'], user_id, wiki_id, story_id)
 
     async def create_user(self, user_json):
@@ -55,6 +58,7 @@ class DataProcessor:
                                                  segment_id=wiki_dict['segment_id'],
                                                  users=wiki_dict['users'],
                                                  summary=wiki_dict['summary'])
+        wiki_message.wiki_id = wiki_id
         self.responses['wiki'] = wiki_message
         story_dict = await self.dispatcher.db_interface.get_story(story_id)
         story_message = GetStoryInformationOutgoingMessage('', '',
@@ -62,6 +66,7 @@ class DataProcessor:
                                                    section_id=story_dict['section_id'],
                                                    wiki_id=story_dict['wiki_id'],
                                                    users=story_dict['users'])
+        story_message.story_id = story_id
         self.responses['story'] = story_message
         for dispatch_item in dispatch_list:
             revised: JSON = {k: self.replace_id(v) for k, v in dispatch_item.items()}
