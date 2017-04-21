@@ -1432,6 +1432,25 @@ class MongoDBClient:
         self.log(f'get_passive_links_in_paragraph {{{paragraph_id}}} in section {{{section_id}}}')
         return section_projection['passive_links'][0]['passive_links']
 
+    async def get_pages_with_passive_link_in_references(self, passive_link_id_encoding: str):
+        # Create index to search for passive link in the text of the references
+        await self.pages.create_index([('references.context.text', 'text')])
+        query_filter = {
+                '$text': {
+                    '$search': passive_link_id_encoding
+                }
+            }
+        pages = []
+        async for doc in self.pages.find(query_filter):
+            if doc is None:
+                self.log(f'get_pages_with_passive_link_in_references {{{passive_link_id_encoding}}} FAILED')
+                await self.pages.drop_indexes()
+                raise NoMatchError
+            pages.append(doc)
+        await self.pages.drop_indexes()
+        self.log(f'get_pages_with_passive_link_in_references {{{passive_link_id_encoding}}}')
+        return pages
+
     async def set_passive_link_context(self, passive_link_id: ObjectId, context: Dict):
         update_result: UpdateResult = await self.passive_links.update_one(
             filter={'_id': passive_link_id},

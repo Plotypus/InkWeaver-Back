@@ -563,10 +563,7 @@ class MongoDBInterface(AbstractDBInterface):
             references = page['references']
             for link_id, context in updates.items():
                 self._update_link_in_references_with_context(references, link_id, context)
-            try:
-                await self.client.set_page_references(page_id, references)
-            except ClientError:
-                raise FailedUpdateError(query='set_paragraph_text')
+            await self._set_page_references(page_id, references)
         # Update links for this paragraph for the section.
         try:
             await self.client.set_links_in_section(section_id, section_links, paragraph_id)
@@ -576,10 +573,7 @@ class MongoDBInterface(AbstractDBInterface):
             await self.client.set_passive_links_in_section(section_id, section_passive_links, paragraph_id)
         except ClientError:
             raise FailedUpdateError(query='set_paragraph_text')
-        try:
-            await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
-        except ClientError:
-            raise FailedUpdateError(query='set_paragraph_text')
+        await self._set_paragraph_text(section_id, text, paragraph_id)
         # Get statistics for section and paragraph
         section_stats = await self.get_section_statistics(section_id)
         section_wf = Counter(section_stats['word_frequency'])
@@ -598,6 +592,18 @@ class MongoDBInterface(AbstractDBInterface):
         await self.set_section_statistics(section_id, section_wf, sum(section_wf.values()))
         await self.set_paragraph_statistics(paragraph_id, word_frequencies, sum(word_frequencies.values()), section_id)
         return text, links_created, passive_links_created, aliases_created
+
+    async def _set_paragraph_text(self, section_id, text, paragraph_id):
+        try:
+            await self.client.set_paragraph_text(paragraph_id, text, in_section_id=section_id)
+        except ClientError:
+            raise FailedUpdateError(query='_set_paragraph_text')
+
+    async def _set_page_references(self, page_id: ObjectId, references: list):
+        try:
+            await self.client.set_page_references(page_id, references)
+        except ClientError:
+            raise FailedUpdateError(query='_set_page_references')
 
     @staticmethod
     def _update_link_in_references_with_context(references, link_id, context):
@@ -1480,7 +1486,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='comprehensive_remove_link', value=link_id)
         encoded_link_id = self.encode_object_id(link_id)
         updated_text = text.replace(encoded_link_id, replacement_text)
-        await self.set_paragraph_text(wiki_id, context['section_id'], updated_text, context['paragraph_id'])
+        await self._set_paragraph_text(context['section_id'], updated_text, context['paragraph_id'])
         await self.delete_link(link_id)
 
     ###########################################################################
@@ -1516,7 +1522,7 @@ class MongoDBInterface(AbstractDBInterface):
         alias = await self.get_alias(alias_id)
         alias_name = alias['name']
         create_link_encoding = generate_create_link_encoding(story_id, page_id, alias_name)
-        links_created = await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, create_link_encoding)
+        links_created = await self._approve_and_remove_passive_link(wiki_id, passive_link_id, create_link_encoding)
         if len(links_created) != 1:
             raise FailedUpdateError(query='approve_passive_link')
         paragraph_text = await self.client.get_paragraph_text(section_id, paragraph_id)
@@ -1540,9 +1546,7 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise FailedUpdateError(query='delete_passive_link')
 
-    async def _comprehensive_remove_passive_link(self, wiki_id: ObjectId, passive_link_id: ObjectId,
-                                                 replacement_text: str):
-        # TODO: handle different encoding?
+    async def _get_text_with_passive_link_replaced_for_removal(self, passive_link_id: ObjectId, replacement_text: str):
         passive_link = await self.get_passive_link(passive_link_id)
         context = passive_link['context']
         try:
@@ -1551,8 +1555,19 @@ class MongoDBInterface(AbstractDBInterface):
             raise BadValueError(query='comprehensive_remove_passive_link', value=passive_link_id)
         encoded_passive_link_id = self.encode_object_id(passive_link_id)
         updated_text = text.replace(encoded_passive_link_id, replacement_text)
-        _, links_created, _, _ = await self.set_paragraph_text(wiki_id, context['section_id'], updated_text,
-                                                               context['paragraph_id'])
+        return context['section_id'], context['paragraph_id'], updated_text
+
+    async def _comprehensive_remove_passive_link(self, passive_link_id: ObjectId, replacement_text: str):
+        section_id, paragraph_id, text = await self._get_text_with_passive_link_replaced_for_removal(passive_link_id,
+                                                                                                     replacement_text)
+        await self._set_paragraph_text(section_id, text, paragraph_id)
+        await self.delete_passive_link(passive_link_id)
+
+    async def _approve_and_remove_passive_link(self, wiki_id: ObjectId, passive_link_id: ObjectId,
+                                               replacement_text: str):
+        section_id, paragraph_id, text = await self._get_text_with_passive_link_replaced_for_removal(passive_link_id,
+                                                                                                     replacement_text)
+        _, links_created, _, _ = await self.set_paragraph_text(wiki_id, section_id, text, paragraph_id)
         await self.delete_passive_link(passive_link_id)
         return links_created
 
@@ -1607,7 +1622,7 @@ class MongoDBInterface(AbstractDBInterface):
             raise FailedUpdateError(query='change_alias_name')
         # Delete existing passive links to this alias.
         for passive_link_id in alias['passive_links']:
-            await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, old_name)
+            await self._comprehensive_remove_passive_link(passive_link_id, old_name)
         # Alias with page title renamed, need to recreate primary alias
         page = await self._get_page(page_id)
         replacement_alias_id = None
@@ -1642,7 +1657,8 @@ class MongoDBInterface(AbstractDBInterface):
         for link_id in alias['links']:
             await self._comprehensive_remove_link(wiki_id, link_id, alias_name)
         for passive_link_id in alias['passive_links']:
-            await self._comprehensive_remove_passive_link(wiki_id, passive_link_id, alias_name)
+            await self._comprehensive_remove_passive_link(passive_link_id, alias_name)
+            await self._update_references_when_removing_alias(passive_link_id, alias_name)
         page_id = alias['page_id']
         try:
             await self.client.remove_alias_from_page(alias_name, page_id)
@@ -1660,6 +1676,22 @@ class MongoDBInterface(AbstractDBInterface):
         title = page['title']
         # Not None if the primary alias exists
         return page['aliases'].get(title) is not None
+
+    async def _update_references_when_removing_alias(self, passive_link_id: ObjectId, alias_name: str):
+        encoded_passive_link_id = self.encode_object_id(passive_link_id)
+        pages = await self._get_pages_with_passive_link_in_references(encoded_passive_link_id)
+        for page in pages:
+            for reference in page['references']:
+                reference['context']['text'] = reference['context']['text'].replace(encoded_passive_link_id, alias_name)
+            await self._set_page_references(page['_id'], page['references'])
+
+    async def _get_pages_with_passive_link_in_references(self, encoded_passive_link_id):
+        try:
+            pages = await self.client.get_pages_with_passive_link_in_references(encoded_passive_link_id)
+        except ClientError:
+            raise BadValueError(query='_get_pages_with_passive_link_in_references', value=encoded_passive_link_id)
+        else:
+            return pages
 
     ###########################################################################
     #
