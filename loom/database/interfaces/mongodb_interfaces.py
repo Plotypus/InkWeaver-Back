@@ -681,7 +681,7 @@ class MongoDBInterface(AbstractDBInterface):
         trie = AliasTrie()
         aliases = await self.get_wiki_alias_list(wiki_id)
         for alias in aliases:
-            path = alias['alias_name'].split()
+            path = self.tokenize_sentence(alias['alias_name'])
             trie.add_path(path, alias['page_id'], alias['alias_id'])
         # Parse the text.
         passive_links = []
