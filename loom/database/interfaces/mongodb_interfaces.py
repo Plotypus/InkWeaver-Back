@@ -959,10 +959,10 @@ class MongoDBInterface(AbstractDBInterface):
         segment_id = await self.create_segment(title)
         wiki_id = await self.client.create_wiki(title, user_description, summary, segment_id)
         await self._add_wiki_id_to_user(user_id, wiki_id)
-        await self._add_default_template_headings(wiki_id, segment_id)
+        await self._create_default_wiki_setup(wiki_id, segment_id)
         return wiki_id
 
-    async def _add_default_template_headings(self, wiki_id, segment_id):
+    async def _create_default_wiki_setup(self, wiki_id, segment_id):
         characters_segment_id = await self.add_child_segment(wiki_id, "Characters", segment_id)
         await self.add_template_heading("Biography", characters_segment_id)
         locations_segment_id = await self.add_child_segment(wiki_id, "Locations", segment_id)
