@@ -1656,6 +1656,7 @@ class MongoDBInterface(AbstractDBInterface):
         alias_name = alias['name']
         for link_id in alias['links']:
             await self._comprehensive_remove_link(wiki_id, link_id, alias_name)
+            await self._replace_object_id_in_references_with_text(link_id, alias_name)
         for passive_link_id in alias['passive_links']:
             await self._comprehensive_remove_passive_link(passive_link_id, alias_name)
             await self._replace_object_id_in_references_with_text(passive_link_id, alias_name)
