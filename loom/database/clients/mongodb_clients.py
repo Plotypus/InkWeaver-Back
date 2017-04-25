@@ -665,9 +665,8 @@ class MongoDBClient:
         return result
 
     async def get_stories_with_wiki_id(self, wiki_id: ObjectId):
-        filter = {'wiki_id': wiki_id}
         results = []
-        async for doc in self.stories.find(filter):
+        async for doc in self.stories.find({'wiki_id': wiki_id}):
             if doc is None:
                 self.log(f'get_stories_with_wiki_id {{{wiki_id}}} FAILED')
                 raise NoMatchError
