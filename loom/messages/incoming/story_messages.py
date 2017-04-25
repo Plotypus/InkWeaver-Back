@@ -234,7 +234,7 @@ class DeleteSectionIncomingMessage(IncomingMessage):
         self.section_id = RequiredField()
 
     def dispatch(self):
-        return self._dispatcher.delete_section(self.uuid, self.message_id, self.section_id)
+        return self._dispatcher.delete_section(self.uuid, self.message_id, self.story_id, self.section_id)
 
 
 class DeleteParagraphIncomingMessage(IncomingMessage):
