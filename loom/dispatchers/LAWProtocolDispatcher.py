@@ -313,7 +313,7 @@ class LAWProtocolDispatcher(AbstractDispatcher):
             yield DeleteStoryNotificationOutgoingMessage(uuid, message_id, story_id=story_id, user_id=user_id)
 
     @handle_interface_errors
-    async def delete_section(self, uuid, story_id, message_id, section_id):
+    async def delete_section(self, uuid, message_id, story_id, section_id):
         deleted_bookmarks = await self.db_interface.delete_section(section_id, story_id)
         for bookmark in deleted_bookmarks:
             yield DeleteBookmarkOutgoingMessage(uuid, message_id, bookmark_id=bookmark['bookmark_id'])
