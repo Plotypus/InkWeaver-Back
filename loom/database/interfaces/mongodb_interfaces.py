@@ -9,7 +9,7 @@ from loom.tokenizer import LoomTokenizer
 import re
 
 from bson.objectid import ObjectId
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, OrderedDict
 from itertools import chain
 from string import punctuation
 from typing import ClassVar
@@ -1714,13 +1714,15 @@ class MongoDBInterface(AbstractDBInterface):
         except ClientError:
             raise BadValueError(query='_recur_get_section_statistics', value=section_id)
         word_freqs = Counter(section['statistics']['word_frequency'])
+        word_count = section['statistics']['word_count']
         for subsection_id in chain(section['preceding_subsections'],
                                    section['inner_subsections'],
                                    section['succeeding_subsections']):
             subsection_stats = await self._recur_get_section_statistics(subsection_id)
             word_freqs.update(subsection_stats['word_frequency'])
-            section['statistics']['word_frequency'] = word_freqs
-            section['statistics']['word_count'] += subsection_stats['word_count']
+            word_count += subsection_stats['word_count']
+        section['statistics']['word_frequency'] = OrderedDict(word_freqs.most_common())
+        section['statistics']['word_count'] = word_count
         return section['statistics']
 
     async def get_section_statistics_recursive(self, section_id):
@@ -1735,6 +1737,7 @@ class MongoDBInterface(AbstractDBInterface):
             return section_stats
 
     async def get_paragraph_statistics(self, section_id, paragraph_id):
+        # TODO: Sort these statistics by most common
         try:
             stats = await self.client.get_paragraph_statistics(section_id, paragraph_id)
         except ClientError:
