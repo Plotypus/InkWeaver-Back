@@ -1519,8 +1519,10 @@ class MongoDBClient:
     ###########################################################################
 
     async def create_alias(self, name: str, page_id: ObjectId, _id=None) -> ObjectId:
+        # Certain characters are replaced in the alias name to ensure MongoDB doesn't complain.
+        adjusted_name = name.replace('$', '\N{POUND SIGN}')  # TODO: Also fix periods.
         alias = {
-            'name':          name,
+            'name':          adjusted_name,
             'page_id':       page_id,
             'links':         list(),
             'passive_links': list(),
