@@ -28,6 +28,11 @@ class DataProcessor:
         extra_users_json = json['extra_users']
         user_id = await self.create_user(user_json)
         wiki_id = await self.create_wiki(user_id, wiki_json)
+        # Delete the default wiki setup, we don't want it for data loading.
+        wiki = await self.dispatcher.db_interface.get_wiki(wiki_id)
+        child_segment = await self.dispatcher.db_interface.get_segment(wiki['segment_id'])
+        for segment in child_segment['segments']:
+            await self.dispatcher.db_interface.delete_segment(wiki_id, segment['segment_id'])
         story_id = await self.create_story(user_id, wiki_id, story_json)
         for extra_user_json in extra_users_json:
             await self.create_user(extra_user_json)
