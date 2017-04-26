@@ -3,10 +3,13 @@
   "last_updated": "2017-01-23",
   "user": {
     "username": "cdickens",
-    "password": "password1234",
+    "password": " ",
     "name": "Charles Dickens",
     "email": "cdickens@email.com"
   },
+  "extra_users": [
+
+  ],
   "wiki": {
     "title": "A Christmas Carol Wiki",
     "summary": "The wiki for A Christmas Carol"
@@ -82,7 +85,7 @@
       "uuid": null,
       "action": "add_heading_with_text",
       "title": "Background",
-      "page_id": "${4.page_id}",
+      "page_id": "${5122.page_id}",
       "text": "<p>In the living world, Ebenezer Scrooge's equally greedy partner. Marley died seven years before the narrative opens. He appears to Scrooge as a ghost condemned to wander the world bound in heavy chains. Marley hopes to save his old partner from suffering a similar fate.</p>"
     },
     {
