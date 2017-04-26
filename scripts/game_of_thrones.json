@@ -217,6 +217,28 @@
       "page_id": "${16.page_id}"
     },
     {
+      "message_id": 7777,
+      "uuid": null,
+      "action": "add_page",
+      "title": "Jon Snow",
+      "parent_id": "${7.segment_id}"
+    },
+    {
+      "message_id": 77777,
+      "uuid": null,
+      "action": "create_alias",
+      "name": "Jon",
+      "page_id": "${7777.page_id}"
+    },
+    {
+      "message_id": 777777,
+      "uuid": null,
+      "action": "add_heading_with_text",
+      "title": "Background",
+      "page_id": "${7777.page_id}",
+      "text": "<p><strong>[REDACTED FOR SPOILERS]</strong></p>"
+    },
+    {
       "message_id": 17,
       "uuid": null,
       "action": "add_segment",
@@ -645,20 +667,6 @@
       "text": "The series begins as Ned Stark is asked to become the chief advisor (known as the Hand of the King) to lecherous King Robert Baratheon. Ned and his wife Catelyn receive a letter from Catelyn's sister, Lysa that gives them reason to believe that rival House Lannister – to which the King's wife Cersei belongs – was the cause of the previous Hand's death. Ned must travel south to help the king and find out who killed the previous Hand of the King, Jon Arryn, while trying to protect his family from the Lannisters. As he tries to uncover the reasons behind Jon Arryn's death he uncovers the dark secrets about the Lannisters that Arryn himself died trying to expose.\n\nMeanwhile, across the Narrow Sea in the continent of Essos, the exiled, arrogant Viserys Targaryen, son of the former king whose throne was usurped, believes he still has the rightful claim to the throne. He marries off his younger sister, Daenerys Targaryen, whom he has psychologically and physically abused for years, to the leader of the Dothraki warrior tribe, Khal Drogo, in an exchange for an army to return to Westeros and take the throne. However, Daenerys' growing love for Drogo and newfound mental strength as the Khaleesi of the tribe mean Viserys' plans go unexpectedly and powerfully awry.\n\nAt the Wall, Ned's bastard son Jon Snow joins the Night's Watch, an ancient brotherhood sworn to watch over the massive wall that separates the Seven Kingdoms from the dangerous unknown beyond. But an ancient force, long believed dead, threatens the land."
     },
     {
-      "message_id": 1103,
-      "uuid": null,
-      "action": "add_inner_subsection",
-      "title": "Episode 2",
-      "parent_id": "${1100.section_id}"
-    },
-    {
-      "message_id": 1104,
-      "uuid": null,
-      "action": "add_text_to_section",
-      "section_id": "${1103.section_id}",
-      "text": "Having accepted his new role as the Hand of the King, Eddard leaves Winterfell with his daughters Sansa and Arya, while Catelyn stays behind to tend to Bran. The unconscious Bran is attacked by an assassin, but his direwolf saves him. Catelyn decides to go to King's Landing to tell Eddard about the attempt and suspected Lannister involvement. Jon Snow, Eddard's illegitimate son, heads north to join the brotherhood of the Night's Watch, protectors of the Wall that keeps the White Walkers and the wildlings from entering civilized Westeros.\n\nTyrion, Cersei's brother, decides to forego the trip south with his family and instead accompanies Snow's entourage to the Wall. When Joffrey threatens Arya and her friend, Arya's direwolf defends her and escapes, provoking a conflict between the Starks and the Lannisters. To resolve the insult, Robert ordering Eddard to execute Sansa's direwolf. In Winterfell, Brandon awakens from unconsciousness. Meanwhile, Daenerys focuses her attention on learning how to please Drogo."
-    },
-    {
       "message_id": 1101,
       "uuid": null,
       "action": "add_inner_subsection",
@@ -671,6 +679,20 @@
       "action": "add_text_to_section",
       "section_id": "${1101.section_id}",
       "text": "In the Seven Kingdoms of Westeros, a soldier survives an attack by the supernatural creatures known as the White Walkers. He rushes to Castle Winterfell, which is ruled by Eddard, who decapitates him for deserting his post. In King's Landing, the capital, Jon Arryn, the \"Hand of the King\", dies under mysterious circumstances. King Robert Baratheon, Eddard's longtime friend, travels to Winterfell, offering the position to him and also proposing marriage between his firstborn son Joffrey and Eddard's older daughter Sansa. Eddard's wife Catelyn receives a letter from her sister Lysa, Jon Arryn's widow, saying that she has escaped King's Landing and that Jon was murdered by the Lannisters, Queen Cersei's family. Catelyn burns the letter and tells Eddard about it, believing that the Lannisters are plotting against Robert.\n\nEddard's youngest son, Brandon, climbs a tower, where he witnesses Cersei \"wrestling\" with her twin brother, Jaime, who then pushes him out the window from a presumably fatal height. Meanwhile across the narrow sea in Essos, the exiled Prince Viserys Targaryen makes a deal with the Dothraki warlord Khal Drogo, who marries Viserys' younger sister, Daenerys, in exchange for an army to conquer Westeros and reclaim the Iron Throne."
+    },
+    {
+      "message_id": 1103,
+      "uuid": null,
+      "action": "add_inner_subsection",
+      "title": "Episode 2",
+      "parent_id": "${1100.section_id}"
+    },
+    {
+      "message_id": 1104,
+      "uuid": null,
+      "action": "add_text_to_section",
+      "section_id": "${1103.section_id}",
+      "text": "Having accepted his new role as the Hand of the King, Eddard leaves Winterfell with his daughters Sansa and Arya, while Catelyn stays behind to tend to Bran. The unconscious Bran is attacked by an assassin, but his direwolf saves him. Catelyn decides to go to King's Landing to tell Eddard about the attempt and suspected Lannister involvement. Jon Snow, Eddard's illegitimate son, heads north to join the brotherhood of the Night's Watch, protectors of the Wall that keeps the White Walkers and the wildlings from entering civilized Westeros.\n\nTyrion, Cersei's brother, decides to forego the trip south with his family and instead accompanies Snow's entourage to the Wall. When Joffrey threatens Arya and her friend, Arya's direwolf defends her and escapes, provoking a conflict between the Starks and the Lannisters. To resolve the insult, Robert ordering Eddard to execute Sansa's direwolf. In Winterfell, Brandon awakens from unconsciousness. Meanwhile, Daenerys focuses her attention on learning how to please Drogo."
     },
     {
       "message_id": 1105,
@@ -803,7 +825,7 @@
       "uuid": null,
       "action": "add_paragraph",
       "section_id": "${1201.section_id}",
-      "text": "Luke Skywalker, from Starfleet, lands in Mordor just as the Daleks begin their invasion. He calls upon Pallet Town's Buzzlight Year to help him save the world."
+      "text": "To Cersei's dismay, Tyrion takes up his post as acting Hand at King's Landing. At Dragonstone, Stannis proclaims allegiance to Melisandre's new god and lays public claim to the Iron Throne, revealing Joffrey's bastardy. The latter orders the soldiers to slaughter Robert's bastards, one of whom named Gendry manages to escape King's Landing along with Arya. Having won three victories, Robb offers the Lannisters peace in exchange for the North's independence and Sansa's return, sending Theon to gain the support of Balon, his father, and Catelyn to seek alliance with Renly, who also claims the throne. Beyond the Wall, the Night's Watch finds shelter with Craster and his daughters/wives. In Essos, as her people slowly die in the Red Waste, Daenerys sends out riders for reconnaissance."
     },
     {
       "message_id": 1203,
@@ -820,15 +842,6 @@
         "paragraph_id": "${12020.paragraph_id}",
         "section_id": "${1201.section_id}"
       }
-    },
-    {
-      "message_id": 9998,
-      "uuid": null,
-      "action": "add_bookmark",
-      "name": "Revise this episode",
-      "section_id": "${1201.section_id}",
-      "paragraph_id": "${12020.paragraph_id}",
-      "index": null
     },
     {
       "message_id": 9997,
