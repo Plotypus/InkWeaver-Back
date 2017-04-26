@@ -12,7 +12,8 @@ from loom.database.interfaces import MongoDBAsyncioInterface
 import asyncio
 
 
-def main(jsonfile, db_name, db_user=None, db_pass=None, blind_override=False, load_without_drop=False):
+def main(jsonfile, db_name, db_user=None, db_pass=None, blind_override=False, load_without_drop=False,
+         approve_passive_links=False):
     if not load_without_drop and not blind_override:
         answer = input("This will drop the `{}` database... continue? [y/N] ".format(db_name))
         if not answer.lower().startswith('y'):
@@ -24,7 +25,7 @@ def main(jsonfile, db_name, db_user=None, db_pass=None, blind_override=False, lo
     processor = DataProcessor(interface)
     if not load_without_drop:
         event_loop.run_until_complete(interface.client.drop_all_collections())
-    event_loop.run_until_complete(processor.load_file(jsonfile))
+    event_loop.run_until_complete(processor.load_file(jsonfile, approve_passive_links))
     event_loop.close()
 
 if __name__ == '__main__':
@@ -38,6 +39,8 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--load-no-drop', help='Do not dump the existing database and load the data.',
                         action='store_true')
+    parser.add_argument('--approve-passive-links', help='Approve all the passive links that were created.',
+                        action='store_true')
     args = parser.parse_args()
 
     # Ensure either both or neither of the authentication arguments are given.
@@ -48,4 +51,5 @@ if __name__ == '__main__':
         print("Cannot authenticate without username.")
         sys.exit(1)
 
-    main(args.data_file, args.db_name, args.db_user, args.db_pass, args.no_ask, args.load_no_drop)
+    main(args.data_file, args.db_name, args.db_user, args.db_pass, args.no_ask, args.load_no_drop,
+         args.approve_passive_links)

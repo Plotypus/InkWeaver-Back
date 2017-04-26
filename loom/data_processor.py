@@ -18,7 +18,7 @@ class DataProcessor:
         self.message_factory = DemoIncomingMessageFactory()
         self.responses = {}
 
-    async def load_file(self, filename):
+    async def load_file(self, filename, approve_passive_links: bool):
         with open(filename) as json_file:
             json_string = json_file.read()
         json = decode_string_to_bson(json_string)
@@ -32,6 +32,12 @@ class DataProcessor:
         for extra_user_json in extra_users_json:
             await self.create_user(extra_user_json)
         await self.process_list(json['dispatch_list'], user_id, wiki_id, story_id)
+        if approve_passive_links:
+            wiki_alias_list = await self.dispatcher.db_interface.get_wiki_alias_list(wiki_id)
+            for alias in wiki_alias_list:
+                for passive_link in alias['passive_links']:
+                    await self.dispatcher.db_interface.approve_passive_link(passive_link['passive_link_id'], story_id,
+                                                                            wiki_id)
 
     async def create_user(self, user_json):
         user_id = await self.dispatcher.db_interface.create_user(**user_json)
